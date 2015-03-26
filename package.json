@@ -1,0 +1,60 @@
+{
+  "name": "openeddi3",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "browser": {
+    "jquery": "./oe/bower_components/jquery/dist/jquery.js",
+    "lodash": "./oe/bower_components/lodash/lodash.js",
+    "backbone": "./oe/bower_components/backbone/backbone.js",
+    "backbone.babysitter": "./oe/bower_components/backbone.babysitter/lib/backbone.babysitter.js",
+    "backbone.radio": "./oe/bower_components/backbone.radio/build/backbone.radio.js",
+    "backbone.dualstorage": "./oe/bower_components/backbone.dualstorage/backbone.dualstorage.js",
+    "marionette": "./oe/bower_components/marionette/lib/backbone.marionette.js",
+    "webcomponents": "./oe/bower_components/webcomponentsjs/webcomponents.js",
+    "polymer": "./oe/bower_components/polymer/polymer.js",
+    "d3": "./oe/bower_components/d3/d3.min.js"
+  },
+  "browserify-shim": {
+    "jquery": "$",
+    "lodash": "_",
+    "backbone": "Backbone",
+    "backbone.babysitter": "Backbone.Babysitter",
+    "backbone.radio": "Backbone.Radio",
+    "backbone.dualstorage": {
+      "exports": "Backbone.DualStorage",
+      "depends": [
+        "lodash:_",
+        "backbone:Backbone"
+      ]
+    },
+    "marionette": "Marionette",
+    "webcomponents": "Webcomponents",
+    "polymer": "Polymer",
+    "d3": "d3"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "author": "",
+  "license": "GPLv3",
+  "devDependencies": {
+    "grunt-watchify": "~0.1.0",
+    "jstify": "~0.8.0"
+  },
+  "dependencies": {
+    "polymerize": "~1.0.0",
+    "cssy": "~1.0.1",
+    "express-session": "~1.10.3",
+    "inherits": "~2.0.1",
+    "ejs": "~2.3.1",
+    "pg": "~4.3.0",
+    "pg-hstore": "~2.3.1",
+    "colors": "~1.0.3"
+  }
+}

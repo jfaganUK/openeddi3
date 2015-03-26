@@ -1,0 +1,22 @@
+
+### OpenEddi Git Ignore list
+
+# The node modules can just be installed using npm
+/node_modules
+
+# The .idea folder, for my webstorm config
+/.idea
+
+# The old client, I just keep it there for reference
+/.client_old
+
+# Ignore the bower files too
+/oe/bower_components
+
+# Just some notes files that I use. Not something to be committed
+scratch.txt
+notes.md
+
+oe/npm-debug.log
+built.min.js
+built.min.js.map

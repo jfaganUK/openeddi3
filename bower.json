@@ -1,0 +1,24 @@
+{
+  "name": "openeddi3",
+  "main": "index.js",
+  "version": "0.0.0",
+  "moduleType": [
+    "node"
+  ],
+  "license": "GPLv3",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "backbone.marionette": "~2.4.1",
+    "backbone.radio": "~0.9.0",
+    "backbone": "~1.1.2",
+    "core-elements": "Polymer/core-elements#~0.5.5",
+    "lodash": "~3.4.0",
+    "paper-elements": "Polymer/paper-elements#~0.5.5"
+  }
+}

@@ -1,0 +1,27 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+
+<polymer-element name="pool-listing-landing" attributes="poolTitle dateCreated oe">
+    <template>
+        <div class="pool-listing">
+            <content select="h2"></content>
+            <h2>{{poolTitle}}</h2>
+            <p>{{dateCreated}}</p>
+            <paper-button on-tap="{{createNewPool}}"><core-icon icon="create"></core-icon>Start New Pool</paper-button>
+        </div>
+        <style>
+            polyfill-next-selector {content: 'h2'; }
+            ::content h2 {
+                color: red;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('pool-listing-landing', {
+            createNewPool: function(e) {
+                this.fire('start-new-pool');
+            }
+        });
+    </script>
+</polymer-element>
