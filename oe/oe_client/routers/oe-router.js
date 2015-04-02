@@ -25,14 +25,17 @@ module.exports = Backbone.Router.extend({
 
     // What happens if they go to 'pool/' with no poolid? I think it should load the landing page...
     loadPool: function(poolid) {
+        app.appState.set('poolid', poolid);
         app.channels.navigation.command('load-pool', {poolid: poolid});
     },
 
     loadPoolPuid: function(poolid, puid) {
+        app.appState.set({poolid: poolid, puid: puid});
         app.channels.navigation.command('load-pool', {poolid: poolid, puid: puid});
     },
 
     loadPoolPuidSheet: function(poolid, puid, sheetid) {
+        app.appState.set({poolid: poolid, puid: puid, sheetid: sheetid});
         app.channels.navigation.command('load-pool', {poolid: poolid, puid: puid, sheetid: sheetid});
     }
 

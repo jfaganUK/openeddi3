@@ -36,13 +36,8 @@ module.exports = function (app) {
             res.json({message: 'success'});
         });
 
-    router.route('/pool/:poolid').get(function (req, res) {
-        var pool = require('./get-pool')(req.params.poolid);
-        log('API: GET /pool/' + req.params.poolid);
-        res.json(pool);
-    });
-
     require('./api-responses')(router);
     require('./api-pool-listings')(router);
+    require('./api-pool-respondent')(router);
     return app;
 };

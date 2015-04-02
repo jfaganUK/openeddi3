@@ -37,6 +37,6 @@ module.exports = Backbone.Model.extend({
             _id = guid();
         }
         return _id;
-    },
+    }
 });
 

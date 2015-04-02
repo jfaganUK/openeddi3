@@ -5,7 +5,14 @@
 "use strict";
 
 var PolymerView = require('./marionette.polymerview');
+var template = require('../../oe_modules/shorttext/template-shorttext.ejs')();
 
 module.exports = PolymerView.extend({
-    tagName: 'oe-shorttext'
+    tagName: 'oe-shorttext',
+    template: _.template(template),
+    initialize: function() {
+    },
+    onBeforeRender: function() {
+        console.log('-- view-eddi before render');
+    }
 });

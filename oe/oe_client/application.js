@@ -5,6 +5,7 @@
 "use strict";
 
 var LandingView = require('./layouts/layout-landing');
+var guid = require('./helpers/guid');
 
 var App = Marionette.Application.extend({
     initialize: function(opts) {
@@ -22,6 +23,13 @@ var App = Marionette.Application.extend({
     listenRadioChannels: function() {
         this.channels.navigation.comply('load-landing', this.loadLanding, this);
         this.channels.navigation.comply('load-pool', this.loadPool, this);
+        this.channels.navigation.comply('new-pool', this.newPool, this);
+
+        // Save the models when the response is updated
+        this.channels.response.on('response-updated', function(e) {
+            console.log('-- Response Updated: ' + e.attributes.eid);
+            e.save();
+        });
     },
 
     registerRadioChannels: function() {
@@ -60,6 +68,13 @@ var App = Marionette.Application.extend({
         });
     },
 
+
+    newPool: function(e) {
+        app.appState.set('newpool', true);
+        app.appState.set('poolid', e.poolid);
+        this.loadPool(e);
+    },
+
     loadPool: function(e) {
         var PoolModel = require('./models/model-pool');
         var poolid = e.poolid;
@@ -74,8 +89,8 @@ var App = Marionette.Application.extend({
         // Set the id of the pool model so that it fetches from localStorage if possible
         // If the data is already in localstorage it will load that.
         this.currentPool = new PoolModel();
-        this.currentPool.set('_poolid', poolid);
-        if(e.puid) { this.currentPool.set('_puid', e.puid) }
+        this.currentPool.set('poolid', poolid);
+        if(e.puid) { this.currentPool.set('puid', e.puid) }
         this.currentPool.fetch();
         app.channels.pool.once('eddis-synced', _.bind(this.prepPoolLaunch, this));
     },
@@ -84,11 +99,11 @@ var App = Marionette.Application.extend({
 
         // Set the appState variables
         if (!this.appState.get('poolid')) {
-            this.appState.set('poolid', this.currentPool.get('_poolid'));
+            this.appState.set('poolid', this.currentPool.get('poolid'));
         }
 
         if (!this.appState.get('puid')) {
-            this.appState.set('puid', this.currentPool.get('_puid'));
+            this.appState.set('puid', this.currentPool.get('puid'));
         }
 
         // Start the pool at the previous sheet index, unless there isn't a previous, in which case start at the beginning
@@ -120,11 +135,8 @@ var App = Marionette.Application.extend({
             this.poolView.sheetView = new SheetView;
             this.poolView.sheet.show(this.poolView.sheetView);
 
-            var EddisCollection = require('./collections/collection-pool-eddis');
-            var eddis = new EddisCollection();
-            eddis.add(app.currentPool.eddis.where({_sheetid: app.appState.get('sheetid')}));
             var EddisView = require('./views/view-eddis');
-            var eddisView = new EddisView(this.eddis);
+            var eddisView = new EddisView({collection: app.currentPool.eddis});
             this.poolView.sheetView.eddispace.show(eddisView);
         }
     },

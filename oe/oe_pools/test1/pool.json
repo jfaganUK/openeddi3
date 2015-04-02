@@ -1,7 +1,7 @@
 {
   "pool":
   {
-    "_poolid": "test1",
+    "poolid": "test1",
     "title": "OpenEddi Test 01",
     "subtitle": "A new generation of data collection and interaction.",
     "intro": "Introduction goes here.",
@@ -11,38 +11,38 @@
   },
   "sheets" :
   [
-    {"_sheetid": 1, "title" : "Sheet 1", "description" : "describe the sheet"},
-    {"_sheetid": 2, "title" : "Sheet 2", "description" : "describe the sheet"},
-    {"_sheetid": 3, "title" : "Sheet 3", "description" : "describe the sheet"}
+    {"sheetid": 1, "title" : "Sheet 1", "description" : "describe the sheet"},
+    {"sheetid": 2, "title" : "Sheet 2", "description" : "describe the sheet"},
+    {"sheetid": 3, "title" : "Sheet 3", "description" : "describe the sheet"}
   ],
   "eddis" :
   [
     {
-      "_eid": 101,
-      "_sheetid": 1,
-      "_poolid": "test1",
+      "eid": "101",
+      "sheetid": "1",
+      "poolid": "test1",
       "sortIndex": 0,
       "title": "aGoodName",
       "module": "shorttext",
-      "prompt": "Just a short text entry"
+      "prompt": "Tell me something good"
     },
     {
-      "_eid": 102,
-      "_sheetid": 2,
-      "_poolid": "test1",
+      "eid": "102",
+      "sheetid": "2",
+      "poolid": "test1",
       "sortIndex": 0,
       "title": "aBadName",
       "module": "shorttext",
-      "prompt": "Just a short text entry"
+      "prompt": "Tell me something bad"
     },
     {
-      "_eid": 103,
-      "_sheetid": 3,
-      "_poolid": "test1",
+      "eid": "103",
+      "sheetid": "3",
+      "poolid": "test1",
       "sortIndex": 0,
       "title": "aOkayName",
       "module": "shorttext",
-      "prompt": "Just a short text entry"
+      "prompt": "Tell me something okay"
     }
 
   ]

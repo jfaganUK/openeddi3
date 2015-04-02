@@ -6,7 +6,7 @@
 
 module.exports = Backbone.Model.extend({
     urlRoot: '/api/sheet/',
-    idAttribute: '_sheetid',
+    idAttribute: 'sheetid',
     initialize: function(opts) {
         var self = this;
         this.on('sync', function() {

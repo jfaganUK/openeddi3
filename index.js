@@ -40,6 +40,17 @@ log('--- Preparing the database (Sequelize, PostgreSQL)...');
 var sequelize = require('./oe/oe_server/db').sequelize;
 var models = require('./oe/oe_server/db').models;
 
+// Specific paths to deal the the Backbone router
+var sendOEApp = function (req, res, next) {
+    console.log('Send the OE app');
+    res.render(__dirname + '/oe/index.ejs',
+        {oe: {
+            test: 'the test'
+        }});
+};
+app.use(/\/$/, sendOEApp);
+app.use('/pool/*', sendOEApp);
+
 // Set up the api routes
 require('./oe/oe_server/api/index')(app);
 
@@ -49,18 +60,6 @@ app.use('/bower_components/', express.static(__dirname + '/oe/bower_components')
 app.use('/oe_modules',        express.static(__dirname + '/oe/oe_modules'));
 app.use('/built.js',          express.static(__dirname + '/built.js'));
 
-// Specific paths to deal the the Backbone router
-var sendOEApp = function (req, res, next) {
-    //res.sendFile(__dirname + '/oe/index.html');
-    console.log('Send the OE app');
-    //console.log(req);
-    res.render(__dirname + '/oe/index.ejs',
-        {oe: {
-            test: 'the test'
-        }});
-};
-app.use('/', sendOEApp);
-app.use('/pool/*', sendOEApp);
 
 
 // NOTE: do these two routes last.
@@ -84,7 +83,7 @@ app.use(function (err, req, res, next) {
 
 // Start the oe_server
 app.listen(appPort);
-log(colors.green('--- Listening on port ' + appPort));
+log('--- Listening on port ' + appPort);
 
 
 

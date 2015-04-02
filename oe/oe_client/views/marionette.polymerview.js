@@ -12,7 +12,7 @@
 //ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 //OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-module.exports = Marionette.View.extend({
+module.exports = Marionette.ItemView.extend({
   constructor: function(options) {
     Marionette.View.prototype.constructor.apply(this, arguments);
     this._setPublishedKeys();
@@ -48,6 +48,9 @@ module.exports = Marionette.View.extend({
   _updateAttrFromEl: function(attributeName) {
     var value = this.el[attributeName];
     this.model.set(attributeName, value);
+    if(attributeName === 'response') {
+      app.channels.response.trigger('response-updated', this.model);
+    }
   },
 
   _updateElAttrsFromModel: function() {

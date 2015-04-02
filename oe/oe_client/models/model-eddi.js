@@ -1,14 +1,14 @@
 /**
  * Created by jfagan on 3/23/15.
- * model-eddi.js
+ * oe/oe_client/models/model-eddi.js
  */
 
 var guid = require('../helpers/guid');
 
 module.exports = Backbone.Model.extend({
+    idAttribute: 'eid',
     defaults: function() {
         return {
-            id: guid(),
             response: {
                 dk: false,
                 rf: false,
@@ -20,6 +20,9 @@ module.exports = Backbone.Model.extend({
 
     initialize: function() {
         var self = this;
+
+        // The eddi components need the oe object to build
+        this.attributes.oe = _.merge({}, this.attributes);
 
         this.on('sync', function() {
             app.channels.response.trigger('eddi-sync', self);

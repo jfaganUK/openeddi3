@@ -11,9 +11,9 @@ sequelize
     .authenticate()
     .complete(function(err) {
         if(!!err) {
-            console.log("Unable to connect to the database:",err);
+            log("DB: Unable to connect to the database:",err);
         } else {
-            console.log("Connection has been established successfully.");
+            log("DB: Connection has been established successfully.");
         }
     });
 
@@ -21,12 +21,12 @@ sequelize
 var models = require('./models/_list');
 
 // Sync the models with the server
-sequelize.sync({force: true})
+sequelize.sync({force: false})
     .complete(function (err) {
         if (!!err) {
-            log('An error occurred while creating the table: ', err);
+            log('DB: An error occurred while creating the table: ', err);
         } else {
-            log('Server is synced.');
+            log('DB: Server is synced.');
         }
     });
 

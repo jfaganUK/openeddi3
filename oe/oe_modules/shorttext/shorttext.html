@@ -2,13 +2,21 @@
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/core-icons/core-icons.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
 
 <polymer-element name="oe-shorttext" attributes="oe response">
     <template>
-        <!--<paper-input label="{{oe.prompt}}" value="{{response.value}}" on-change="{{updateModel}}"></paper-input>-->
-        <paper-input label="Colors are fun"></paper-input>
+        <paper-input class="oe-shorttext-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>
     </template>
     <script>
-        Polymer('oe-shorttext', {});
+        Polymer('oe-shorttext', {
+            ready: function() {
+            },
+
+            updateResponse: function(event, detail, sender) {
+                this.fire('change:response');
+            }
+
+        });
     </script>
 </polymer-element>

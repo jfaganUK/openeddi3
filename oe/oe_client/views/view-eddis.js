@@ -6,5 +6,11 @@
 var EddiView = require('./view-eddi');
 
 module.exports = Marionette.CollectionView.extend({
-    childView: EddiView
+    childView: EddiView,
+    filter: function(child, index, collection) {
+        if(!this.sheetid) {
+            this.sheetid = app.appState.get('sheetid');
+        }
+        return child.get('sheetid') == this.sheetid;
+    }
 });

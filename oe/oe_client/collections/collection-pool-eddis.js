@@ -10,13 +10,13 @@ module.exports = Backbone.Collection.extend({
     model: EddiModel,
 
     url: function() {
-        var currentPool = app.channels.pool.request('current-pool');
-        var puid = currentPool.get('_puid');
-        var poolid = currentPool.get('_poolid');
-        return 'api/responses/' + poolid + '/' + puid + '/';
+        return 'api/responses/' + this.poolid + '/' + this.puid + '/';
     },
 
     initialize: function() {
+        var currentPool = app.channels.pool.request('current-pool');
+        this.puid = currentPool.get('puid');
+        this.poolid = currentPool.get('poolid');
         this.createStore();
     }
 

@@ -1,7 +1,7 @@
 {
   "pool":
   {
-    "_poolid": "test2",
+    "poolid": "test2",
     "title": "OpenEddi Test 02",
     "subtitle": "A new generation of data collection and interaction.",
     "intro": "Introduction goes here.",
@@ -11,33 +11,33 @@
   },
   "sheets" :
   [
-    {"_sheetid": 1, "title" : "Sheet 1", "description" : "describe the sheet"},
-    {"_sheetid": 2, "title" : "Sheet 2", "description" : "describe the sheet"}
+    {"sheetid": 1, "title" : "Sheet 1", "description" : "describe the sheet"},
+    {"sheetid": 2, "title" : "Sheet 2", "description" : "describe the sheet"}
   ],
   "eddis" :
   [
     {
-      "_eid": 101,
-      "_sheetid": 1,
-      "_poolid": "test2",
+      "eid": 101,
+      "sheetid": 1,
+      "poolid": "test2",
       "sortIndex": 0,
       "title": "aGoodName",
       "module": "shorttext",
       "prompt": "Just a short text entry"
     },
     {
-      "_eid": 102,
-      "_sheetid": 2,
-      "_poolid": "test2",
+      "eid": 102,
+      "sheetid": 2,
+      "poolid": "test2",
       "sortIndex": 0,
       "title": "aBadName",
       "module": "shorttext",
       "prompt": "Just a short text entry"
     },
     {
-      "_eid": 103,
-      "_sheetid": 2,
-      "_poolid": "test2",
+      "eid": 103,
+      "sheetid": 2,
+      "poolid": "test2",
       "sortIndex": 0,
       "title": "aOkayName",
       "module": "shorttext",

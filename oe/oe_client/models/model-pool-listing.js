@@ -10,7 +10,7 @@ module.exports = Backbone.Model.extend({
         poolTitle: 'default title',
         dateCreated: '1982-10-10 18:43:00-05:00'
     },
-    idAttribute: '_poolid',
+    idAttribute: 'poolid',
     initialize: function() {
         // we need to avoid using 'title' since it doesn't interact well with Polymer elements
         // it's the name of an HTML element (you know, the <title> element).

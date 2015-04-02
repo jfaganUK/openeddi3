@@ -4,6 +4,7 @@
  */
 
 var Response = require('../../db/models/_list').Response;
+var log = require('util').log;
 
 /*
  * Get one response by id
@@ -17,11 +18,9 @@ function getResponse(req, res, next) {
             if (!!err) {
                 res.status(400).send("Unable to find response.");
             } else {
-                res.status(200).send(response);
+                res.status(200).json(response.dataValues);
             }
         });
-
-    next();
 }
 exports.get = getResponse;
 
@@ -29,29 +28,29 @@ exports.get = getResponse;
  * Get all the responses
  */
 function getAllResponses(req, res, next) {
-    console.log('-- Get all responses for puid');
-    res.json({message: "you asked for poolid: " + req.params.poolid + " and puid: " + req.params.puid});
-    Response.find({where: {puid: req.params.puid}})
-        .then(function(responses) {
-            if(!responses) {
-                //res.json({message: "didn't find any responses for you!"})
+    console.log('-- Get all responses: ' + req.params.puid);
+    Response.findAll({where: {puid: req.params.puid}})
+        .complete(function(err, responses) {
+            if(!!err) {
+                console.log('Error retrieving the responses');
+                res.status(400).send('Unable to retrieve the responses');
+            } else if (!responses) {
+                res.send("didn't find any responses for you!");
+            } else {
+                console.log(responses);
+                res.status(200).json(responses);
             }
-            //res.json(responses);
         });
-    next();
 }
 exports.getall = getAllResponses;
 
 // POST Response
 function postResponse(req, res, next) {
-    console.log('**** Response POST request');
-    console.log(req.params);
-
     Response.create({
-        id: req.params.id,
         puid: req.params.puid,
         poolid: req.body.poolid,
         eid: req.body.eid,
+        sheetid: req.body.sheetid,
         logic: req.body.logic,
         response: req.body.response
     }).complete(function(err, response) {
@@ -59,12 +58,9 @@ function postResponse(req, res, next) {
             console.log("Failed to save response: ", err);
             res.status(400).send("Failed to save response.");
         } else {
-            res.status(201).send(response.dataValues);
+            res.status(201).json(response.dataValues);
         }
     });
-
-
-    next();
 }
 exports.post = postResponse;
 
@@ -76,51 +72,35 @@ function putResponse(req, res, next) {
 
     // Just because it's a put request doesn't mean the entry actually exists
     // The client-side creates the id, so Backbone treats it as a pre-existing item
-    Response.find({where: {id: params.id, puid: params.puid }})
-        .complete(function(err, x) {
+    // Search by eid and puid, this should be a unique pairing within the database
+    Response.find({where: {eid: params.eid, puid: params.puid }})
+        .complete(function(err, response) {
             if(!!err) {
                 var returnMessage = 'A system error occurred: ' + err.message;
                 console.log(returnMessage);
                 res.status(500).send(returnMessage);
-            } else if (!x) {
-                 //postResponse(req, res, next);
-                    Response.create({
-                        id: params.id,
-                        puid: params.puid,
-                        poolid: body._poolid,
-                        eid: body._eid,
-                        logic: body.logic,
-                        response: body.response
-                    }).complete(function(err, x) {
-                        if(!!err) {
-                            console.log("Failed to save response: ", err);
-                            res.status(400).send("Failed to save response.");
-                        } else {
-                            res.status(201).send(x.dataValues);
-                        }
-                    });
+            } else if (!response) {
+                // There is no record in the database, so make a new one.
+                postResponse(req, res, next);
             } else {
-                // There is an existing response with that ID
-                // So update it
-                x.id = params.id;
-                x.puid = params.puid;
-                x.poolid = body._poolid;
-                x.eid= body._eid;
-                x.logic = body.logic;
-                x.response = body.response;
+                // There is an existing response with that eid, so update with current data
+                // The only thing that really should be updated is the 'response' data.
+                response.response = body.response;
 
-                x.save()
-                    .complete(function(err, x) {
+                response.save()
+                    .complete(function(err, response) {
                         if(!!err) {
                             res.status(400).send("Error saving the response.");
                         } else {
-                            res.json(x);
+                            res.json(response.dataValues);
                         }
                     });
             }
         });
 
-    next();
+    // For some reason putting next here triggers an error. It creates another
+    // Can't set headers after they are sent, error.
+    // next();
 }
 exports.put = putResponse;
 
@@ -141,7 +121,5 @@ function deleteResponse(req, res, next) {
                     });
             }
         });
-
-    next();
 }
 exports.delete = deleteResponse;

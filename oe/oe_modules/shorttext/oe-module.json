@@ -1,7 +1,8 @@
 {
   "name" : "shorttext",
+  "type" : "eddi",
   "author" : "Jesse Fagan (aftersox@gmail.com)",
-  "description" : "It is a short text input field.",
+  "description" : "It's a simple short text input field.",
   "components" : [{"shorttext" : "shorttext.html"} ],
   "templates" : [{"template-shorttext" : "template-shorttext.ejs"}],
   "views" : [{"view-shorttext" : "view-shorttext.js"}],

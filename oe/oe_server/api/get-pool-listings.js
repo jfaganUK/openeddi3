@@ -17,7 +17,7 @@ var getPools = function () {
         // Has to by Sync otherwise I get empty returns some times.
         var jsonRead = fs.readFileSync(jsonFile, 'utf8');
         var jsonData = JSON.parse(jsonRead);
-        pools[jsonData.pool._poolid] = jsonData;
+        pools[jsonData.pool.poolid] = jsonData;
     });
 
     return pools;

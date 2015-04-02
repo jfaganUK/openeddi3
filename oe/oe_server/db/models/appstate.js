@@ -1,6 +1,6 @@
 /**
  * Created by jfagan on 3/25/15.
- *
+ * oe/oe_server/db/models/appstate.js
  * The AppState model. I want to keep a record of use of the site. I want to store the current
  *
  */
