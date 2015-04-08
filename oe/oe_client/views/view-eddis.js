@@ -3,10 +3,10 @@
  * view-eddis.js
  */
 
-var EddiView = require('./view-eddi');
+var EddiLayoutView = require('../layouts/layout-eddi');
 
 module.exports = Marionette.CollectionView.extend({
-    childView: EddiView,
+    childView: EddiLayoutView,
     filter: function(child, index, collection) {
         if(!this.sheetid) {
             this.sheetid = app.appState.get('sheetid');

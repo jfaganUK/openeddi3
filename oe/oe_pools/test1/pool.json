@@ -23,7 +23,7 @@
       "poolid": "test1",
       "sortIndex": 0,
       "title": "aGoodName",
-      "module": "shorttext",
+      "controlmodule": "shorttext",
       "prompt": "Tell me something good"
     },
     {
@@ -32,7 +32,7 @@
       "poolid": "test1",
       "sortIndex": 0,
       "title": "aBadName",
-      "module": "shorttext",
+      "controlmodule": "shorttext",
       "prompt": "Tell me something bad"
     },
     {
@@ -41,7 +41,7 @@
       "poolid": "test1",
       "sortIndex": 0,
       "title": "aOkayName",
-      "module": "shorttext",
+      "controlmodule": "shorttext",
       "prompt": "Tell me something okay"
     }
 

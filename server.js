@@ -20,6 +20,9 @@ var colors = require('colors');           // For colorful logging. So it's easy 
 var app = express();
 app.set('view engine', 'ejs');
 
+// Load the Eddi modules
+global.oeModules = require('./oe/oe_server/load-oe-module-information')();
+
 // Session handling
 // TODO: (jfagan) come up with a better secret
 app.use(session({
@@ -59,6 +62,7 @@ app.use('/oe_client',         express.static(__dirname + '/oe/oe_client'));
 app.use('/bower_components/', express.static(__dirname + '/oe/bower_components'));
 app.use('/oe_modules',        express.static(__dirname + '/oe/oe_modules'));
 app.use('/built.js',          express.static(__dirname + '/built.js'));
+app.use('/demo',              express.static(__dirname + '/oe/oe_client/components/demo-oe-eddi-promptbar.html'))
 
 
 

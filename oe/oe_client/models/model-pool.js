@@ -46,6 +46,9 @@ module.exports = Backbone.Model.extend({
             app.channels.pool.trigger('eddis-synced', self);
         } else {
             $.when(self.eddis.fetch()).done(function() {
+                self.eddis.each(function (e) {
+                    e.restoreLogic();
+                });
                 app.channels.pool.trigger('eddis-synced', self);
             });
         }

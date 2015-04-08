@@ -68,7 +68,6 @@ var App = Marionette.Application.extend({
         });
     },
 
-
     newPool: function(e) {
         app.appState.set('newpool', true);
         app.appState.set('poolid', e.poolid);
@@ -134,10 +133,6 @@ var App = Marionette.Application.extend({
             var sheetid = this.appState.get('sheetid');
             this.poolView.sheetView = new SheetView;
             this.poolView.sheet.show(this.poolView.sheetView);
-
-            var EddisView = require('./views/view-eddis');
-            var eddisView = new EddisView({collection: app.currentPool.eddis});
-            this.poolView.sheetView.eddispace.show(eddisView);
         }
     },
 

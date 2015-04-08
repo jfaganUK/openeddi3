@@ -4,7 +4,7 @@
  */
 
 var template = require('../templates/template-layout-sheet.ejs')();
-var EddiCollection = require('../collections/collection-pool-eddis');
+var EddisView = require('../views/view-eddis');
 
 module.exports = Marionette.LayoutView.extend({
     template: _.template(template),
@@ -13,6 +13,17 @@ module.exports = Marionette.LayoutView.extend({
     },
 
     initialize: function (opts) {
+        this.sheetid = app.appState.get('sheetid');
+    },
 
+    onShow: function() {
+        this.showEddis();
+    },
+
+    showEddis: function() {
+        var eddisView = new EddisView({collection: app.currentPool.eddis});
+        this.eddispace.show(eddisView);
     }
+
+
 });

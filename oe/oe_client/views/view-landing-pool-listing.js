@@ -9,13 +9,9 @@ var PoolListingModel = require('../models/model-pool-listing');
 module.exports = PolymerView.extend({
     tagName: 'pool-listing-landing',
     model: PoolListingModel,
-    template: require('../templates/template-landing-pool-listing.ejs')(),
+    template: require('../templates/template-landing-pool-listing.ejs'),
     initialize: function() {
         this.$el.on('start-new-pool', _.bind(this.newPool, this));
-    },
-
-    render: function() {
-        //this.$el.html(this.template(this.model.toJSON()));
     },
 
     newPool: function() {

@@ -19,14 +19,19 @@ function getPool(req, res, next) {
                 res.status(400).send('Unable to find the pool.');
             } else if (!pool) {
                 // Can't find them pool in the database, so send a blank new pool
-                var newPool = require('../get-pool')(req.params.poolid);
                 log('API: GET /pool/' + req.params.poolid);
+                var newPool = require('../get-pool')(req.params.poolid);
+
+                // Grab the module meta-information for the pool
+                // TODO: Only grab the modules relevant to the pool
+                newPool.modules = oeModules;
+
                 res.status(200).json(newPool);
             } else {
                 // The pool was found in the database, send the pool
                 res.status(200).json(pool.dataValues);
             }
-        })
+        });
 }
 exports.get = getPool;
 

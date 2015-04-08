@@ -28,16 +28,14 @@ exports.get = getResponse;
  * Get all the responses
  */
 function getAllResponses(req, res, next) {
-    console.log('-- Get all responses: ' + req.params.puid);
     Response.findAll({where: {puid: req.params.puid}})
         .complete(function(err, responses) {
             if(!!err) {
                 console.log('Error retrieving the responses');
                 res.status(400).send('Unable to retrieve the responses');
             } else if (!responses) {
-                res.send("didn't find any responses for you!");
+                res.status(400).send("didn't find any responses for you!");
             } else {
-                console.log(responses);
                 res.status(200).json(responses);
             }
         });
@@ -92,7 +90,7 @@ function putResponse(req, res, next) {
                         if(!!err) {
                             res.status(400).send("Error saving the response.");
                         } else {
-                            res.json(response.dataValues);
+                            res.status(200).json(response.dataValues);
                         }
                     });
             }

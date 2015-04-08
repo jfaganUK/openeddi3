@@ -24,7 +24,7 @@ module.exports = function (grunt) {
         //},
         execute: {
             target: {
-                src: ['browserify-jstify.js']
+                src: ['openeddi-build.js']
             }
         },
         watch: {

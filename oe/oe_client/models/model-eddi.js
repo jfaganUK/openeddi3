@@ -29,6 +29,23 @@ module.exports = Backbone.Model.extend({
         });
     },
 
+    // The 'logic' of the eddi is stored in the logic attribute
+    // It needs to be restored after a fetch
+    restoreLogic: function(restoreResponse) {
+        if(typeof restoredResponse === 'undefined') {
+            restoreResponse = true;
+        }
+        var restoredLogic = JSON.parse(this.attributes.logic);
+        this.set(restoredLogic);
+
+        if( typeof this.attributes.response === 'string' && restoreResponse) {
+            var restoredResponse = JSON.parse(this.response);
+            this.set('response', restoredResponse);
+        }
+
+        this.attributes.oe = _.merge({}, this.attributes);
+    },
+
     // TODO: this needs to be rewritten for the current version
     checkCondition: function() {
         // if there are no conditions, return true

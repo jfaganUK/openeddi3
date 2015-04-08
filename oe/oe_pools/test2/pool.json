@@ -22,7 +22,7 @@
       "poolid": "test2",
       "sortIndex": 0,
       "title": "aGoodName",
-      "module": "shorttext",
+      "controlmodule": "shorttext",
       "prompt": "Just a short text entry"
     },
     {
@@ -31,7 +31,7 @@
       "poolid": "test2",
       "sortIndex": 0,
       "title": "aBadName",
-      "module": "shorttext",
+      "controlmodule": "shorttext",
       "prompt": "Just a short text entry"
     },
     {
@@ -40,7 +40,7 @@
       "poolid": "test2",
       "sortIndex": 0,
       "title": "aOkayName",
-      "module": "shorttext",
+      "controlmodule": "shorttext",
       "prompt": "Just a short text entry"
     }
 

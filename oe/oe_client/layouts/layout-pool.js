@@ -18,10 +18,10 @@ var template = require('../templates/template-layout-pool.ejs')();
 module.exports = Marionette.LayoutView.extend({
     template: _.template(template),
     regions: {
-        header: '#oe-pool-header',
+        header:     '#oe-pool-header',
         navigation: '#oe-pool-navigation',
-        sheet: '#oe-sheet-space',
-        footer: '#oe-pool-footer'
+        sheet:      '#oe-sheet-space',
+        footer:     '#oe-pool-footer'
     },
 
     initialize: function(opts) {
