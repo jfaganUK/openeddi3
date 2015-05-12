@@ -23,8 +23,6 @@ module.exports = function (app) {
         res.json({message: 'the OpenEddi API is working.'});
     });
 
-
-
     router.route('/appstate/:id')
         .get(function(req, res) {
             res.json({});
@@ -39,5 +37,23 @@ module.exports = function (app) {
     require('./api-responses')(router);
     require('./api-pool-listings')(router);
     require('./api-pool-respondent')(router);
+
+    // OE Modules with APIs
+    var m = {},
+        fileLoc = "";
+    for (var k in oeModules) {
+        if (oeModules.hasOwnProperty(k)) {
+            m = oeModules[k];
+            if (m.hasOwnProperty('api')) {
+                if (m.api.hasOwnProperty('crud')) {
+                    fileLoc = appRoot + '/oe' + m.urlPath + '/' + m.api.crud.file;
+                    require(fileLoc)(router);
+                }
+
+            }
+
+        }
+    }
+
     return app;
 };

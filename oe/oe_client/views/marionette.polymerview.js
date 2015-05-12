@@ -13,56 +13,59 @@
 //OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 module.exports = Marionette.ItemView.extend({
-  constructor: function(options) {
-    Marionette.View.prototype.constructor.apply(this, arguments);
-    this._setPublishedKeys();
-    this._initAttrsFromModel();
-    this._initModelEvents();
-    this._initPolymerEvents();
-  },
+    constructor: function (options) {
+        Marionette.View.prototype.constructor.apply(this, arguments);
+        this._setPublishedKeys();
+        this._initAttrsFromModel();
+        this._initModelEvents();
+        this._initPolymerEvents();
+    },
 
-  _setPublishedKeys: function() {
-    this._publishedKeys = _.keys(this.el.publish);
-  },
+    _setPublishedKeys: function () {
+        this._publishedKeys = _.keys(this.el.publish);
+    },
 
-  _initAttrsFromModel: function() {
-    this._setElAttrs(this.model.attributes);
-  },
+    _initAttrsFromModel: function () {
+        this._setElAttrs(this.model.attributes);
+    },
 
-  _initModelEvents: function() {
-    this.listenTo(this.model, 'change', this._updateElAttrsFromModel);
-  },
+    _initModelEvents: function () {
+        this.listenTo(this.model, 'change', this._updateElAttrsFromModel);
+    },
 
-  _initPolymerEvents: function() {
-    if (!this.events) {
-      this.events = {};
+    _initPolymerEvents: function () {
+        if (!this.events) {
+            this.events = {};
+        }
+
+        _.each(this._publishedKeys, function (key) {
+            this.events['change:' + key] = _.bind(this._updateAttrFromEl, this, key);
+        }, this);
+
+        this.delegateEvents();
+    },
+
+    _updateAttrFromEl: function (attributeName) {
+        var value = this.el[attributeName];
+        this.model.set(attributeName, value);
+
+        // jfagan: want to communicate with the message bus here.
+        if (attributeName === 'response') {
+            app.channels.response.trigger('response-updated', this.model);
+        }
+    },
+
+    _updateElAttrsFromModel: function () {
+        this._setElAttrs(this.model.changed);
+    },
+
+    _setElAttrs: function (attributes) {
+        var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
+        _.each(attributeNames, this._setElAttr, this);
+        this.el.fire('attributes-updated', this.model);
+    },
+
+    _setElAttr: function (attributeName) {
+        this.el[attributeName] = this.model.get(attributeName);
     }
-
-    _.each(this._publishedKeys, function(key) {
-      this.events['change:' + key] = _.bind(this._updateAttrFromEl, this, key);
-    }, this);
-
-    this.delegateEvents();
-  },
-
-  _updateAttrFromEl: function(attributeName) {
-    var value = this.el[attributeName];
-    this.model.set(attributeName, value);
-    if(attributeName === 'response') {
-      app.channels.response.trigger('response-updated', this.model);
-    }
-  },
-
-  _updateElAttrsFromModel: function() {
-    this._setElAttrs(this.model.changed);
-  },
-
-  _setElAttrs: function(attributes) {
-    var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
-    _.each(attributeNames, this._setElAttr, this);
-  },
-
-  _setElAttr: function(attributeName) {
-    this.el[attributeName] = this.model.get(attributeName);
-  }
 });

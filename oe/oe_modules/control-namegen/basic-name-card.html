@@ -1,0 +1,78 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-shadow/paper-shadow.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
+
+<polymer-element name="oe-basic-name-card" attributes="oe name">
+    <template>
+        <paper-shadow id="nameCard">
+            <section id="nameCardShow">
+                <div horizontal layout>
+                    <paper-icon-button icon="create" id="editName" on-tap="{{editNameTapped}}"></paper-icon-button>
+                    <span id="nameCardName" on-tap="{{editNameTapped}}" flex>{{name}}</span>
+                    <paper-icon-button icon="clear" id="removeName" on-tap="{{removeNameTapped}}"></paper-icon-button>
+                </div>
+            </section>
+            <section id="nameCardEdit">
+                <div horizontal layout>
+                    <span class="nameCardNameEdit" flex>
+                        <paper-input value={{name}} on-blur="{{editDoneTapped}}">
+                            <core-a11y-keys keys="enter" on-keys-pressed="{{editDoneTapped}}"></core-a11y-keys>
+                            <core-a11y-keys keys="esc" on-keys-pressed="{{cancelEdit}}"></core-a11y-keys>
+                        </paper-input>
+                    </span>
+                    <paper-icon-button icon="done" id="editDone" on-tap="{{editDoneTapped}}"></paper-icon-button>
+                </div>
+            </section>
+        </paper-shadow>
+        <style>
+            #nameCard {
+                margin-left: 10px;
+                margin-right: 10px;
+                margin-bottom: 5px;
+                padding: 5px;
+                height: 100%;
+            }
+
+            #nameCardName {
+                height: 24px;
+                padding-top: 12px;
+            }
+
+            #nameCardEdit {
+                display: none;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-basic-name-card', {
+            ready: function () {
+                this.previousName = this.name;
+            },
+            editNameTapped: function () {
+                this.previousName = this.name;
+                var editBox = $(this.$.nameCardEdit);
+                editBox.show();
+                editBox.find('paper-input').focus();
+                editBox.find('paper-input').select();
+
+                $(this.$.nameCardShow).hide();
+            },
+            removeNameTapped: function () {
+                this.fire('remove-name');
+            },
+            nameChanged: function () {
+                this.fire('change:name');
+            },
+            editDoneTapped: function () {
+                this.fire('edit-done');
+                $(this.$.nameCardEdit).hide();
+                $(this.$.nameCardShow).show();
+            },
+            cancelEdit: function () {
+                this.name = this.previousName;
+                this.editDoneTapped();
+            }
+        });
+    </script>
+</polymer-element>

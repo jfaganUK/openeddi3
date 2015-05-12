@@ -1,4 +1,11 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+    /*
+     * OpenEddi
+     * (c) 2015, Jesse Fagan
+     *
+     */
+
+
 var $ = require('jquery');
 var _ = require('lodash');
 var Backbone = require('backbone');
@@ -7,6 +14,8 @@ Backbone.Radio = require('backbone.radio');
 require('./oe_client/backbone.dualstorage.browserify');
 require('./oe_client/backbone.dualstorage.oe.helpers');
 var Marionette = require('marionette');
+    var PolymerView = require('./oe_client/views/marionette.polymerview');
+    Mn.PolymerView = Marionette.PolymerView = PolymerView;
 
 // Make sure any issues with the radio are broadcast to the log.
 Backbone.Radio.DEBUG = true;
@@ -14,14 +23,32 @@ Backbone.Radio.DEBUG = true;
 // The 'request controller' for the templates
 _.templateSettings.varialbe = 'rc';
 
+// Determine local storage is active or not
+// This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
+    Backbone.Collection.prototype.local = true;
+    Backbone.Collection.prototype.remote = true;
+    Backbone.Model.prototype.local = true;
+    Backbone.Model.prototype.remote = true;
+
 // Create the application as a global object
 // There probably is a better modular way to do this, but
 // this will be the *only* intentionally global object.
 // I've noticed that some of the shimmed libraries are
 // assigning stuff to the global scope. I'd like to somehow fix that later.
-window.app = require('./oe_client/application');
+    window.App = require('./oe_client/application');
 
-app.OEModules = require('./oe-modules');
+// Load the OEModules here before initializing or creating any objects
+// The modules need a chance to modify the prototypes before anything
+// initializes.
+    var OEModules = require('./oe-modules');
+
+    window.app = new App();
+    app.OEModules = OEModules;
+
+    app.addRegions({
+        appSpace: '#app-space'
+    });
+
 
 app.on('start', function() {
 
@@ -45,7 +72,1237 @@ $(document).ready(function () {
     Backbone.history.start({pushState: false});
 });
 
-},{"./oe-modules":7,"./oe_client/application":8,"./oe_client/backbone.dualstorage.browserify":9,"./oe_client/backbone.dualstorage.oe.helpers":10,"./oe_client/models/model-appstate":19,"./oe_client/routers/oe-router":25,"backbone":3,"backbone.radio":2,"jquery":4,"lodash":5,"marionette":6}],2:[function(require,module,exports){
+}, {
+    "./oe-modules": 9,
+    "./oe_client/application": 10,
+    "./oe_client/backbone.dualstorage.browserify": 11,
+    "./oe_client/backbone.dualstorage.oe.helpers": 12,
+    "./oe_client/models/model-appstate": 21,
+    "./oe_client/routers/oe-router": 27,
+    "./oe_client/views/marionette.polymerview": 35,
+    "backbone": 5,
+    "backbone.radio": 4,
+    "jquery": 6,
+    "lodash": 7,
+    "marionette": 8
+}],
+    2: [function (require, module, exports) {
+        (function (process) {
+            /*!
+             * async
+             * https://github.com/caolan/async
+             *
+             * Copyright 2010-2014 Caolan McMahon
+             * Released under the MIT license
+             */
+            /*jshint onevar: false, indent:4 */
+            /*global setImmediate: false, setTimeout: false, console: false */
+            (function () {
+
+                var async = {};
+
+                // global on the server, window in the browser
+                var root, previous_async;
+
+                root = this;
+                if (root != null) {
+                    previous_async = root.async;
+                }
+
+                async.noConflict = function () {
+                    root.async = previous_async;
+                    return async;
+                };
+
+                function only_once(fn) {
+                    var called = false;
+                    return function () {
+                        if (called) throw new Error("Callback was already called.");
+                        called = true;
+                        fn.apply(root, arguments);
+                    }
+                }
+
+                //// cross-browser compatiblity functions ////
+
+                var _toString = Object.prototype.toString;
+
+                var _isArray = Array.isArray || function (obj) {
+                        return _toString.call(obj) === '[object Array]';
+                    };
+
+                var _each = function (arr, iterator) {
+                    if (arr.forEach) {
+                        return arr.forEach(iterator);
+                    }
+                    for (var i = 0; i < arr.length; i += 1) {
+                        iterator(arr[i], i, arr);
+                    }
+                };
+
+                var _map = function (arr, iterator) {
+                    if (arr.map) {
+                        return arr.map(iterator);
+                    }
+                    var results = [];
+                    _each(arr, function (x, i, a) {
+                        results.push(iterator(x, i, a));
+                    });
+                    return results;
+                };
+
+                var _reduce = function (arr, iterator, memo) {
+                    if (arr.reduce) {
+                        return arr.reduce(iterator, memo);
+                    }
+                    _each(arr, function (x, i, a) {
+                        memo = iterator(memo, x, i, a);
+                    });
+                    return memo;
+                };
+
+                var _keys = function (obj) {
+                    if (Object.keys) {
+                        return Object.keys(obj);
+                    }
+                    var keys = [];
+                    for (var k in obj) {
+                        if (obj.hasOwnProperty(k)) {
+                            keys.push(k);
+                        }
+                    }
+                    return keys;
+                };
+
+                //// exported async module functions ////
+
+                //// nextTick implementation with browser-compatible fallback ////
+                if (typeof process === 'undefined' || !(process.nextTick)) {
+                    if (typeof setImmediate === 'function') {
+                        async.nextTick = function (fn) {
+                            // not a direct alias for IE10 compatibility
+                            setImmediate(fn);
+                        };
+                        async.setImmediate = async.nextTick;
+                    }
+                    else {
+                        async.nextTick = function (fn) {
+                            setTimeout(fn, 0);
+                        };
+                        async.setImmediate = async.nextTick;
+                    }
+                }
+                else {
+                    async.nextTick = process.nextTick;
+                    if (typeof setImmediate !== 'undefined') {
+                        async.setImmediate = function (fn) {
+                            // not a direct alias for IE10 compatibility
+                            setImmediate(fn);
+                        };
+                    }
+                    else {
+                        async.setImmediate = async.nextTick;
+                    }
+                }
+
+                async.each = function (arr, iterator, callback) {
+                    callback = callback || function () {
+                        };
+                    if (!arr.length) {
+                        return callback();
+                    }
+                    var completed = 0;
+                    _each(arr, function (x) {
+                        iterator(x, only_once(done));
+                    });
+                    function done(err) {
+                        if (err) {
+                            callback(err);
+                            callback = function () {
+                            };
+                        }
+                        else {
+                            completed += 1;
+                            if (completed >= arr.length) {
+                                callback();
+                            }
+                        }
+                    }
+                };
+                async.forEach = async.each;
+
+                async.eachSeries = function (arr, iterator, callback) {
+                    callback = callback || function () {
+                        };
+                    if (!arr.length) {
+                        return callback();
+                    }
+                    var completed = 0;
+                    var iterate = function () {
+                        iterator(arr[completed], function (err) {
+                            if (err) {
+                                callback(err);
+                                callback = function () {
+                                };
+                            }
+                            else {
+                                completed += 1;
+                                if (completed >= arr.length) {
+                                    callback();
+                                }
+                                else {
+                                    iterate();
+                                }
+                            }
+                        });
+                    };
+                    iterate();
+                };
+                async.forEachSeries = async.eachSeries;
+
+                async.eachLimit = function (arr, limit, iterator, callback) {
+                    var fn = _eachLimit(limit);
+                    fn.apply(null, [arr, iterator, callback]);
+                };
+                async.forEachLimit = async.eachLimit;
+
+                var _eachLimit = function (limit) {
+
+                    return function (arr, iterator, callback) {
+                        callback = callback || function () {
+                            };
+                        if (!arr.length || limit <= 0) {
+                            return callback();
+                        }
+                        var completed = 0;
+                        var started = 0;
+                        var running = 0;
+
+                        (function replenish() {
+                            if (completed >= arr.length) {
+                                return callback();
+                            }
+
+                            while (running < limit && started < arr.length) {
+                                started += 1;
+                                running += 1;
+                                iterator(arr[started - 1], function (err) {
+                                    if (err) {
+                                        callback(err);
+                                        callback = function () {
+                                        };
+                                    }
+                                    else {
+                                        completed += 1;
+                                        running -= 1;
+                                        if (completed >= arr.length) {
+                                            callback();
+                                        }
+                                        else {
+                                            replenish();
+                                        }
+                                    }
+                                });
+                            }
+                        })();
+                    };
+                };
+
+
+                var doParallel = function (fn) {
+                    return function () {
+                        var args = Array.prototype.slice.call(arguments);
+                        return fn.apply(null, [async.each].concat(args));
+                    };
+                };
+                var doParallelLimit = function (limit, fn) {
+                    return function () {
+                        var args = Array.prototype.slice.call(arguments);
+                        return fn.apply(null, [_eachLimit(limit)].concat(args));
+                    };
+                };
+                var doSeries = function (fn) {
+                    return function () {
+                        var args = Array.prototype.slice.call(arguments);
+                        return fn.apply(null, [async.eachSeries].concat(args));
+                    };
+                };
+
+
+                var _asyncMap = function (eachfn, arr, iterator, callback) {
+                    arr = _map(arr, function (x, i) {
+                        return {index: i, value: x};
+                    });
+                    if (!callback) {
+                        eachfn(arr, function (x, callback) {
+                            iterator(x.value, function (err) {
+                                callback(err);
+                            });
+                        });
+                    } else {
+                        var results = [];
+                        eachfn(arr, function (x, callback) {
+                            iterator(x.value, function (err, v) {
+                                results[x.index] = v;
+                                callback(err);
+                            });
+                        }, function (err) {
+                            callback(err, results);
+                        });
+                    }
+                };
+                async.map = doParallel(_asyncMap);
+                async.mapSeries = doSeries(_asyncMap);
+                async.mapLimit = function (arr, limit, iterator, callback) {
+                    return _mapLimit(limit)(arr, iterator, callback);
+                };
+
+                var _mapLimit = function (limit) {
+                    return doParallelLimit(limit, _asyncMap);
+                };
+
+                // reduce only has a series version, as doing reduce in parallel won't
+                // work in many situations.
+                async.reduce = function (arr, memo, iterator, callback) {
+                    async.eachSeries(arr, function (x, callback) {
+                        iterator(memo, x, function (err, v) {
+                            memo = v;
+                            callback(err);
+                        });
+                    }, function (err) {
+                        callback(err, memo);
+                    });
+                };
+                // inject alias
+                async.inject = async.reduce;
+                // foldl alias
+                async.foldl = async.reduce;
+
+                async.reduceRight = function (arr, memo, iterator, callback) {
+                    var reversed = _map(arr, function (x) {
+                        return x;
+                    }).reverse();
+                    async.reduce(reversed, memo, iterator, callback);
+                };
+                // foldr alias
+                async.foldr = async.reduceRight;
+
+                var _filter = function (eachfn, arr, iterator, callback) {
+                    var results = [];
+                    arr = _map(arr, function (x, i) {
+                        return {index: i, value: x};
+                    });
+                    eachfn(arr, function (x, callback) {
+                        iterator(x.value, function (v) {
+                            if (v) {
+                                results.push(x);
+                            }
+                            callback();
+                        });
+                    }, function (err) {
+                        callback(_map(results.sort(function (a, b) {
+                            return a.index - b.index;
+                        }), function (x) {
+                            return x.value;
+                        }));
+                    });
+                };
+                async.filter = doParallel(_filter);
+                async.filterSeries = doSeries(_filter);
+                // select alias
+                async.select = async.filter;
+                async.selectSeries = async.filterSeries;
+
+                var _reject = function (eachfn, arr, iterator, callback) {
+                    var results = [];
+                    arr = _map(arr, function (x, i) {
+                        return {index: i, value: x};
+                    });
+                    eachfn(arr, function (x, callback) {
+                        iterator(x.value, function (v) {
+                            if (!v) {
+                                results.push(x);
+                            }
+                            callback();
+                        });
+                    }, function (err) {
+                        callback(_map(results.sort(function (a, b) {
+                            return a.index - b.index;
+                        }), function (x) {
+                            return x.value;
+                        }));
+                    });
+                };
+                async.reject = doParallel(_reject);
+                async.rejectSeries = doSeries(_reject);
+
+                var _detect = function (eachfn, arr, iterator, main_callback) {
+                    eachfn(arr, function (x, callback) {
+                        iterator(x, function (result) {
+                            if (result) {
+                                main_callback(x);
+                                main_callback = function () {
+                                };
+                            }
+                            else {
+                                callback();
+                            }
+                        });
+                    }, function (err) {
+                        main_callback();
+                    });
+                };
+                async.detect = doParallel(_detect);
+                async.detectSeries = doSeries(_detect);
+
+                async.some = function (arr, iterator, main_callback) {
+                    async.each(arr, function (x, callback) {
+                        iterator(x, function (v) {
+                            if (v) {
+                                main_callback(true);
+                                main_callback = function () {
+                                };
+                            }
+                            callback();
+                        });
+                    }, function (err) {
+                        main_callback(false);
+                    });
+                };
+                // any alias
+                async.any = async.some;
+
+                async.every = function (arr, iterator, main_callback) {
+                    async.each(arr, function (x, callback) {
+                        iterator(x, function (v) {
+                            if (!v) {
+                                main_callback(false);
+                                main_callback = function () {
+                                };
+                            }
+                            callback();
+                        });
+                    }, function (err) {
+                        main_callback(true);
+                    });
+                };
+                // all alias
+                async.all = async.every;
+
+                async.sortBy = function (arr, iterator, callback) {
+                    async.map(arr, function (x, callback) {
+                        iterator(x, function (err, criteria) {
+                            if (err) {
+                                callback(err);
+                            }
+                            else {
+                                callback(null, {value: x, criteria: criteria});
+                            }
+                        });
+                    }, function (err, results) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        else {
+                            var fn = function (left, right) {
+                                var a = left.criteria, b = right.criteria;
+                                return a < b ? -1 : a > b ? 1 : 0;
+                            };
+                            callback(null, _map(results.sort(fn), function (x) {
+                                return x.value;
+                            }));
+                        }
+                    });
+                };
+
+                async.auto = function (tasks, callback) {
+                    callback = callback || function () {
+                        };
+                    var keys = _keys(tasks);
+                    var remainingTasks = keys.length
+                    if (!remainingTasks) {
+                        return callback();
+                    }
+
+                    var results = {};
+
+                    var listeners = [];
+                    var addListener = function (fn) {
+                        listeners.unshift(fn);
+                    };
+                    var removeListener = function (fn) {
+                        for (var i = 0; i < listeners.length; i += 1) {
+                            if (listeners[i] === fn) {
+                                listeners.splice(i, 1);
+                                return;
+                            }
+                        }
+                    };
+                    var taskComplete = function () {
+                        remainingTasks--
+                        _each(listeners.slice(0), function (fn) {
+                            fn();
+                        });
+                    };
+
+                    addListener(function () {
+                        if (!remainingTasks) {
+                            var theCallback = callback;
+                            // prevent final callback from calling itself if it errors
+                            callback = function () {
+                            };
+
+                            theCallback(null, results);
+                        }
+                    });
+
+                    _each(keys, function (k) {
+                        var task = _isArray(tasks[k]) ? tasks[k] : [tasks[k]];
+                        var taskCallback = function (err) {
+                            var args = Array.prototype.slice.call(arguments, 1);
+                            if (args.length <= 1) {
+                                args = args[0];
+                            }
+                            if (err) {
+                                var safeResults = {};
+                                _each(_keys(results), function (rkey) {
+                                    safeResults[rkey] = results[rkey];
+                                });
+                                safeResults[k] = args;
+                                callback(err, safeResults);
+                                // stop subsequent errors hitting callback multiple times
+                                callback = function () {
+                                };
+                            }
+                            else {
+                                results[k] = args;
+                                async.setImmediate(taskComplete);
+                            }
+                        };
+                        var requires = task.slice(0, Math.abs(task.length - 1)) || [];
+                        var ready = function () {
+                            return _reduce(requires, function (a, x) {
+                                    return (a && results.hasOwnProperty(x));
+                                }, true) && !results.hasOwnProperty(k);
+                        };
+                        if (ready()) {
+                            task[task.length - 1](taskCallback, results);
+                        }
+                        else {
+                            var listener = function () {
+                                if (ready()) {
+                                    removeListener(listener);
+                                    task[task.length - 1](taskCallback, results);
+                                }
+                            };
+                            addListener(listener);
+                        }
+                    });
+                };
+
+                async.retry = function (times, task, callback) {
+                    var DEFAULT_TIMES = 5;
+                    var attempts = [];
+                    // Use defaults if times not passed
+                    if (typeof times === 'function') {
+                        callback = task;
+                        task = times;
+                        times = DEFAULT_TIMES;
+                    }
+                    // Make sure times is a number
+                    times = parseInt(times, 10) || DEFAULT_TIMES;
+                    var wrappedTask = function (wrappedCallback, wrappedResults) {
+                        var retryAttempt = function (task, finalAttempt) {
+                            return function (seriesCallback) {
+                                task(function (err, result) {
+                                    seriesCallback(!err || finalAttempt, {err: err, result: result});
+                                }, wrappedResults);
+                            };
+                        };
+                        while (times) {
+                            attempts.push(retryAttempt(task, !(times -= 1)));
+                        }
+                        async.series(attempts, function (done, data) {
+                            data = data[data.length - 1];
+                            (wrappedCallback || callback)(data.err, data.result);
+                        });
+                    }
+                    // If a callback is passed, run this as a controll flow
+                    return callback ? wrappedTask() : wrappedTask
+                };
+
+                async.waterfall = function (tasks, callback) {
+                    callback = callback || function () {
+                        };
+                    if (!_isArray(tasks)) {
+                        var err = new Error('First argument to waterfall must be an array of functions');
+                        return callback(err);
+                    }
+                    if (!tasks.length) {
+                        return callback();
+                    }
+                    var wrapIterator = function (iterator) {
+                        return function (err) {
+                            if (err) {
+                                callback.apply(null, arguments);
+                                callback = function () {
+                                };
+                            }
+                            else {
+                                var args = Array.prototype.slice.call(arguments, 1);
+                                var next = iterator.next();
+                                if (next) {
+                                    args.push(wrapIterator(next));
+                                }
+                                else {
+                                    args.push(callback);
+                                }
+                                async.setImmediate(function () {
+                                    iterator.apply(null, args);
+                                });
+                            }
+                        };
+                    };
+                    wrapIterator(async.iterator(tasks))();
+                };
+
+                var _parallel = function (eachfn, tasks, callback) {
+                    callback = callback || function () {
+                        };
+                    if (_isArray(tasks)) {
+                        eachfn.map(tasks, function (fn, callback) {
+                            if (fn) {
+                                fn(function (err) {
+                                    var args = Array.prototype.slice.call(arguments, 1);
+                                    if (args.length <= 1) {
+                                        args = args[0];
+                                    }
+                                    callback.call(null, err, args);
+                                });
+                            }
+                        }, callback);
+                    }
+                    else {
+                        var results = {};
+                        eachfn.each(_keys(tasks), function (k, callback) {
+                            tasks[k](function (err) {
+                                var args = Array.prototype.slice.call(arguments, 1);
+                                if (args.length <= 1) {
+                                    args = args[0];
+                                }
+                                results[k] = args;
+                                callback(err);
+                            });
+                        }, function (err) {
+                            callback(err, results);
+                        });
+                    }
+                };
+
+                async.parallel = function (tasks, callback) {
+                    _parallel({map: async.map, each: async.each}, tasks, callback);
+                };
+
+                async.parallelLimit = function (tasks, limit, callback) {
+                    _parallel({map: _mapLimit(limit), each: _eachLimit(limit)}, tasks, callback);
+                };
+
+                async.series = function (tasks, callback) {
+                    callback = callback || function () {
+                        };
+                    if (_isArray(tasks)) {
+                        async.mapSeries(tasks, function (fn, callback) {
+                            if (fn) {
+                                fn(function (err) {
+                                    var args = Array.prototype.slice.call(arguments, 1);
+                                    if (args.length <= 1) {
+                                        args = args[0];
+                                    }
+                                    callback.call(null, err, args);
+                                });
+                            }
+                        }, callback);
+                    }
+                    else {
+                        var results = {};
+                        async.eachSeries(_keys(tasks), function (k, callback) {
+                            tasks[k](function (err) {
+                                var args = Array.prototype.slice.call(arguments, 1);
+                                if (args.length <= 1) {
+                                    args = args[0];
+                                }
+                                results[k] = args;
+                                callback(err);
+                            });
+                        }, function (err) {
+                            callback(err, results);
+                        });
+                    }
+                };
+
+                async.iterator = function (tasks) {
+                    var makeCallback = function (index) {
+                        var fn = function () {
+                            if (tasks.length) {
+                                tasks[index].apply(null, arguments);
+                            }
+                            return fn.next();
+                        };
+                        fn.next = function () {
+                            return (index < tasks.length - 1) ? makeCallback(index + 1) : null;
+                        };
+                        return fn;
+                    };
+                    return makeCallback(0);
+                };
+
+                async.apply = function (fn) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    return function () {
+                        return fn.apply(
+                            null, args.concat(Array.prototype.slice.call(arguments))
+                        );
+                    };
+                };
+
+                var _concat = function (eachfn, arr, fn, callback) {
+                    var r = [];
+                    eachfn(arr, function (x, cb) {
+                        fn(x, function (err, y) {
+                            r = r.concat(y || []);
+                            cb(err);
+                        });
+                    }, function (err) {
+                        callback(err, r);
+                    });
+                };
+                async.concat = doParallel(_concat);
+                async.concatSeries = doSeries(_concat);
+
+                async.whilst = function (test, iterator, callback) {
+                    if (test()) {
+                        iterator(function (err) {
+                            if (err) {
+                                return callback(err);
+                            }
+                            async.whilst(test, iterator, callback);
+                        });
+                    }
+                    else {
+                        callback();
+                    }
+                };
+
+                async.doWhilst = function (iterator, test, callback) {
+                    iterator(function (err) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        if (test.apply(null, args)) {
+                            async.doWhilst(iterator, test, callback);
+                        }
+                        else {
+                            callback();
+                        }
+                    });
+                };
+
+                async.until = function (test, iterator, callback) {
+                    if (!test()) {
+                        iterator(function (err) {
+                            if (err) {
+                                return callback(err);
+                            }
+                            async.until(test, iterator, callback);
+                        });
+                    }
+                    else {
+                        callback();
+                    }
+                };
+
+                async.doUntil = function (iterator, test, callback) {
+                    iterator(function (err) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        if (!test.apply(null, args)) {
+                            async.doUntil(iterator, test, callback);
+                        }
+                        else {
+                            callback();
+                        }
+                    });
+                };
+
+                async.queue = function (worker, concurrency) {
+                    if (concurrency === undefined) {
+                        concurrency = 1;
+                    }
+                    function _insert(q, data, pos, callback) {
+                        if (!q.started) {
+                            q.started = true;
+                        }
+                        if (!_isArray(data)) {
+                            data = [data];
+                        }
+                        if (data.length == 0) {
+                            // call drain immediately if there are no tasks
+                            return async.setImmediate(function () {
+                                if (q.drain) {
+                                    q.drain();
+                                }
+                            });
+                        }
+                        _each(data, function (task) {
+                            var item = {
+                                data: task,
+                                callback: typeof callback === 'function' ? callback : null
+                            };
+
+                            if (pos) {
+                                q.tasks.unshift(item);
+                            } else {
+                                q.tasks.push(item);
+                            }
+
+                            if (q.saturated && q.tasks.length === q.concurrency) {
+                                q.saturated();
+                            }
+                            async.setImmediate(q.process);
+                        });
+                    }
+
+                    var workers = 0;
+                    var q = {
+                        tasks: [],
+                        concurrency: concurrency,
+                        saturated: null,
+                        empty: null,
+                        drain: null,
+                        started: false,
+                        paused: false,
+                        push: function (data, callback) {
+                            _insert(q, data, false, callback);
+                        },
+                        kill: function () {
+                            q.drain = null;
+                            q.tasks = [];
+                        },
+                        unshift: function (data, callback) {
+                            _insert(q, data, true, callback);
+                        },
+                        process: function () {
+                            if (!q.paused && workers < q.concurrency && q.tasks.length) {
+                                var task = q.tasks.shift();
+                                if (q.empty && q.tasks.length === 0) {
+                                    q.empty();
+                                }
+                                workers += 1;
+                                var next = function () {
+                                    workers -= 1;
+                                    if (task.callback) {
+                                        task.callback.apply(task, arguments);
+                                    }
+                                    if (q.drain && q.tasks.length + workers === 0) {
+                                        q.drain();
+                                    }
+                                    q.process();
+                                };
+                                var cb = only_once(next);
+                                worker(task.data, cb);
+                            }
+                        },
+                        length: function () {
+                            return q.tasks.length;
+                        },
+                        running: function () {
+                            return workers;
+                        },
+                        idle: function () {
+                            return q.tasks.length + workers === 0;
+                        },
+                        pause: function () {
+                            if (q.paused === true) {
+                                return;
+                            }
+                            q.paused = true;
+                            q.process();
+                        },
+                        resume: function () {
+                            if (q.paused === false) {
+                                return;
+                            }
+                            q.paused = false;
+                            q.process();
+                        }
+                    };
+                    return q;
+                };
+
+                async.priorityQueue = function (worker, concurrency) {
+
+                    function _compareTasks(a, b) {
+                        return a.priority - b.priority;
+                    };
+
+                    function _binarySearch(sequence, item, compare) {
+                        var beg = -1,
+                            end = sequence.length - 1;
+                        while (beg < end) {
+                            var mid = beg + ((end - beg + 1) >>> 1);
+                            if (compare(item, sequence[mid]) >= 0) {
+                                beg = mid;
+                            } else {
+                                end = mid - 1;
+                            }
+                        }
+                        return beg;
+                    }
+
+                    function _insert(q, data, priority, callback) {
+                        if (!q.started) {
+                            q.started = true;
+                        }
+                        if (!_isArray(data)) {
+                            data = [data];
+                        }
+                        if (data.length == 0) {
+                            // call drain immediately if there are no tasks
+                            return async.setImmediate(function () {
+                                if (q.drain) {
+                                    q.drain();
+                                }
+                            });
+                        }
+                        _each(data, function (task) {
+                            var item = {
+                                data: task,
+                                priority: priority,
+                                callback: typeof callback === 'function' ? callback : null
+                            };
+
+                            q.tasks.splice(_binarySearch(q.tasks, item, _compareTasks) + 1, 0, item);
+
+                            if (q.saturated && q.tasks.length === q.concurrency) {
+                                q.saturated();
+                            }
+                            async.setImmediate(q.process);
+                        });
+                    }
+
+                    // Start with a normal queue
+                    var q = async.queue(worker, concurrency);
+
+                    // Override push to accept second parameter representing priority
+                    q.push = function (data, priority, callback) {
+                        _insert(q, data, priority, callback);
+                    };
+
+                    // Remove unshift function
+                    delete q.unshift;
+
+                    return q;
+                };
+
+                async.cargo = function (worker, payload) {
+                    var working = false,
+                        tasks = [];
+
+                    var cargo = {
+                        tasks: tasks,
+                        payload: payload,
+                        saturated: null,
+                        empty: null,
+                        drain: null,
+                        drained: true,
+                        push: function (data, callback) {
+                            if (!_isArray(data)) {
+                                data = [data];
+                            }
+                            _each(data, function (task) {
+                                tasks.push({
+                                    data: task,
+                                    callback: typeof callback === 'function' ? callback : null
+                                });
+                                cargo.drained = false;
+                                if (cargo.saturated && tasks.length === payload) {
+                                    cargo.saturated();
+                                }
+                            });
+                            async.setImmediate(cargo.process);
+                        },
+                        process: function process() {
+                            if (working) return;
+                            if (tasks.length === 0) {
+                                if (cargo.drain && !cargo.drained) cargo.drain();
+                                cargo.drained = true;
+                                return;
+                            }
+
+                            var ts = typeof payload === 'number'
+                                ? tasks.splice(0, payload)
+                                : tasks.splice(0, tasks.length);
+
+                            var ds = _map(ts, function (task) {
+                                return task.data;
+                            });
+
+                            if (cargo.empty) cargo.empty();
+                            working = true;
+                            worker(ds, function () {
+                                working = false;
+
+                                var args = arguments;
+                                _each(ts, function (data) {
+                                    if (data.callback) {
+                                        data.callback.apply(null, args);
+                                    }
+                                });
+
+                                process();
+                            });
+                        },
+                        length: function () {
+                            return tasks.length;
+                        },
+                        running: function () {
+                            return working;
+                        }
+                    };
+                    return cargo;
+                };
+
+                var _console_fn = function (name) {
+                    return function (fn) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        fn.apply(null, args.concat([function (err) {
+                            var args = Array.prototype.slice.call(arguments, 1);
+                            if (typeof console !== 'undefined') {
+                                if (err) {
+                                    if (console.error) {
+                                        console.error(err);
+                                    }
+                                }
+                                else if (console[name]) {
+                                    _each(args, function (x) {
+                                        console[name](x);
+                                    });
+                                }
+                            }
+                        }]));
+                    };
+                };
+                async.log = _console_fn('log');
+                async.dir = _console_fn('dir');
+                /*async.info = _console_fn('info');
+                 async.warn = _console_fn('warn');
+                 async.error = _console_fn('error');*/
+
+                async.memoize = function (fn, hasher) {
+                    var memo = {};
+                    var queues = {};
+                    hasher = hasher || function (x) {
+                            return x;
+                        };
+                    var memoized = function () {
+                        var args = Array.prototype.slice.call(arguments);
+                        var callback = args.pop();
+                        var key = hasher.apply(null, args);
+                        if (key in memo) {
+                            async.nextTick(function () {
+                                callback.apply(null, memo[key]);
+                            });
+                        }
+                        else if (key in queues) {
+                            queues[key].push(callback);
+                        }
+                        else {
+                            queues[key] = [callback];
+                            fn.apply(null, args.concat([function () {
+                                memo[key] = arguments;
+                                var q = queues[key];
+                                delete queues[key];
+                                for (var i = 0, l = q.length; i < l; i++) {
+                                    q[i].apply(null, arguments);
+                                }
+                            }]));
+                        }
+                    };
+                    memoized.memo = memo;
+                    memoized.unmemoized = fn;
+                    return memoized;
+                };
+
+                async.unmemoize = function (fn) {
+                    return function () {
+                        return (fn.unmemoized || fn).apply(null, arguments);
+                    };
+                };
+
+                async.times = function (count, iterator, callback) {
+                    var counter = [];
+                    for (var i = 0; i < count; i++) {
+                        counter.push(i);
+                    }
+                    return async.map(counter, iterator, callback);
+                };
+
+                async.timesSeries = function (count, iterator, callback) {
+                    var counter = [];
+                    for (var i = 0; i < count; i++) {
+                        counter.push(i);
+                    }
+                    return async.mapSeries(counter, iterator, callback);
+                };
+
+                async.seq = function (/* functions... */) {
+                    var fns = arguments;
+                    return function () {
+                        var that = this;
+                        var args = Array.prototype.slice.call(arguments);
+                        var callback = args.pop();
+                        async.reduce(fns, args, function (newargs, fn, cb) {
+                                fn.apply(that, newargs.concat([function () {
+                                    var err = arguments[0];
+                                    var nextargs = Array.prototype.slice.call(arguments, 1);
+                                    cb(err, nextargs);
+                                }]))
+                            },
+                            function (err, results) {
+                                callback.apply(that, [err].concat(results));
+                            });
+                    };
+                };
+
+                async.compose = function (/* functions... */) {
+                    return async.seq.apply(null, Array.prototype.reverse.call(arguments));
+                };
+
+                var _applyEach = function (eachfn, fns /*args...*/) {
+                    var go = function () {
+                        var that = this;
+                        var args = Array.prototype.slice.call(arguments);
+                        var callback = args.pop();
+                        return eachfn(fns, function (fn, cb) {
+                                fn.apply(that, args.concat([cb]));
+                            },
+                            callback);
+                    };
+                    if (arguments.length > 2) {
+                        var args = Array.prototype.slice.call(arguments, 2);
+                        return go.apply(this, args);
+                    }
+                    else {
+                        return go;
+                    }
+                };
+                async.applyEach = doParallel(_applyEach);
+                async.applyEachSeries = doSeries(_applyEach);
+
+                async.forever = function (fn, callback) {
+                    function next(err) {
+                        if (err) {
+                            if (callback) {
+                                return callback(err);
+                            }
+                            throw err;
+                        }
+                        fn(next);
+                    }
+
+                    next();
+                };
+
+                // Node.js
+                if (typeof module !== 'undefined' && module.exports) {
+                    module.exports = async;
+                }
+                // AMD / RequireJS
+                else if (typeof define !== 'undefined' && define.amd) {
+                    define([], function () {
+                        return async;
+                    });
+                }
+                // included directly via <script> tag
+                else {
+                    root.async = async;
+                }
+
+            }());
+
+        }).call(this, require('_process'))
+    }, {"_process": 3}],
+    3: [function (require, module, exports) {
+// shim for using process in browser
+
+        var process = module.exports = {};
+        var queue = [];
+        var draining = false;
+
+        function drainQueue() {
+            if (draining) {
+                return;
+            }
+            draining = true;
+            var currentQueue;
+            var len = queue.length;
+            while (len) {
+                currentQueue = queue;
+                queue = [];
+                var i = -1;
+                while (++i < len) {
+                    currentQueue[i]();
+                }
+                len = queue.length;
+            }
+            draining = false;
+        }
+
+        process.nextTick = function (fun) {
+            queue.push(fun);
+            if (!draining) {
+                setTimeout(drainQueue, 0);
+            }
+        };
+
+        process.title = 'browser';
+        process.browser = true;
+        process.env = {};
+        process.argv = [];
+        process.version = ''; // empty string to avoid regexp issues
+        process.versions = {};
+
+        function noop() {
+        }
+
+        process.on = noop;
+        process.addListener = noop;
+        process.once = noop;
+        process.off = noop;
+        process.removeListener = noop;
+        process.removeAllListeners = noop;
+        process.emit = noop;
+
+        process.binding = function (name) {
+            throw new Error('process.binding is not supported');
+        };
+
+// TODO(shtylman)
+        process.cwd = function () {
+            return '/'
+        };
+        process.chdir = function (dir) {
+            throw new Error('process.chdir is not supported');
+        };
+        process.umask = function () {
+            return 0;
+        };
+
+    }, {}],
+    4: [function (require, module, exports) {
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 // Backbone.Radio v0.9.0
@@ -480,7 +1737,8 @@ $(document).ready(function () {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],3:[function(require,module,exports){
+    }, {}],
+    5: [function (require, module, exports) {
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 //     Backbone.js 1.1.2
@@ -2097,7 +3355,8 @@ $(document).ready(function () {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
+    }, {}],
+    6: [function (require, module, exports) {
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /*!
@@ -11311,7 +12570,8 @@ return jQuery;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],5:[function(require,module,exports){
+    }, {}],
+    7: [function (require, module, exports) {
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /**
@@ -22877,7 +24137,8 @@ return jQuery;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],6:[function(require,module,exports){
+    }, {}],
+    8: [function (require, module, exports) {
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 // MarionetteJS (Backbone.Marionette)
@@ -26705,23 +27966,40 @@ return jQuery;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
+    }, {}],
+    9: [function (require, module, exports) {
 var OEModules = {};
+        OEModules.basicnameinterpret = require('./oe_modules/control-basic-nameinterpret/client-index');
+        OEModules.checklist = require('./oe_modules/control-checklist/client-index');
+        OEModules.basicnamegen = require('./oe_modules/control-namegen/client-index');
+        OEModules.namepick = require('./oe_modules/control-namepick/client-index');
+        OEModules.radiolist = require('./oe_modules/control-radiolist/client-index');
 OEModules.shorttext = require('./oe_modules/control-shorttext/client-index');
+        OEModules.namelist = require('./oe_modules/model-namelist/client-index');
 module.exports = OEModules;
 
-},{"./oe_modules/control-shorttext/client-index":37}],8:[function(require,module,exports){
+    }, {
+        "./oe_modules/control-basic-nameinterpret/client-index": 45,
+        "./oe_modules/control-checklist/client-index": 50,
+        "./oe_modules/control-namegen/client-index": 57,
+        "./oe_modules/control-namepick/client-index": 63,
+        "./oe_modules/control-radiolist/client-index": 66,
+        "./oe_modules/control-shorttext/client-index": 69,
+        "./oe_modules/model-namelist/client-index": 76
+    }],
+    10: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/7/15.
  * application.js
  */
 "use strict";
 
+        var async = require('async');
 var LandingView = require('./layouts/layout-landing');
 var guid = require('./helpers/guid');
 
 var App = Marionette.Application.extend({
-    initialize: function(opts) {
+    initialize: function () {
         this.regions = {};
         this.layouts = {};
         this.views = {};
@@ -26731,12 +28009,21 @@ var App = Marionette.Application.extend({
 
         this.registerRadioChannels();
         this.listenRadioChannels();
+
+        // These are the functions that have to run to load an existing pool
+        // Note: it is run using the async library, so make sure to bind the context.
+        this.loadPoolQueue = [
+            this.fetchCurrentPool.bind(this)
+        ];
     },
 
     listenRadioChannels: function() {
         this.channels.navigation.comply('load-landing', this.loadLanding, this);
         this.channels.navigation.comply('load-pool', this.loadPool, this);
         this.channels.navigation.comply('new-pool', this.newPool, this);
+
+        this.channels.navigation.comply('pool-prev-sheet', this.prevSheet, this);
+        this.channels.navigation.comply('pool-next-sheet', this.nextSheet, this);
 
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
@@ -26764,6 +28051,7 @@ var App = Marionette.Application.extend({
 
     loadLanding: function() {
         var landingView = new LandingView;
+        //noinspection JSUnresolvedVariable
         this.appSpace.show(landingView);
 
         // Grab the existing pools
@@ -26777,6 +28065,7 @@ var App = Marionette.Application.extend({
         poolListingsCollection.on('sync', function () {
             console.log('--- PoolListingsSynced');
             poolListingsView = new PoolListingsView({collection: this});
+            //noinspection JSUnresolvedVariable
             landingView.pools.show(poolListingsView);
         });
     },
@@ -26787,9 +28076,38 @@ var App = Marionette.Application.extend({
         this.loadPool(e);
     },
 
-    loadPool: function(e) {
+    /*
+     *  Part of the loadPoolQueue.
+     *  Will load the fetch the current pool data.
+     *
+     */
+    fetchCurrentPool: function (callback) {
+        // Note this will load the logic of the pool, but not any prior existing responses
+        // Set the id of the pool model so that it fetches from localStorage if possible
+        // If the data is already in localstorage it will load that.
         var PoolModel = require('./models/model-pool');
-        var poolid = e.poolid;
+        var poolid = app.appState.get('poolid');
+        var puid = app.appState.get('puid');
+
+        this.currentPool = new PoolModel();
+        this.currentPool.set('poolid', poolid);
+        if (puid) {
+            this.currentPool.set('puid', puid)
+        }
+        this.currentPool.fetch();
+
+        // The pool model will also sync the eddis (response data)
+        // So wait for the eddis-synced, then trigger the async callback
+        // TODO: think about error handling here
+        app.channels.pool.once('eddis-synced', function () {
+            callback(null);
+        });
+    },
+
+    loadPool: function (e) {
+        if (e.poolid) {
+            app.appState.set('poolid', e.poolid);
+        }
 
         // If the load-pool-sheet command was complied with, then there will be a sheetid property
         if(e.sheetid) {
@@ -26797,17 +28115,18 @@ var App = Marionette.Application.extend({
             app.appState.save();
         }
 
-        // Note this will load the logic of the pool, but not any prior existing responses
-        // Set the id of the pool model so that it fetches from localStorage if possible
-        // If the data is already in localstorage it will load that.
-        this.currentPool = new PoolModel();
-        this.currentPool.set('poolid', poolid);
-        if(e.puid) { this.currentPool.set('puid', e.puid) }
-        this.currentPool.fetch();
-        app.channels.pool.once('eddis-synced', _.bind(this.prepPoolLaunch, this));
+        // Once the pool is ready, launch it
+        app.channels.pool.once('load-pool-ready', _.bind(this.poolLaunch, this));
+
+        // Execute all the functions in the loadPoolQueue
+        // Then tell the pool channel that everything is ready.
+        async.series(this.loadPoolQueue, function () {
+            app.channels.pool.trigger('load-pool-ready');
+        });
+
     },
 
-    prepPoolLaunch: function() {
+    poolLaunch: function () {
 
         // Set the appState variables
         if (!this.appState.get('poolid')) {
@@ -26821,6 +28140,7 @@ var App = Marionette.Application.extend({
         // Start the pool at the previous sheet index, unless there isn't a previous, in which case start at the beginning
         var sheetid = this.appState.get('sheetid');
         if (!sheetid) {
+            //noinspection JSUnresolvedVariable
             sheetid = this.currentPool.get('pool').sheetOrder[0];
             this.appState.set('sheetid', sheetid);
         }
@@ -26829,6 +28149,8 @@ var App = Marionette.Application.extend({
 
         var PoolView = require('./layouts/layout-pool');
         this.poolView = new PoolView;
+        // Defined in the oe.js launch
+        //noinspection JSUnresolvedVariable
         this.appSpace.show(this.poolView);
 
         this.loadSheet();
@@ -26845,8 +28167,53 @@ var App = Marionette.Application.extend({
             var SheetView = require('./layouts/layout-sheet');
             var sheetid = this.appState.get('sheetid');
             this.poolView.sheetView = new SheetView;
+            //noinspection JSUnresolvedVariable
             this.poolView.sheet.show(this.poolView.sheetView);
         }
+    },
+
+    getCurrentSheetIndex: function () {
+        // Figure out what the previous sheet should be
+        //noinspection JSUnresolvedVariable
+        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var currentSheet = app.appState.get('sheetid');
+
+        // TODO: make sure the types match up
+        return _(sheetOrder).indexOf(currentSheet);
+    },
+
+    prevSheet: function (e) {
+        var idx = this.getCurrentSheetIndex();
+        //noinspection JSUnresolvedVariable
+        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+
+        // If we are at the first page already, then just quit
+        if (idx === 0) {
+            return false;
+        } else {
+            idx--;
+            var newSheet = sheetOrder[idx];
+            app.appState.set('sheetid', newSheet);
+        }
+
+        this.loadSheet(e);
+    },
+
+    nextSheet: function (e) {
+        var idx = this.getCurrentSheetIndex();
+        //noinspection JSUnresolvedVariable
+        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+
+        // If we are at the last page, then quit
+        if (idx >= app.currentPool.get('poolLength') - 1) {
+            return false;
+        } else {
+            idx++;
+            var newSheet = sheetOrder[idx];
+            app.appState.set('sheetid', newSheet);
+        }
+
+        this.loadSheet(e);
     },
 
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript
@@ -26856,7 +28223,6 @@ var App = Marionette.Application.extend({
     hostReachable: function () {
         // Handle IE and more capable browsers
         var xhr = new ( window.ActiveXObject || XMLHttpRequest )("Microsoft.XMLHTTP");
-        var status;
 
         // Open new request as a HEAD to the root hostname with a random param to bust the cache
         xhr.open("HEAD", "//" + window.location.hostname + "/?rand=" + Math.floor((1 + Math.random()) * 0x10000), false);
@@ -26871,18 +28237,20 @@ var App = Marionette.Application.extend({
     }
 });
 
-var app = new App();
-
-app.addRegions({
-    appSpace: '#app-space'
-});
-
-module.exports = app;
+        module.exports = App;
 
 
-
-
-},{"./collections/collection-pool-listings":12,"./helpers/guid":14,"./layouts/layout-landing":16,"./layouts/layout-pool":17,"./layouts/layout-sheet":18,"./models/model-pool":23,"./views/view-landing-pool-listings":36}],9:[function(require,module,exports){
+    }, {
+        "./collections/collection-pool-listings": 14,
+        "./helpers/guid": 16,
+        "./layouts/layout-landing": 18,
+        "./layouts/layout-pool": 19,
+        "./layouts/layout-sheet": 20,
+        "./models/model-pool": 25,
+        "./views/view-landing-pool-listings": 39,
+        "async": 2
+    }],
+    11: [function (require, module, exports) {
 // Generated by CoffeeScript 1.9.0
 
 /*
@@ -27374,7 +28742,8 @@ dualsync = function(method, model, options) {
 
 Backbone.sync = dualsync;
 
-},{"backbone":3,"lodash":5}],10:[function(require,module,exports){
+    }, {"backbone": 5, "lodash": 7}],
+    12: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  *
@@ -27412,7 +28781,8 @@ Store.prototype.totalClear = function () {
 };
 
 
-},{"backbone":3,"lodash":5}],11:[function(require,module,exports){
+    }, {"backbone": 5, "lodash": 7}],
+    13: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * collection-pool-eddis.js
@@ -27437,7 +28807,8 @@ module.exports = Backbone.Collection.extend({
 
 });
 
-},{"../models/model-eddi":21}],12:[function(require,module,exports){
+    }, {"../models/model-eddi": 23}],
+    14: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  * collection-pool-listings.js
@@ -27450,9 +28821,8 @@ module.exports = Backbone.Collection.extend({
 });
 
 
-
-
-},{"../models/model-pool-listing":22}],13:[function(require,module,exports){
+    }, {"../models/model-pool-listing": 24}],
+    15: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * collection-pool-sheets.js
@@ -27468,7 +28838,8 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/model-sheet":24}],14:[function(require,module,exports){
+    }, {"../models/model-sheet": 26}],
+    16: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/13/15.
  */
@@ -27487,7 +28858,8 @@ function guid() {
 }
 
 module.exports = guid;
-},{}],15:[function(require,module,exports){
+    }, {}],
+    17: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/layouts/layout-eddi.js
@@ -27518,7 +28890,8 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-},{"../templates/template-layout-eddi.ejs":28,"../views/view-eddi-promptbar":33}],16:[function(require,module,exports){
+    }, {"../templates/template-layout-eddi.ejs": 30, "../views/view-eddi-promptbar": 36}],
+    18: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/7/15.
  * layout-landing.js
@@ -27540,39 +28913,60 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-},{"../templates/template-layout-landing.ejs":29}],17:[function(require,module,exports){
+    }, {"../templates/template-layout-landing.ejs": 31}],
+    19: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/22/15.
- * layout-pool.js
+ * oe/oe_client/layouts/layout-pool.js
  */
+"use strict";
+
 
 
 // The Pool Layout.
 // This layout should persist during the data collection period. It contains the important elements of the pool for
 // data collection.
 
-// The header is for overall information you may have about the current pool (title, logo, for instance)
-// The navigation will be a layer that helps the user navigate between (and within) the sheets
+// The header is for overall information you may have about the current pool (title, logo, navigation)
 // The sheet space is where the sheet is shown.
 // The footer will have additional navigation elements (such as exit pool) and information, such as % completion.
 
 var template = require('../templates/template-layout-pool.ejs')();
 
 module.exports = Marionette.LayoutView.extend({
+    tagName: 'core-header-panel',
+    attributes: function () {
+        return ( {
+            'flex': ''
+        });
+    },
+    id: 'poolLayout',
     template: _.template(template),
     regions: {
         header:     '#oe-pool-header',
-        navigation: '#oe-pool-navigation',
         sheet:      '#oe-sheet-space',
         footer:     '#oe-pool-footer'
     },
 
     initialize: function(opts) {
+    },
+
+    onShow: function () {
+        // TODO: I think the load sheet should be handled by the pool view
+
+        // Load the pool header
+        var HeaderView = require('../views/view-pool-header');
+        var headerView = new HeaderView({model: app.currentPool});
+        this.header.show(headerView);
+    },
+
+    onRender: function () {
     }
 });
 
 
-},{"../templates/template-layout-pool.ejs":30}],18:[function(require,module,exports){
+    }, {"../templates/template-layout-pool.ejs": 32, "../views/view-pool-header": 40}],
+    20: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/23/15.
  * layout-sheet.js
@@ -27602,7 +28996,8 @@ module.exports = Marionette.LayoutView.extend({
 
 
 });
-},{"../templates/template-layout-sheet.ejs":31,"../views/view-eddis":34}],19:[function(require,module,exports){
+    }, {"../templates/template-layout-sheet.ejs": 33, "../views/view-eddis": 37}],
+    21: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/12/15.
  */
@@ -27646,7 +29041,8 @@ module.exports = Backbone.Model.extend({
 });
 
 
-},{"../helpers/guid":14}],20:[function(require,module,exports){
+    }, {"../helpers/guid": 16}],
+    22: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/4/15.
  * oe/oe_client/models/model-eddi-promptbar.js
@@ -27655,7 +29051,8 @@ module.exports = Backbone.Model.extend({
 module.exports = Backbone.Model.extend({
 
 });
-},{}],21:[function(require,module,exports){
+    }, {}],
+    23: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/23/15.
  * oe/oe_client/models/model-eddi.js
@@ -27766,7 +29163,8 @@ module.exports = Backbone.Model.extend({
 });
 
 
-},{"../helpers/guid":14}],22:[function(require,module,exports){
+    }, {"../helpers/guid": 16}],
+    24: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -27792,7 +29190,8 @@ module.exports = Backbone.Model.extend({
 });
 
 
-},{"../helpers/guid":14,"backbone":3}],23:[function(require,module,exports){
+    }, {"../helpers/guid": 16, "backbone": 5}],
+    25: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/17/15.
  * oe/oe_client/models/model-pool.js
@@ -27826,6 +29225,8 @@ module.exports = Backbone.Model.extend({
         this.eddis = new EddiCollection();
         this.sheets = new SheetColllection(this.toJSON().sheets);
 
+        this.set('poolLength', this.get('pool').sheetOrder.length);
+
         // If it's a new pool, then create the question logic for everything
         // It also saves it to the server.
         // Otherwise, fetch the question data and then announce when it's done
@@ -27851,7 +29252,12 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/collection-pool-eddis":11,"../collections/collection-pool-sheets":13,"../helpers/guid":14}],24:[function(require,module,exports){
+    }, {
+        "../collections/collection-pool-eddis": 13,
+        "../collections/collection-pool-sheets": 15,
+        "../helpers/guid": 16
+    }],
+    26: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/19/15.
  * model-sheet.js
@@ -27869,7 +29275,8 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{}],25:[function(require,module,exports){
+    }, {}],
+    27: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/19/15.
  */
@@ -27913,7 +29320,8 @@ module.exports = Backbone.Router.extend({
 
 });
 
-},{}],26:[function(require,module,exports){
+    }, {}],
+    28: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -27927,7 +29335,8 @@ __p+='<core-toolbar class="oe-eddi-promptbar"><div flex></div><div class="middle
 return __p;
 };
 
-},{"lodash":5}],27:[function(require,module,exports){
+    }, {"lodash": 7}],
+    29: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -27935,7 +29344,8 @@ __p+='';
 return __p;
 };
 
-},{"lodash":5}],28:[function(require,module,exports){
+    }, {"lodash": 7}],
+    30: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -27943,7 +29353,8 @@ __p+='<div id="oe-layout-eddi-promptbar">Eddi Promptbar</div><div id="oe-layout-
 return __p;
 };
 
-},{"lodash":5}],29:[function(require,module,exports){
+    }, {"lodash": 7}],
+    31: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -27951,15 +29362,17 @@ __p+='<div id="oe-landing-header">Header</div><div id="oe-landing-pools">Pools</
 return __p;
 };
 
-},{"lodash":5}],30:[function(require,module,exports){
+    }, {"lodash": 7}],
+    32: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<div id="oe-pool-header">Pool Header</div><div id="oe-pool-navigation">Pool Navigation</div><div id="oe-sheet-space">Sheet Space</div><div id="oe-pool-footer">Pool Footer</div>';
+    __p += '<div id="oe-pool-header" class="core-header">Pool Header</div><div id="oe-sheet-space">Sheet Space</div><div id="oe-pool-footer">Pool Footer</div>';
 return __p;
 };
 
-},{"lodash":5}],31:[function(require,module,exports){
+    }, {"lodash": 7}],
+    33: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -27967,7 +29380,11 @@ __p+='<div id="oe-sheet-eddi-space">Eddi Space</div>';
 return __p;
 };
 
-},{"lodash":5}],32:[function(require,module,exports){
+    }, {"lodash": 7}],
+    34: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    35: [function (require, module, exports) {
 //Copyright (c) 2014, Jeremy Fairbank <elpapapollo@gmail.com>
 //
 //Permission to use, copy, modify, and/or distribute this software for any
@@ -27983,61 +29400,65 @@ return __p;
 //OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 module.exports = Marionette.ItemView.extend({
-  constructor: function(options) {
-    Marionette.View.prototype.constructor.apply(this, arguments);
-    this._setPublishedKeys();
-    this._initAttrsFromModel();
-    this._initModelEvents();
-    this._initPolymerEvents();
-  },
+    constructor: function (options) {
+        Marionette.View.prototype.constructor.apply(this, arguments);
+        this._setPublishedKeys();
+        this._initAttrsFromModel();
+        this._initModelEvents();
+        this._initPolymerEvents();
+    },
 
-  _setPublishedKeys: function() {
-    this._publishedKeys = _.keys(this.el.publish);
-  },
+    _setPublishedKeys: function () {
+        this._publishedKeys = _.keys(this.el.publish);
+    },
 
-  _initAttrsFromModel: function() {
-    this._setElAttrs(this.model.attributes);
-  },
+    _initAttrsFromModel: function () {
+        this._setElAttrs(this.model.attributes);
+    },
 
-  _initModelEvents: function() {
-    this.listenTo(this.model, 'change', this._updateElAttrsFromModel);
-  },
+    _initModelEvents: function () {
+        this.listenTo(this.model, 'change', this._updateElAttrsFromModel);
+    },
 
-  _initPolymerEvents: function() {
-    if (!this.events) {
-      this.events = {};
+    _initPolymerEvents: function () {
+        if (!this.events) {
+            this.events = {};
+        }
+
+        _.each(this._publishedKeys, function (key) {
+            this.events['change:' + key] = _.bind(this._updateAttrFromEl, this, key);
+        }, this);
+
+        this.delegateEvents();
+    },
+
+    _updateAttrFromEl: function (attributeName) {
+        var value = this.el[attributeName];
+        this.model.set(attributeName, value);
+
+        // jfagan: want to communicate with the message bus here.
+        if (attributeName === 'response') {
+            app.channels.response.trigger('response-updated', this.model);
+        }
+    },
+
+    _updateElAttrsFromModel: function () {
+        this._setElAttrs(this.model.changed);
+    },
+
+    _setElAttrs: function (attributes) {
+        var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
+        _.each(attributeNames, this._setElAttr, this);
+        this.el.fire('attributes-updated', this.model);
+    },
+
+    _setElAttr: function (attributeName) {
+        this.el[attributeName] = this.model.get(attributeName);
     }
-
-    _.each(this._publishedKeys, function(key) {
-      this.events['change:' + key] = _.bind(this._updateAttrFromEl, this, key);
-    }, this);
-
-    this.delegateEvents();
-  },
-
-  _updateAttrFromEl: function(attributeName) {
-    var value = this.el[attributeName];
-    this.model.set(attributeName, value);
-    if(attributeName === 'response') {
-      app.channels.response.trigger('response-updated', this.model);
-    }
-  },
-
-  _updateElAttrsFromModel: function() {
-    this._setElAttrs(this.model.changed);
-  },
-
-  _setElAttrs: function(attributes) {
-    var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
-    _.each(attributeNames, this._setElAttr, this);
-  },
-
-  _setElAttr: function(attributeName) {
-    this.el[attributeName] = this.model.get(attributeName);
-  }
 });
 
-},{}],33:[function(require,module,exports){
+    }, {}],
+    36: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/views/view-eddi-promptbar.js
@@ -28053,7 +29474,8 @@ module.exports = Mn.ItemView.extend({
     initialize: function() {
     }
 });
-},{"../models/model-eddi-promptbar":20,"../templates/template-eddi-promptbar.ejs":26}],34:[function(require,module,exports){
+    }, {"../models/model-eddi-promptbar": 22, "../templates/template-eddi-promptbar.ejs": 28}],
+    37: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * view-eddis.js
@@ -28070,7 +29492,8 @@ module.exports = Marionette.CollectionView.extend({
         return child.get('sheetid') == this.sheetid;
     }
 });
-},{"../layouts/layout-eddi":15}],35:[function(require,module,exports){
+    }, {"../layouts/layout-eddi": 17}],
+    38: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -28093,7 +29516,12 @@ module.exports = PolymerView.extend({
     }
 
 });
-},{"../models/model-pool-listing":22,"../templates/template-landing-pool-listing.ejs":27,"./marionette.polymerview":32}],36:[function(require,module,exports){
+    }, {
+        "../models/model-pool-listing": 24,
+        "../templates/template-landing-pool-listing.ejs": 29,
+        "./marionette.polymerview": 35
+    }],
+    39: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -28104,9 +29532,597 @@ var PoolListingView = require('./view-landing-pool-listing');
 module.exports = Marionette.CollectionView.extend({
     childView: PoolListingView
 });
-},{"./view-landing-pool-listing":35}],37:[function(require,module,exports){
+    }, {"./view-landing-pool-listing": 38}],
+    40: [function (require, module, exports) {
 /**
+ * Created by jfagan on 4/9/15.
+ * oe/oe_client/views/view-pool-header.js
+ */
+
+var PolymerView = require('./marionette.polymerview');
+        var template = require('../templates/template-pool-header.ejs');
+
+        module.exports = PolymerView.extend({
+            tagName: 'oe-pool-header',
+            template: template
+        });
+
+    }, {"../templates/template-pool-header.ejs": 34, "./marionette.polymerview": 35}],
+    41: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/12/15.
+         * oe/oe_modules/control-basic-nameinterpret/NICollectionView.js:3
+         */
+
+        var NINameLayoutView = require('./NINameLayoutView');
+
+        module.exports = Mn.CollectionView.extend({
+            childView: NINameLayoutView,
+            initialize: function (options) {
+                this.childViewOptions = {
+                    namelist: this.options.namelist,
+                    oe: options.oe
+                };
+            }
+        });
+    }, {"./NINameLayoutView": 42}],
+    42: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/12/15.
+         * oe/oe_modules/control-basic-nameinterpret/NINameLayoutView.js
+         */
+
+        var templateNameLayout = require('./templateNINameLayout.ejs');
+        var NameModel = require('../model-namelist/NameModel');
+        var NameTag = require('./NINameTag');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+
+// In addition to the standard eddi control, I need to show the name of the alter
+// So do a layout view with a region for the name and a region for the control
+        module.exports = Mn.LayoutView.extend({
+            model: NameModel,
+            template: templateNameLayout,
+            regions: {
+                nametag: "#niNameLayoutName",
+                nameinterpreter: "#niNameLayoutControl"
+            },
+            initialize: function (options) {
+                this.namelist = options.namelist;
+                this.oe = _.merge(options.oe, options.oe.niEddiDetails);
+                this.model.set('oe', this.oe);
+            },
+
+            onShow: function () {
+                // Show the name tag
+                var nameTag = new NameTag({model: this.model});
+                this.nametag.show(nameTag);
+
+                // Show the eddi control
+                var ControlView = app.OEModules[this.oe.niEddi].views.eddicontrol;
+
+                // Need to create a custom eddi model with all the attributes coded so that we can capture
+                // the response and redirect it to the name details
+                var niModel = new EddiModel({});
+                niModel.set('oe', this.oe);
+
+                // If the detail for this does not exist, then use the default
+                if (this.model.attributes.details[this.oe.eid]) {
+                    niModel.set('response', this.model.attributes.details[this.oe.eid]);
+                }
+
+                // Hijack the sync ability to signal the eddi to save
+                niModel.sync = function () {
+                    this.trigger('interpreter-sync', this.attributes.response);
+                };
+                niModel.on('interpreter-sync', this.saveResponseToDetails, this);
+
+                // Create a new control view with this model.
+                var controlView = new ControlView({model: niModel});
+                this.nameinterpreter.show(controlView);
+            },
+
+            saveResponseToDetails: function (response) {
+                this.model.addToDetails(this.oe.eid, response);
+                this.model.save();
+            }
+        });
+    }, {
+        "../../oe_client/models/model-eddi": 23,
+        "../model-namelist/NameModel": 73,
+        "./NINameTag": 43,
+        "./templateNINameLayout.ejs": 46
+    }],
+    43: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/12/15.
+         * oe/oe_modules/control-basic-nameinterpret/NINameTag.js:3
+         */
+
+        var template = require('./templateNINameTag.ejs');
+        var NameModel = require('../model-namelist/NameModel');
+
+        module.exports = Mn.ItemView.extend({
+            model: NameModel,
+            template: template
+        });
+
+    }, {"../model-namelist/NameModel": 73, "./templateNINameTag.ejs": 47}],
+    44: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/10/15.
+         * oe/oe_modules/control-basic-nameinterpret/ViewBasicNameInterpret.js:3
+         *
+         * The way I want this to work, is that this part should be able to use any
+         * eddi that has a 'response' as its updated attribute. It would capture the
+         * response and save it as part of the details of the alter.
+         *
+         */
+
+        "use strict";
+
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var NICollectionView = require('./NICollectionView');
+        var templateLayout = require('./templateNameInterpret.ejs');
+
+        var NILayoutView = Mn.LayoutView.extend({
+            model: EddiModel,
+            template: templateLayout,
+            regions: {
+                interpreters: "#oe-basic-nameinterpreters"
+            },
+            onShow: function () {
+                // show the collection view
+                var niList = new NICollectionView({
+                    collection: app.currentPool.namelist,
+                    namelist: this.model.get('namelist'),
+                    oe: this.model.get('oe')
+                });
+                this.interpreters.show(niList);
+            }
+        });
+
+        module.exports = NILayoutView;
+
+
+    }, {"../../oe_client/models/model-eddi": 23, "./NICollectionView": 41, "./templateNameInterpret.ejs": 48}],
+    45: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/10/15.
+         *
+         */
+
+        var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./ViewBasicNameInterpret');
+        templates.eddicontrol = require('./templateNameInterpret.ejs');
+        templates.nameinterpret = require('./templateOEBasicNameInterpreter.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+    }, {"./ViewBasicNameInterpret": 44, "./templateNameInterpret.ejs": 48, "./templateOEBasicNameInterpreter.ejs": 49}],
+    46: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
+            __p += '<paper-shadow class="NameInterpreterBox"><div id="niNameLayoutName"></div><div id="niNameLayoutControl"></div></paper-shadow><style>.NameInterpreterBox {\n        margin-top: 5px;\n        margin-bottom: 5px;\n    }\n\n    #niNameLayoutName {\n\n    }</style>';
+            return __p;
+        };
+
+    }, {"lodash": 7}],
+    47: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
+            __p += '<div class="niNameTag"><h3>' +
+                ((__t = ( rc.name )) == null ? '' : _.escape(__t)) +
+                '</h3></div><style>.niNameTag {\n        padding-left: 10px;\n    }</style>';
+            return __p;
+        };
+
+    }, {"lodash": 7}],
+    48: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
+            __p += '<div id="oe-basic-nameinterpreters">Name Layout!</div>';
+            return __p;
+        };
+
+    }, {"lodash": 7}],
+    49: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    50: [function (require, module, exports) {
+        /**
  * Created by jfagan on 4/7/15.
+         * The index file for the checklist module
+         * oe/oe_modules/control-checklist/client-index.js:4
+         */
+
+
+        var views = {};
+        var templates = {};
+
+// The eddi control view
+// view shorttext
+        views.eddicontrol = require('./viewChecklist');
+
+// The view template
+        templates.eddicontrol = require('./templateChecklist.ejs');
+
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+
+    }, {"./templateChecklist.ejs": 51, "./viewChecklist": 52}],
+    51: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    52: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 3/24/15.
+         * oe/oe_modules/control-checklist/viewChecklist.js
+         */
+
+        var PolymerView = require('../../oe_client/views/marionette.polymerview');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('./templateChecklist.ejs');
+
+        module.exports = PolymerView.extend({
+            tagName: 'oe-checklist',
+            //class: 'oe-checklist',
+            model: EddiModel,
+            template: template,
+            initialize: function () {
+                this._initializeCheckboxArray();
+            },
+            _initializeCheckboxArray: function () {
+                // If the value is null, then I want to default the different array values
+                if (this.model.attributes.response.value === null) {
+                    var responseValue = {};
+                    _(this.model.attributes.arrayPrompts).forEach(function (x) {
+                        responseValue[x.arrayid] = false;
+                    }).value();
+                    this.model.attributes.response.value = responseValue;
+                }
+            }
+        });
+
+
+    }, {
+        "../../oe_client/models/model-eddi": 23,
+        "../../oe_client/views/marionette.polymerview": 35,
+        "./templateChecklist.ejs": 51
+    }],
+    53: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/5/15.
+         * oe/oe_modules/control-namegen/BasicNameCard.js
+         */
+
+        var PolymerView = require('../../oe_client/views/marionette.polymerview');
+        var template = require('./templateBasicNameCard.ejs');
+
+        module.exports = PolymerView.extend({
+            template: template,
+            tagName: 'oe-basic-name-card',
+            initialize: function (options) {
+                this.namelist = options.namelist;
+                this.$el.on('remove-name', _.bind(this.removeName, this));
+                this.$el.on('edit-done', _.bind(this.editDone, this));
+            },
+            removeName: function () {
+                this.model.removeFromList(this.namelist);
+            },
+            editDone: function () {
+                this.model.save();
+            }
+        });
+
+
+    }, {"../../oe_client/views/marionette.polymerview": 35, "./templateBasicNameCard.ejs": 58}],
+    54: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/29/15.
+         * oe/oe_modules/control-namegen/BasicNameGen-NameInput.js
+         */
+        'use strict';
+
+        var PolymerView = require('../../oe_client/views/marionette.polymerview');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('./templateBasicNameGen-NameInput.ejs');
+
+        module.exports = PolymerView.extend({
+            tagName: "oe-basicnamegen-nameinput",
+            model: EddiModel,
+            template: template
+        });
+
+    }, {
+        "../../oe_client/models/model-eddi": 23,
+        "../../oe_client/views/marionette.polymerview": 35,
+        "./templateBasicNameGen-NameInput.ejs": 59
+    }],
+    55: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/5/15.
+         * oe/oe_modules/control-namegen/BasicNameGen-Names.js
+         */
+        "use strict";
+
+        var BasicNameCard = require('./BasicNameCard');
+
+        module.exports = Mn.CollectionView.extend({
+            childView: BasicNameCard,
+            initialize: function () {
+                this.childViewOptions = {
+                    namelist: this.options.namelist
+                };
+            },
+            filter: function (child, index, collection) {
+                return child.inList(this.options.namelist);
+            },
+            onRender: function () {
+                console.log('Name collection rendering');
+            }
+        });
+
+    }, {"./BasicNameCard": 53}],
+    56: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/27/15.
+         * oe/oe_modules/control-namegen/BasicNameGenerator.js
+         *
+         * BasicNameGenerator             layout view
+         *    BasicNameGen-NameInput      control for inputting a new name
+         *    BasicNameGen-Names          collection view
+         *        BasicNameCard           view for a single name. includes controls for changing or deleting the name
+         *
+         */
+        "use strict";
+
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var NameInputView = require('./BasicNameGen-NameInput');
+        var NamesView = require('./BasicNameGen-Names');
+        var template = require('./templateBasicNamegen.ejs');
+
+        module.exports = Mn.LayoutView.extend({
+            model: EddiModel,
+            template: template,
+            regions: {
+                nameinput: "#oe-basicnamegen-nameinput",
+                namelist: "#oe-basicnamegen-names"
+            },
+            onShow: function () {
+                // Display the name input and the name list
+                var nameInputView = new NameInputView({model: this.model});
+                this.nameinput.show(nameInputView);
+
+                // Display the list of names
+                var namesView = new NamesView({
+                    collection: app.currentPool.namelist,
+                    namelist: this.model.get('namelist')
+                });
+                this.namelist.show(namesView);
+            }
+        });
+    }, {
+        "../../oe_client/models/model-eddi": 23,
+        "./BasicNameGen-NameInput": 54,
+        "./BasicNameGen-Names": 55,
+        "./templateBasicNamegen.ejs": 60
+    }],
+    57: [function (require, module, exports) {
+        /**
+         *
+         * oe/oe_modules/control-namegen/client-index.js
+         */
+        "use strict";
+
+        var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./BasicNameGenerator');
+        templates.eddicontrol = require('./templateBasicNamegen.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+    }, {"./BasicNameGenerator": 56, "./templateBasicNamegen.ejs": 60}],
+    58: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    59: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    60: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
+            __p += '<div id="oe-basicnamegen-nameinput"></div><div id="oe-basicnamegen-names"></div>';
+            return __p;
+        };
+
+    }, {"lodash": 7}],
+    61: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/8/15.
+         * oe/oe_modules/control-namepick/NamePick-Name.js:3
+         */
+
+        var template = require('./templateNamePickName.ejs');
+
+        module.exports = Mn.PolymerView.extend({
+            template: template,
+            tagName: 'oe-name-pick',
+            initialize: function (options) {
+                // Make the namelist convient to access
+                this.namelist = options.namelist;
+                // Add the namelist to the oe object here, so that the component can read it
+                var oe = this.model.attributes.oe || {};
+                oe.namelist = this.namelist;
+                oe.inlist = this.model.inList(this.namelist);
+                this.model.set('oe', oe);
+
+                this.$el.on('toggle-name', _.bind(this.toggleName, this));
+            },
+            toggleName: function () {
+                if (this.model.inList(this.namelist)) {
+                    this.model.removeFromList(this.namelist);
+                    this.model.attributes.oe.inlist = false;
+                } else {
+                    this.model.appendToList(this.namelist);
+                    this.model.attributes.oe.inlist = true;
+                }
+            }
+        });
+
+    }, {"./templateNamePickName.ejs": 65}],
+    62: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/8/15.
+         * oe/oe_modules/control-namepick/NamePick.js:3
+         *
+         * The name picker allows a user to add existing names to a namelist.
+         * Usually used sequentially with a name generator.
+         *
+         * LayoutView and CollectionView are both here.
+         * Then the name-card component and
+         *
+         */
+
+        var NamePickCard = require('./NamePick-Name');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('./templateNamePick.ejs');
+
+        var NamePickList = Mn.CollectionView.extend({
+            childView: NamePickCard,
+            initialize: function () {
+                this.childViewOptions = {
+                    namelist: this.options.namelist
+                };
+            }
+        });
+
+        module.exports = Mn.LayoutView.extend({
+            model: EddiModel,
+            template: template,
+            initialize: function () {
+                console.log('initialize namepick');
+            },
+            regions: {
+                namePickNames: "#oe-namepick-names"
+            },
+            onShow: function () {
+                // Display the list of names
+                var namePickList = new NamePickList({
+                    collection: app.currentPool.namelist,
+                    namelist: this.model.get('namelist')
+                });
+                this.namePickNames.show(namePickList);
+            }
+        });
+
+
+    }, {"../../oe_client/models/model-eddi": 23, "./NamePick-Name": 61, "./templateNamePick.ejs": 64}],
+    63: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/8/15.
+         * oe/oe_modules/control-namepick/client-index.js:3
+         */
+
+        var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./NamePick');
+        templates.eddicontrol = require('./templateNamePick.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+    }, {"./NamePick": 62, "./templateNamePick.ejs": 64}],
+    64: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
+            __p += '<div id="oe-namepick-names"></div>';
+            return __p;
+        };
+
+    }, {"lodash": 7}],
+    65: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    66: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/15/15.
+         * oe/oe_modules/control-radiolist/client-index.js
+         */
+
+        var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./viewRadiolist');
+
+        templates.eddicontrol = require('./templateRadiolist.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+
+    }, {"./templateRadiolist.ejs": 67, "./viewRadiolist": 68}],
+    67: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    68: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/15/15.
+         * oe/oe_modules/control-radiolist/viewRadiolist.js
+         */
+
+        var PolymerView = require('../../oe_client/views/marionette.polymerview');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('./templateRadiolist.ejs');
+
+        module.exports = PolymerView.extend({
+            tagName: 'oe-radiolist',
+            model: EddiModel,
+            template: template,
+            initialize: function () {
+                this._initializeSelected();
+            },
+            _initializeSelected: function () {
+                var respVal = this.model.attributes.response.value;
+                if (this.model.attributes.response.value === null) {
+                    this.model.attributes.oe.selection = '';
+                } else {
+                    this.model.attributes.oe.selection = '2';
+
+                    //var arrayPrompts = this.model.attributes.arrayPrompts;
+                    //this.model.attributes.oe.selection= _(arrayPrompts)
+                    //    .where({value: respVal})
+                    //    .value()[0]
+                    //    .prompt;
+                }
+            }
+        });
+
+    }, {
+        "../../oe_client/models/model-eddi": 23,
+        "../../oe_client/views/marionette.polymerview": 35,
+        "./templateRadiolist.ejs": 67
+    }],
+    69: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/7/15.
  * The index file for the shorttext file
  * oe/oe_modules/control-shorttext/index.js
  */
@@ -28126,9 +30142,11 @@ templates.eddicontrol = require('./templateShorttext.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-},{"./templateShorttext.ejs":38,"./viewShorttext":39}],38:[function(require,module,exports){
-arguments[4][27][0].apply(exports,arguments)
-},{"dup":27,"lodash":5}],39:[function(require,module,exports){
+    }, {"./templateShorttext.ejs": 70, "./viewShorttext": 71}],
+    70: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    71: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-shorttext/view-shorttext.js
@@ -28145,5 +30163,421 @@ module.exports = PolymerView.extend({
 });
 
 
+    }, {
+        "../../oe_client/models/model-eddi": 23,
+        "../../oe_client/views/marionette.polymerview": 35,
+        "./templateShorttext.ejs": 70
+    }],
+    72: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/27/15.
+         * oe/oe_modules/control-shorttext/NameCollection.js
+         */
 
-},{"../../oe_client/models/model-eddi":21,"../../oe_client/views/marionette.polymerview":32,"./templateShorttext.ejs":38}]},{},[1]);
+        var NameModel = require('./NameModel');
+
+        module.exports = Backbone.Collection.extend({
+            model: NameModel,
+            url: function () {
+                return '/api/namelist/' + app.appState.get('puid');
+            },
+
+            initialize: function () {
+                // Make sure that a localstorage instance is created
+                this.createStore();
+            },
+
+            // Will return an array of models that are in a particular named list
+            namesInList: function (nl) {
+                var oarray = [];
+                for (var i = 0; i < this.length; i++) {
+                    if (_.indexOf(this.models[i].attributes.lists, nl) != -1) {
+                        oarray.push(this.models[i]);
+                    }
+                }
+                return (oarray);
+            },
+
+            // Sort by the name
+            comparator: function (name) {
+                return name.get('name');
+            },
+
+            //returns the number of names in a specified list
+            countOfList: function (ll) {
+                var ml = this.models;
+                var cn = 0;
+                _.each(ml, function (qq) {
+                    if (_.indexOf(qq.toJSON().lists, ll) != -1) {
+                        cn++;
+                    }
+                });
+                return cn;
+            }
+
+        });
+    }, {"./NameModel": 73}],
+    73: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/23/15.
+         * oe/oe_modules/model-namelist/NameModel.js
+         *
+         * This is largely lifted from OpenEddi pre2
+         */
+        'use strict';
+
+        var guid = require('../../oe_client/helpers/guid');
+
+        module.exports = Backbone.Model.extend({
+            defaults: function () {
+                //noinspection SpellCheckingInspection
+                var newid = guid();
+                return {
+                    id: newid,
+                    name: "",
+                    lists: [],
+                    details: {ties: {}},
+                    oe: {}
+                };
+            },
+
+            initialize: function () {
+                this.on('sync', this.onSync);
+            },
+
+            onSync: function (ev) {
+                app.appState.trigger('nameSync');
+                app.appState.set('lastsynced', ev.id);
+            },
+
+            addToDetails: function (key, val) {
+                // when retrieving an empty details object from the server
+                // it is coerced to an array, this fixes that
+                if (this.attributes.details instanceof Array) {
+                    if (!this.attributes.details.length) {
+                        this.attributes.details = {};
+                    }
+                }
+
+                this.attributes.details[key] = val;
+                this.trigger('reset');
+            },
+
+            appendToList: function (x) {
+                var ix = _.indexOf(this.attributes.lists, x);
+                if (ix === -1) {
+                    this.attributes.lists.push(x);
+                }
+
+                this.trigger('reset');
+                this.save();
+            },
+
+            removeFromList: function (x) {
+                var ix = _.indexOf(this.attributes.lists, x);
+
+                if (ix > -1) {
+                    this.attributes.lists.splice(ix, 1);
+
+                    // if the lists are totally empty, destroy the model
+                    if (this.attributes.lists.length === 0) {
+                        this.destroy();
+                        return;
+                    }
+
+                    // if the list is not empty, just trigger the change event
+                    this.trigger('reset');
+                    this.save();
+                }
+            },
+
+            // is a namelist in the list of lists
+            inList: function (x) {
+                var ix = _.indexOf(this.attributes.lists, x);
+
+                return (ix > -1);
+            },
+
+            removename: function () {
+                this.destroy();
+            },
+
+            addTie: function (nameid, tiedetails, savethis) {
+                if (typeof this.attributes.details.ties === 'undefined') {
+                    this.attributes.details.ties = {};
+                }
+
+                savethis = typeof savethis === 'undefined' ? true : savethis;
+
+                /***********************************
+                 * Ties are stored as a node-list. Each name should have a list of
+                 * names it is connected to. Each entry in the list contains the details
+                 * of each type of relationship.
+                 *
+                 * The ties object has objects in it like this:
+                 *  ties =
+                 *    {"a": [
+			*		{relation: "communicate", type: "undirected", weight: 3},
+			*		{relation: "giveadvice", type: "directed", weight: 1}],
+			*	"b": [
+			*		{relation: "communicate", type: "undirected", weight: 3}]
+			*	}
+                 */
+
+                var ties = this.attributes.details.ties;
+
+                if (!_.has(ties, nameid)) {
+                    ties[nameid] = [];
+                    ties[nameid].push(tiedetails);
+                } else {
+                    var ix = _.indexOf(_.pluck(ties[nameid], 'relation'), tiedetails.relation);
+                    ties[nameid][ix] = tiedetails;
+                }
+
+                if (savethis) {
+                    this.save();
+                }
+
+                //noinspection SpellCheckingInspection
+                this.trigger('tieschanged');
+            },
+
+            // Does this have a tie with nameid of a certain relationship?
+            hasTieWith: function (nameid, relation) {
+                var otherName = app.names.get(nameid);
+                if (otherName === undefined) {
+                    return;
+                }
+                // TODO: throw an error in this case
+
+                var ties = this.attributes.details.ties;
+
+                for (var k in ties) {
+                    if (k == otherName.id) {
+                        if (typeof relation === 'undefined') {
+                            return true;
+                        } else {
+                            for (var i = 0; i < ties[k].length; i++) {
+                                if (ties[k][i].relation === relation) {
+                                    return true;
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                return false;
+            },
+
+            removeTie: function (nameid, tiedetails) {
+                if (typeof this.attributes.details.ties === 'undefined') {
+                    this.attributes.details.ties = {};
+                }
+
+                var ties = this.attributes.details.ties;
+
+                if (!_.has(ties, nameid)) {
+                    return;
+                } else {
+                    var ix = _.indexOf(_.pluck(ties[nameid], 'relation'), tiedetails.relation)
+                    ties[nameid].splice(ix, 1);
+                }
+
+                this.trigger('tieschanged');
+            },
+
+            // Remove all ties of a certain relation
+            clearTies: function (tiedetails) {
+                if (typeof this.attributes.details.ties === 'undefined') {
+                    return;
+                }
+
+                this.attributes.details.ties = {};
+
+                this.trigger('tieschanged');
+            },
+
+            // check the condition of the name
+            checkCondition: function (conds) {
+                // if there are no conditions, return true
+                // otherwise check the condition
+                if (false) {  // Note: it's currently if (false) because it's not really working right now.
+                    var conds = conds.details;
+                    var comp = conds.comparator;
+                    var results = [];
+
+                    if (typeof conds === 'object') {
+                        var b = [];
+                        b.push(conds);
+                        conds = b;
+                    }
+
+                    // test each condition
+                    for (var i = 0; i < conds.length; i++) {
+                        var dat = this.attributes.details[conds[i].detail];
+                        var val = dat.value;
+                        if (typeof val === 'string') {
+                            if (val.match(/[a-zA-Z]/) === null) {
+                                val = parseInt(val);
+                            }
+                        }
+                        if (typeof val === 'undefined') {
+                            results.push(false);
+                            continue;
+                        }
+                        switch (conds[i].comparator) {
+                            case '===':
+                                results.push(val === conds[i].value);
+                                break;
+                            case '!==':
+                                results.push(val !== conds[i].value);
+                                break;
+                            case '>':
+                                results.push(val > conds[i].value);
+                                break;
+                            case '<':
+                                results.push(val < conds[i].value);
+                                break;
+                            default:
+                                console.log('Missing / bad comparator!');
+                                results.push(null);
+                                break;
+                        }
+                    }
+
+                    // if there is more than one condition, test them with the group comparator
+                    // otherwise just return the first item in results
+                    if (conds.length > 1) {
+                        switch (comp) {
+                            case '&&':
+                                return _.filter(results, function (q) {
+                                        return q;
+                                    }).length == results.length;
+                                break;
+                            case '||':
+                                return _.contains(results, true);
+                                break;
+                            default:
+                                console.log('Missing / bad group comparator!');
+                                return true; // default to showing the question
+                        }
+                    } else {
+                        return results[0];
+                    }
+
+                } else {
+                    return true;
+                }
+            }
+
+
+        });
+    }, {"../../oe_client/helpers/guid": 16}],
+    74: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/4/15.
+         * oe/oe_modules/model-namelist/NamelistPrep.js:3
+         *
+         * These functions should run when a new pool is created
+         * or an existing pool is being loaded. It prepares the namelist
+         * models and collections.
+         */
+
+        var App = require('../../oe_client/application');
+        var NamelistCollection = require('./NameCollection');
+
+// Need to add the callback, since it is part of an async series queue
+        App.prototype.prepNamelistForLaunch = function (callback) {
+            this.currentPool.namelist = new NamelistCollection();
+
+            // These next two steps seem redundant, but it's just in case
+            // there are other steps in between sync and ready in the future.
+            app.channels.namelist.once('namelist-ready', function () {
+                callback(null);
+            });
+
+            this.currentPool.namelist.once('sync', function () {
+                app.channels.namelist.trigger('namelist-ready');
+            });
+
+            this.currentPool.namelist.fetch();
+        };
+
+// Now add it to the loadPoolQueue
+        var oldApplicationInitialize = App.prototype.initialize;
+        App.prototype.initialize = function () {
+            oldApplicationInitialize.apply(this, arguments);
+            this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
+        };
+
+    }, {"../../oe_client/application": 10, "./NameCollection": 72}],
+    75: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/1/15.
+         * oe/oe_modules/model-namelist/NamelistRadio.js
+         */
+        "use strict";
+
+        var App = require('../../oe_client/application');
+
+        var oldRegisterRadioChannels = App.prototype.registerRadioChannels;
+        App.prototype.registerRadioChannels = function () {
+            this.channels.namelist = Backbone.Radio.channel('namelist');
+            Backbone.Radio.tuneIn('namelist');
+            oldRegisterRadioChannels.apply(this, arguments);
+        };
+
+        var oldListenRadioChannels = App.prototype.listenRadioChannels;
+        App.prototype.listenRadioChannels = function () {
+            this.channels.namelist.comply('add-new-name', this.namelistAddNewName, this);
+            oldListenRadioChannels.apply(this, arguments);
+        };
+
+        App.prototype.namelistAddNewName = function (e) {
+            console.log('--- App: add new name.');
+            console.log(e);
+
+            var newname = this.currentPool.namelist.create({
+                name: e.name,
+                namelist: e.namelist,
+                puid: app.appState.get('puid'),
+                poolid: app.appState.get('poolid')
+            });
+
+            if (this.currentPool.namelist.remote) {
+                newname.once('sync', function () {
+                    newname.appendToList(e.namelist);
+                });
+            } else {
+                newname.appendToList(e.namelist);
+            }
+        };
+
+
+    }, {"../../oe_client/application": 10}],
+    76: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/22/15.
+         *
+         */
+        "use strict";
+
+
+        var models = {};
+        var views = {};
+        var collections = {};
+
+        models.oemodel = require('./NameModel');
+        collections.oecollection = require('./NameCollection');
+
+// Add the radio channels
+        require('./NamelistRadio');
+
+// Add the prep functions
+        require('./NamelistPrep');
+
+        module.exports.models = models;
+        module.exports.views = views;
+    }, {"./NameCollection": 72, "./NameModel": 73, "./NamelistPrep": 74, "./NamelistRadio": 75}]
+}, {}, [1]);

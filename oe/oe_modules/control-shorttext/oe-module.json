@@ -11,8 +11,5 @@
   },
   "views" : {
     "eddicontrol" : "ViewShorttext"
-  },
-  "apis" : {
-    "crud" : "ApiShorttext"
   }
 }

@@ -1,3 +1,9 @@
 var OEModules = {};
+OEModules.basicnameinterpret = require('./oe_modules/control-basic-nameinterpret/client-index');
+OEModules.checklist = require('./oe_modules/control-checklist/client-index');
+OEModules.basicnamegen = require('./oe_modules/control-namegen/client-index');
+OEModules.namepick = require('./oe_modules/control-namepick/client-index');
+OEModules.radiolist = require('./oe_modules/control-radiolist/client-index');
 OEModules.shorttext = require('./oe_modules/control-shorttext/client-index');
+OEModules.namelist = require('./oe_modules/model-namelist/client-index');
 module.exports = OEModules;

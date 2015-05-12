@@ -31,6 +31,8 @@ module.exports = Backbone.Model.extend({
         this.eddis = new EddiCollection();
         this.sheets = new SheetColllection(this.toJSON().sheets);
 
+        this.set('poolLength', this.get('pool').sheetOrder.length);
+
         // If it's a new pool, then create the question logic for everything
         // It also saves it to the server.
         // Otherwise, fetch the question data and then announce when it's done

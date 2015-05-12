@@ -1,0 +1,15 @@
+{
+  "name": "checklist",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "A check-box control",
+  "components": {
+    "eddicontrol": "checklist.html"
+  },
+  "templates": {
+    "eddicontrol": "TemplateChecklist"
+  },
+  "views": {
+    "eddicontrol": "ViewChecklist"
+  }
+}

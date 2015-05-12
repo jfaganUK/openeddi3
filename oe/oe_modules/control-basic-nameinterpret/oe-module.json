@@ -1,0 +1,17 @@
+{
+  "name": "basicnameinterpret",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "The name interpreter allows the respondent to specify details about each alter.",
+  "components": {
+    "eddicontrol": "oe-basic-nameinterpreter.html",
+    "templatecomponents": "nameinterpreter-components.html"
+  },
+  "templates": {
+    "eddicontrol": "templateNameInterpret",
+    "nameinterpret": "templateOEBasicNameInterpreter"
+  },
+  "views": {
+    "eddicontrol": "ViewBasicNameInterpret"
+  }
+}

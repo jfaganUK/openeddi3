@@ -6,14 +6,34 @@
     "subtitle": "A new generation of data collection and interaction.",
     "intro": "Introduction goes here.",
     "outtro": "The exit message goes here.",
-    "sheetOrder": [1,2,3],
+    "sheetOrder": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
     "dateCreated": "2015-03-09 11:18:23-04:00"
   },
   "sheets" :
   [
     {"sheetid": 1, "title" : "Sheet 1", "description" : "describe the sheet"},
     {"sheetid": 2, "title" : "Sheet 2", "description" : "describe the sheet"},
-    {"sheetid": 3, "title" : "Sheet 3", "description" : "describe the sheet"}
+    {
+      "sheetid": 3,
+      "title": "Sheet 3",
+      "description": "describe the sheet"
+    },
+    {
+      "sheetid": 4,
+      "title": "Sheet 4",
+      "description": "describe the sheet"
+    },
+    {
+      "sheetid": 5,
+      "title": "Sheet 5",
+      "description": "describe the sheet"
+    }
   ],
   "eddis" :
   [
@@ -28,6 +48,88 @@
     },
     {
       "eid": "102",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": 1,
+      "title": "someGoodFoods",
+      "controlmodule": "checklist",
+      "prompt": "Which foods have you eaten in the last month?",
+      "arrayPrompts": [
+        {
+          "arrayid": 0,
+          "prompt": "apple",
+          "value": "apple"
+        },
+        {
+          "arrayid": 1,
+          "prompt": "orange",
+          "value": "orange"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "ice",
+          "value": "ice"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "delicious air",
+          "value": "air"
+        }
+      ]
+    },
+    {
+      "eid": "103",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": 1,
+      "title": "respondentAge",
+      "controlmodule": "radiolist",
+      "prompt": "Which range best describes your age?",
+      "arrayPrompts": [
+        {
+          "arrayid": 0,
+          "prompt": " 0-18 years",
+          "value": "1"
+        },
+        {
+          "arrayid": 1,
+          "prompt": "19-25 years",
+          "value": "2"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "26-35 years",
+          "value": "3"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "36-45 years",
+          "value": "4"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "46-55 years",
+          "value": "5"
+        },
+        {
+          "arrayid": 5,
+          "prompt": "56-65 years",
+          "value": "6"
+        },
+        {
+          "arrayid": 6,
+          "prompt": "66-75 years",
+          "value": "7"
+        },
+        {
+          "arrayid": 7,
+          "prompt": "76+ years",
+          "value": "8"
+        }
+      ]
+    },
+    {
+      "eid": "201",
       "sheetid": "2",
       "poolid": "test1",
       "sortIndex": 0,
@@ -36,13 +138,68 @@
       "prompt": "Tell me something bad"
     },
     {
-      "eid": "103",
+      "eid": "202",
+      "sheetid": "2",
+      "poolid": "test1",
+      "sortIndex": 1,
+      "title": "generate25",
+      "controlmodule": "basicnamegen",
+      "prompt": "Please list 25 people that you know.",
+      "namelist": "gen25"
+    },
+    {
+      "eid": "302",
+      "sheetid": "3",
+      "poolid": "test1",
+      "sortIndex": 1,
+      "title": "gotoMovies",
+      "controlmodule": "namepick",
+      "prompt": "Do you go to the movies with any of the people listed?",
+      "namelist": "gotomovies"
+    },
+    {
+      "eid": "301",
       "sheetid": "3",
       "poolid": "test1",
       "sortIndex": 0,
       "title": "aOkayName",
       "controlmodule": "shorttext",
       "prompt": "Tell me something okay"
+    },
+    {
+      "eid": "401",
+      "sheetid": "4",
+      "poolid": "test1",
+      "sortIndex": 0,
+      "title": "gotoMoviesPick",
+      "controlmodule": "basicnamegen",
+      "prompt": "Does anyone else listed go to movies with you?",
+      "namelist": "gotomovies"
+    },
+    {
+      "eid": "501",
+      "sheetid": "5",
+      "poolid": "test1",
+      "sortIndex": 0,
+      "title": "alterGender",
+      "controlmodule": "basicnameinterpret",
+      "prompt": "What is the gender of each of the alters you named?",
+      "niEddi": "radiolist",
+      "niEddiDetails": {
+        "arrayPrompts": [
+          {
+            "arrayid": 0,
+            "prompt": "Male",
+            "value": "1"
+          },
+          {
+            "arrayid": 1,
+            "prompt": "Female",
+            "value": "1"
+          }
+        ]
+      }
+
     }
 
   ]

@@ -1,0 +1,29 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html"/>
+
+<polymer-element name="oe-pool-header" attributes="oe pool">
+    <template>
+        <core-toolbar id="oe-pool-header-toolbar" flex>
+            <core-icon-button icon="arrow-back" class="poolNavBack" on-tap="{{poolNavBackClick}}"></core-icon-button>
+            <span class="poolTitle" flex>{{ pool.title }}</span>
+            <core-icon-button icon="arrow-forward" class="poolNavForward"
+                              on-tap="{{poolNavForwardClick}}"></core-icon-button>
+        </core-toolbar>
+        <style>
+            #oe-pool-header-toolbar {
+                background-color: #819fff;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-pool-header', {
+            poolNavBackClick: function () {
+                app.channels.navigation.command('pool-prev-sheet');
+            },
+
+            poolNavForwardClick: function () {
+                app.channels.navigation.command('pool-next-sheet');
+            }
+        });
+    </script>
+</polymer-element>

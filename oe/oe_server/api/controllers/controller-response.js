@@ -8,12 +8,12 @@ var log = require('util').log;
 
 /*
  * Get one response by id
- * GET /responses/rid/:rid/:id
+ * GET /responses/:rid/:id
  */
 
 function getResponse(req, res, next) {
     console.log('-- Get one response');
-    Response.find({where: {id: req.param.id, puid: req.params.puid}})
+    Response.find({where: {id: req.params.id, puid: req.params.puid}})
         .complete(function(err, response) {
             if (!!err) {
                 res.status(400).send("Unable to find response.");

@@ -4,11 +4,12 @@
  */
 "use strict";
 
+var async = require('async');
 var LandingView = require('./layouts/layout-landing');
 var guid = require('./helpers/guid');
 
 var App = Marionette.Application.extend({
-    initialize: function(opts) {
+    initialize: function () {
         this.regions = {};
         this.layouts = {};
         this.views = {};
@@ -18,12 +19,21 @@ var App = Marionette.Application.extend({
 
         this.registerRadioChannels();
         this.listenRadioChannels();
+
+        // These are the functions that have to run to load an existing pool
+        // Note: it is run using the async library, so make sure to bind the context.
+        this.loadPoolQueue = [
+            this.fetchCurrentPool.bind(this)
+        ];
     },
 
     listenRadioChannels: function() {
         this.channels.navigation.comply('load-landing', this.loadLanding, this);
         this.channels.navigation.comply('load-pool', this.loadPool, this);
         this.channels.navigation.comply('new-pool', this.newPool, this);
+
+        this.channels.navigation.comply('pool-prev-sheet', this.prevSheet, this);
+        this.channels.navigation.comply('pool-next-sheet', this.nextSheet, this);
 
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
@@ -51,6 +61,7 @@ var App = Marionette.Application.extend({
 
     loadLanding: function() {
         var landingView = new LandingView;
+        //noinspection JSUnresolvedVariable
         this.appSpace.show(landingView);
 
         // Grab the existing pools
@@ -64,6 +75,7 @@ var App = Marionette.Application.extend({
         poolListingsCollection.on('sync', function () {
             console.log('--- PoolListingsSynced');
             poolListingsView = new PoolListingsView({collection: this});
+            //noinspection JSUnresolvedVariable
             landingView.pools.show(poolListingsView);
         });
     },
@@ -74,9 +86,38 @@ var App = Marionette.Application.extend({
         this.loadPool(e);
     },
 
-    loadPool: function(e) {
+    /*
+     *  Part of the loadPoolQueue.
+     *  Will load the fetch the current pool data.
+     *
+     */
+    fetchCurrentPool: function (callback) {
+        // Note this will load the logic of the pool, but not any prior existing responses
+        // Set the id of the pool model so that it fetches from localStorage if possible
+        // If the data is already in localstorage it will load that.
         var PoolModel = require('./models/model-pool');
-        var poolid = e.poolid;
+        var poolid = app.appState.get('poolid');
+        var puid = app.appState.get('puid');
+
+        this.currentPool = new PoolModel();
+        this.currentPool.set('poolid', poolid);
+        if (puid) {
+            this.currentPool.set('puid', puid)
+        }
+        this.currentPool.fetch();
+
+        // The pool model will also sync the eddis (response data)
+        // So wait for the eddis-synced, then trigger the async callback
+        // TODO: think about error handling here
+        app.channels.pool.once('eddis-synced', function () {
+            callback(null);
+        });
+    },
+
+    loadPool: function (e) {
+        if (e.poolid) {
+            app.appState.set('poolid', e.poolid);
+        }
 
         // If the load-pool-sheet command was complied with, then there will be a sheetid property
         if(e.sheetid) {
@@ -84,17 +125,18 @@ var App = Marionette.Application.extend({
             app.appState.save();
         }
 
-        // Note this will load the logic of the pool, but not any prior existing responses
-        // Set the id of the pool model so that it fetches from localStorage if possible
-        // If the data is already in localstorage it will load that.
-        this.currentPool = new PoolModel();
-        this.currentPool.set('poolid', poolid);
-        if(e.puid) { this.currentPool.set('puid', e.puid) }
-        this.currentPool.fetch();
-        app.channels.pool.once('eddis-synced', _.bind(this.prepPoolLaunch, this));
+        // Once the pool is ready, launch it
+        app.channels.pool.once('load-pool-ready', _.bind(this.poolLaunch, this));
+
+        // Execute all the functions in the loadPoolQueue
+        // Then tell the pool channel that everything is ready.
+        async.series(this.loadPoolQueue, function () {
+            app.channels.pool.trigger('load-pool-ready');
+        });
+
     },
 
-    prepPoolLaunch: function() {
+    poolLaunch: function () {
 
         // Set the appState variables
         if (!this.appState.get('poolid')) {
@@ -108,6 +150,7 @@ var App = Marionette.Application.extend({
         // Start the pool at the previous sheet index, unless there isn't a previous, in which case start at the beginning
         var sheetid = this.appState.get('sheetid');
         if (!sheetid) {
+            //noinspection JSUnresolvedVariable
             sheetid = this.currentPool.get('pool').sheetOrder[0];
             this.appState.set('sheetid', sheetid);
         }
@@ -116,6 +159,8 @@ var App = Marionette.Application.extend({
 
         var PoolView = require('./layouts/layout-pool');
         this.poolView = new PoolView;
+        // Defined in the oe.js launch
+        //noinspection JSUnresolvedVariable
         this.appSpace.show(this.poolView);
 
         this.loadSheet();
@@ -132,8 +177,53 @@ var App = Marionette.Application.extend({
             var SheetView = require('./layouts/layout-sheet');
             var sheetid = this.appState.get('sheetid');
             this.poolView.sheetView = new SheetView;
+            //noinspection JSUnresolvedVariable
             this.poolView.sheet.show(this.poolView.sheetView);
         }
+    },
+
+    getCurrentSheetIndex: function () {
+        // Figure out what the previous sheet should be
+        //noinspection JSUnresolvedVariable
+        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var currentSheet = app.appState.get('sheetid');
+
+        // TODO: make sure the types match up
+        return _(sheetOrder).indexOf(currentSheet);
+    },
+
+    prevSheet: function (e) {
+        var idx = this.getCurrentSheetIndex();
+        //noinspection JSUnresolvedVariable
+        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+
+        // If we are at the first page already, then just quit
+        if (idx === 0) {
+            return false;
+        } else {
+            idx--;
+            var newSheet = sheetOrder[idx];
+            app.appState.set('sheetid', newSheet);
+        }
+
+        this.loadSheet(e);
+    },
+
+    nextSheet: function (e) {
+        var idx = this.getCurrentSheetIndex();
+        //noinspection JSUnresolvedVariable
+        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+
+        // If we are at the last page, then quit
+        if (idx >= app.currentPool.get('poolLength') - 1) {
+            return false;
+        } else {
+            idx++;
+            var newSheet = sheetOrder[idx];
+            app.appState.set('sheetid', newSheet);
+        }
+
+        this.loadSheet(e);
     },
 
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript
@@ -143,7 +233,6 @@ var App = Marionette.Application.extend({
     hostReachable: function () {
         // Handle IE and more capable browsers
         var xhr = new ( window.ActiveXObject || XMLHttpRequest )("Microsoft.XMLHTTP");
-        var status;
 
         // Open new request as a HEAD to the root hostname with a random param to bust the cache
         xhr.open("HEAD", "//" + window.location.hostname + "/?rand=" + Math.floor((1 + Math.random()) * 0x10000), false);
@@ -158,13 +247,7 @@ var App = Marionette.Application.extend({
     }
 });
 
-var app = new App();
-
-app.addRegions({
-    appSpace: '#app-space'
-});
-
-module.exports = app;
+module.exports = App;
 
 
 

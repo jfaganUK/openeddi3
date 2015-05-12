@@ -2,5 +2,9 @@
   "options": {},
   "verbose" : true,
   "ignore" : ["oe/oe_client/*", "built.js",".idea/**"],
-  "watch" : ["index.js", "oe/oe_server/*"]
+  "watch": [
+    "index.js",
+    "oe/oe_server/*",
+    "oe/oe_modules/*"
+  ]
 }

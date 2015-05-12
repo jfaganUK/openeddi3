@@ -1,0 +1,26 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-shadow/paper-shadow.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html"/>
+
+<polymer-element name="oe-basic-nameinterpreter" attributes="oe name details">
+    <template>
+        <paper-shadow id="nameCard">
+            {{name}}
+        </paper-shadow>
+        <style>
+            #nameCard {
+                margin-left: 10px;
+                margin-right: 10px;
+                margin-bottom: 5px;
+                margin-top: 5px;
+                padding: 5px;
+                height: 100%;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-basic-nameinterpreter', {})
+    </script>
+
+</polymer-element>

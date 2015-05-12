@@ -1,0 +1,15 @@
+{
+  "name": "radiolist",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "A radio button control",
+  "components": {
+    "eddicontrol": "radiolist.html"
+  },
+  "templates": {
+    "eddicontrol": "TemplateRadiolist"
+  },
+  "views": {
+    "eddicontrol": "ViewRadiolist"
+  }
+}

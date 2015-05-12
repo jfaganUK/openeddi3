@@ -1,0 +1,44 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/core-label/core-label.html"/>
+<link rel="import" href="/bower_components/paper-checkbox/paper-checkbox.html"/>
+
+<polymer-element name="oe-checklist" attributes="oe response">
+    <template>
+        <!--<paper-input class="oe-checklist-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>-->
+        <template repeat="{{ arrayPrompt in oe.arrayPrompts }}">
+            <core-label horizontal layout id="{{oe.eid + '-' + arrayPrompt.arrayid}}">
+                <paper-checkbox for role="checkbox"
+                                class="oe-checklist-checkbox"
+                                aria-labelledby="{{oe.eid + '-' + arrayPrompt.arrayid}}"
+                                on-change="{{oeCheckboxChanged}}"
+                                aria-checked="{{response.value[arrayPrompt.arrayid] ? true : false }}"
+                                data-arrayid="{{arrayPrompt.arrayid}}"
+                                checked?="{{response.value[arrayPrompt.arrayid]}}"
+                        ></paper-checkbox>
+                <div vertical layout>
+                    {{ arrayPrompt.prompt }}
+                </div>
+            </core-label>
+            <br>
+        </template>
+        <style>
+            .oe-checklist-checkbox {
+                padding-right: 20px;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-checklist', {
+            ready: function () {
+            },
+
+            oeCheckboxChanged: function (event, detail, sender) {
+                var arrayid = sender.attributes['data-arrayid'].value;
+                this.response.value[arrayid] = sender.checked;
+                this.fire('change:response');
+            }
+
+        });
+    </script>
+</polymer-element>

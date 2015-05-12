@@ -1,0 +1,17 @@
+{
+  "name": "namepick",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "Add existing names to a namelist using this name picker",
+  "components": {
+    "namepick": "oe-name-pick.html"
+  },
+  "templates": {
+    "eddicontrol": "templateNamePick.ejs",
+    "namepick": "templateNamePickName.ejs"
+  },
+  "views": {
+    "eddicontrol": "NamePick",
+    "namepick": "NamePick-Name"
+  }
+}

@@ -1,0 +1,55 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-shadow/paper-shadow.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html"/>
+
+<polymer-element name="oe-name-pick" attributes="oe name namelist inlist">
+    <template>
+        <paper-shadow id="nameCard" class="{{ {nameInListCard: oe.inlist} | tokenList}}">
+            <section id="namePickCard">
+                <div horizontal layout>
+                    <paper-icon-button icon="done" id="pickName" on-tap="{{pickName}}"
+                                       class="{{ {nameInList: oe.inlist} | tokenList }}"></paper-icon-button>
+                    <span id="nameCardName" on-tap="{{pickName}}" flex>{{name}}</span>
+                    <paper-ripple fit on-tap="{{pickName}}"></paper-ripple>
+                </div>
+            </section>
+        </paper-shadow>
+        <style>
+            #nameCard {
+                margin-left: 10px;
+                margin-right: 10px;
+                margin-bottom: 5px;
+                margin-top: 5px;
+                padding: 5px;
+                height: 100%;
+            }
+
+            .nameInList {
+                color: rgb(13, 144, 79);
+            }
+
+            .nameInListCard {
+                background-color: rgb(242, 224, 199);
+            }
+
+            #nameCardName {
+                height: 24px;
+                padding-top: 12px;
+            }
+
+            #pickName {
+                height: 24px;
+                padding-top: 12px;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-name-pick', {
+            pickName: function () {
+                this.fire('toggle-name');
+            }
+        })
+    </script>
+
+</polymer-element>

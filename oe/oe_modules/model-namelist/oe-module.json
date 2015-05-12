@@ -1,0 +1,22 @@
+{
+  "name": "namelist",
+  "type": "datamodel",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "This module will provide support for social network data in OpenEddi",
+  "models": {
+    "oemodel": "NameModel"
+  },
+  "collections": {
+    "oecollection": "NameCollection"
+  },
+  "api": {
+    "crud": {
+      "file": "ApiCrudNamelist",
+      "name": "CrudNamelist"
+    },
+    "dbmodel": {
+      "file": "ApiModelNamelist",
+      "name": "Namelist"
+    }
+  }
+}

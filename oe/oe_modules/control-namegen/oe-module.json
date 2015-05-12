@@ -1,0 +1,21 @@
+{
+  "name": "basicnamegen",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "A name generator for ego-network data collection",
+  "components": {
+    "nameinput": "basicnamegen-nameinput.html",
+    "namecard": "basic-name-card.html"
+  },
+  "templates": {
+    "eddicontrol": "templateBasicNamegen.ejs",
+    "nameinput": "templateBasicNamegen-NameInput.ejs",
+    "namecard": "templateBasicNameCard.ejs"
+  },
+  "views": {
+    "eddicontrol": "BasicNameGenerator",
+    "nameinput": "BasicNameGen-NameInput",
+    "names": "BasicNameGen-Names",
+    "namecard": "BasicNameCard"
+  }
+}
