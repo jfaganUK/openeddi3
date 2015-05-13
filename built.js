@@ -244,16 +244,16 @@ $(document).ready(function () {
                                 callback(err);
                                 callback = function () {
                                 };
-                            }
-                            else {
+                }
+                else {
                                 completed += 1;
                                 if (completed >= arr.length) {
                                     callback();
-                                }
-                                else {
+                    }
+                    else {
                                     iterate();
-                                }
-                            }
+                    }
+                }
                         });
                     };
                     iterate();
@@ -287,21 +287,21 @@ $(document).ready(function () {
                                 started += 1;
                                 running += 1;
                                 iterator(arr[started - 1], function (err) {
-                                    if (err) {
-                                        callback(err);
-                                        callback = function () {
-                                        };
-                                    }
-                                    else {
-                                        completed += 1;
-                                        running -= 1;
-                                        if (completed >= arr.length) {
-                                            callback();
-                                        }
-                                        else {
-                                            replenish();
-                                        }
-                                    }
+                        if (err) {
+                            callback(err);
+                            callback = function () {
+                            };
+                        }
+                        else {
+                            completed += 1;
+                            running -= 1;
+                            if (completed >= arr.length) {
+                                callback();
+                            }
+                            else {
+                                replenish();
+                            }
+                        }
                                 });
                             }
                         })();
@@ -507,7 +507,7 @@ $(document).ready(function () {
                             var fn = function (left, right) {
                                 var a = left.criteria, b = right.criteria;
                                 return a < b ? -1 : a > b ? 1 : 0;
-                            };
+                };
                             callback(null, _map(results.sort(fn), function (x) {
                                 return x.value;
                             }));
@@ -567,7 +567,7 @@ $(document).ready(function () {
                                 var safeResults = {};
                                 _each(_keys(results), function (rkey) {
                                     safeResults[rkey] = results[rkey];
-                                });
+                    });
                                 safeResults[k] = args;
                                 callback(err, safeResults);
                                 // stop subsequent errors hitting callback multiple times
@@ -593,8 +593,8 @@ $(document).ready(function () {
                                 if (ready()) {
                                     removeListener(listener);
                                     task[task.length - 1](taskCallback, results);
-                                }
-                            };
+                    }
+                };
                             addListener(listener);
                         }
                     });
@@ -617,7 +617,7 @@ $(document).ready(function () {
                                 task(function (err, result) {
                                     seriesCallback(!err || finalAttempt, {err: err, result: result});
                                 }, wrappedResults);
-                            };
+                };
                         };
                         while (times) {
                             attempts.push(retryAttempt(task, !(times -= 1)));
@@ -653,13 +653,13 @@ $(document).ready(function () {
                                 var next = iterator.next();
                                 if (next) {
                                     args.push(wrapIterator(next));
-                                }
-                                else {
+                    }
+                    else {
                                     args.push(callback);
-                                }
+                    }
                                 async.setImmediate(function () {
                                     iterator.apply(null, args);
-                                });
+                    });
                             }
                         };
                     };
@@ -673,12 +673,12 @@ $(document).ready(function () {
                         eachfn.map(tasks, function (fn, callback) {
                             if (fn) {
                                 fn(function (err) {
-                                    var args = Array.prototype.slice.call(arguments, 1);
+                        var args = Array.prototype.slice.call(arguments, 1);
                                     if (args.length <= 1) {
                                         args = args[0];
-                                    }
+                        }
                                     callback.call(null, err, args);
-                                });
+                    });
                             }
                         }, callback);
                     }
@@ -689,7 +689,7 @@ $(document).ready(function () {
                                 var args = Array.prototype.slice.call(arguments, 1);
                                 if (args.length <= 1) {
                                     args = args[0];
-                                }
+                    }
                                 results[k] = args;
                                 callback(err);
                             });
@@ -714,12 +714,12 @@ $(document).ready(function () {
                         async.mapSeries(tasks, function (fn, callback) {
                             if (fn) {
                                 fn(function (err) {
-                                    var args = Array.prototype.slice.call(arguments, 1);
+                        var args = Array.prototype.slice.call(arguments, 1);
                                     if (args.length <= 1) {
                                         args = args[0];
-                                    }
+                        }
                                     callback.call(null, err, args);
-                                });
+                    });
                             }
                         }, callback);
                     }
@@ -730,7 +730,7 @@ $(document).ready(function () {
                                 var args = Array.prototype.slice.call(arguments, 1);
                                 if (args.length <= 1) {
                                     args = args[0];
-                                }
+                    }
                                 results[k] = args;
                                 callback(err);
                             });
@@ -910,7 +910,7 @@ $(document).ready(function () {
                                         q.drain();
                                     }
                                     q.process();
-                                };
+                    };
                                 var cb = only_once(next);
                                 worker(task.data, cb);
                             }
@@ -1059,7 +1059,7 @@ $(document).ready(function () {
                                 _each(ts, function (data) {
                                     if (data.callback) {
                                         data.callback.apply(null, args);
-                                    }
+                        }
                                 });
 
                                 process();
@@ -1084,13 +1084,13 @@ $(document).ready(function () {
                                 if (err) {
                                     if (console.error) {
                                         console.error(err);
-                                    }
-                                }
+                        }
+                    }
                                 else if (console[name]) {
                                     _each(args, function (x) {
                                         console[name](x);
                                     });
-                                }
+                    }
                             }
                         }]));
                     };
@@ -1127,7 +1127,7 @@ $(document).ready(function () {
                                 delete queues[key];
                                 for (var i = 0, l = q.length; i < l; i++) {
                                     q[i].apply(null, arguments);
-                                }
+                    }
                             }]));
                         }
                     };
@@ -1207,11 +1207,11 @@ $(document).ready(function () {
                         if (err) {
                             if (callback) {
                                 return callback(err);
-                            }
+                }
                             throw err;
-                        }
+            }
                         fn(next);
-                    }
+        }
 
                     next();
                 };
@@ -1255,7 +1255,7 @@ $(document).ready(function () {
                 var i = -1;
                 while (++i < len) {
                     currentQueue[i]();
-                }
+        }
                 len = queue.length;
             }
             draining = false;
@@ -29676,7 +29676,7 @@ var PolymerView = require('./marionette.polymerview');
                     collection: app.currentPool.namelist,
                     namelist: this.model.get('namelist'),
                     oe: this.model.get('oe')
-                });
+        });
                 this.interpreters.show(niList);
             }
         });
@@ -29909,7 +29909,7 @@ var PolymerView = require('./marionette.polymerview');
                 var namesView = new NamesView({
                     collection: app.currentPool.namelist,
                     namelist: this.model.get('namelist')
-                });
+        });
                 this.namelist.show(namesView);
             }
         });
@@ -30026,7 +30026,7 @@ var PolymerView = require('./marionette.polymerview');
                 var namePickList = new NamePickList({
                     collection: app.currentPool.namelist,
                     namelist: this.model.get('namelist')
-                });
+        });
                 this.namePickNames.show(namePickList);
             }
         });
@@ -30193,7 +30193,7 @@ module.exports = PolymerView.extend({
                 for (var i = 0; i < this.length; i++) {
                     if (_.indexOf(this.models[i].attributes.lists, nl) != -1) {
                         oarray.push(this.models[i]);
-                    }
+            }
                 }
                 return (oarray);
             },
@@ -30211,7 +30211,7 @@ module.exports = PolymerView.extend({
                     if (_.indexOf(qq.toJSON().lists, ll) != -1) {
                         cn++;
                     }
-                });
+        });
                 return cn;
             }
 
@@ -30359,10 +30359,10 @@ module.exports = PolymerView.extend({
                         } else {
                             for (var i = 0; i < ties[k].length; i++) {
                                 if (ties[k][i].relation === relation) {
-                                    return true;
-                                }
-                            }
+                            return true;
                         }
+                    }
+                }
 
                     }
                 }
@@ -30420,7 +30420,7 @@ module.exports = PolymerView.extend({
                         if (typeof val === 'string') {
                             if (val.match(/[a-zA-Z]/) === null) {
                                 val = parseInt(val);
-                            }
+                    }
                         }
                         if (typeof val === 'undefined') {
                             results.push(false);
@@ -30461,10 +30461,10 @@ module.exports = PolymerView.extend({
                             default:
                                 console.log('Missing / bad group comparator!');
                                 return true; // default to showing the question
-                        }
+                }
                     } else {
                         return results[0];
-                    }
+            }
 
                 } else {
                     return true;

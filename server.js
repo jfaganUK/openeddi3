@@ -6,8 +6,7 @@
 var path = require('path');
 global.appRoot = path.resolve(__dirname);
 
-var appPort = 4444; // The port the server runs on.
-
+var appPort = 4444;                       // The port the server runs on.
 var _ = require('lodash');                // For some functional programming
 var fs = require('fs');                   // For using the file system.
 var log = require('util').log;            // For better logging (with timestamps)

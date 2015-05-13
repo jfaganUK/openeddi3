@@ -11,7 +11,8 @@
       "2",
       "3",
       "4",
-      "5"
+      "5",
+      "6"
     ],
     "dateCreated": "2015-03-09 11:18:23-04:00"
   },
@@ -32,6 +33,11 @@
     {
       "sheetid": 5,
       "title": "Sheet 5",
+      "description": "describe the sheet"
+    },
+    {
+      "sheetid": 6,
+      "title": "Sheet 6",
       "description": "describe the sheet"
     }
   ],
@@ -190,7 +196,7 @@
           {
             "arrayid": 0,
             "prompt": "Male",
-            "value": "1"
+            "value": "0"
           },
           {
             "arrayid": 1,
@@ -199,9 +205,41 @@
           }
         ]
       }
-
+    },
+    {
+      "eid": "601",
+      "sheetid": "6",
+      "poolid": "test1",
+      "sortIndex": 0,
+      "title": "alterBooks",
+      "controlmodule": "basicnameinterpret",
+      "prompt": "Which books has each alter claimed to have read?",
+      "niEddi": "checklist",
+      "niEddiDetails": {
+        "arrayPrompts": [
+          {
+            "arrayid": 0,
+            "prompt": "Catcher in the Rye",
+            "value": "Catcher in the Rye"
+          },
+          {
+            "arrayid": 1,
+            "prompt": "Lord of the Rings",
+            "value": "Lord of the Rings"
+          },
+          {
+            "arrayid": 2,
+            "prompt": "Slaughterhouse Five",
+            "value": "Slaughterhouse Five"
+          },
+          {
+            "arrayid": 3,
+            "prompt": "Moby Dick",
+            "value": "Moby Dick"
+          }
+        ]
+      }
     }
-
   ]
 }
 
