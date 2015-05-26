@@ -1,6 +1,6 @@
 /**
  * Created by jfagan on 3/6/15.
- * index.js
+ * server.js
  */
 
 var path = require('path');
@@ -24,7 +24,7 @@ var models = require('./oe/oe_server/db').models;
 var app = require('./oe/oe_server/create_app');
 
 // Start the oe_server
-app.listen(appPort, '192.168.1.131');
+app.listen(appPort, '0.0.0.0');
 log('--- Listening on port ' + appPort);
 
 

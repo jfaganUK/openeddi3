@@ -1,0 +1,81 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-slider/paper-slider.html"/>
+<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
+
+<polymer-element name="oe-slider" attributes="oe response">
+    <template>
+        <div hidden?="{{oe.arrayPrompts === undefined}}">
+            <template repeat="{{arrayPrompt in oe.arrayPrompts}}">
+                <div class="slider-array-entry" layout vertical>
+                    <div>{{arrayPrompt.prompt}}</div>
+                    <div class="slider-container" layout horizontal>
+                        <span class="slider-value-label min" layout vertical center-justified>{{oe.ranges.minValue.label}}</span>
+                        <paper-slider flex min="{{oe.ranges.minValue.value}}"
+                                      max="{{oe.ranges.maxValue.value}}"
+                                      value="{{response.value[arrayPrompt.id]}}"
+                                      on-change="{{updateResponse}}"
+                                      data-arrayid="{{arrayPrompt.id}}"></paper-slider>
+                        <span class="slider-value-label max">{{oe.ranges.maxValue.label}}</span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <template bind="oe response">
+            <div hidden?="{{oe.arrayPrompts !== undefined}}" class="slider-container" layout horizontal>
+                <span class="slider-value-label min" layout vertical
+                      center-justified>{{oe.ranges.minValue.label}}</span>
+                <paper-slider flex min="{{oe.ranges.minValue.value}}"
+                              max="{{oe.ranges.maxValue.value}}"
+                              value="{{response.value}}"
+                              on-change="{{updateResponse}}"></paper-slider>
+                <span class="slider-value-label max">{{oe.ranges.maxValue.label}}</span>
+            </div>
+
+        </template>
+
+        <style>
+            .slider-container {
+                margin: 10px;
+            }
+
+            .slider-array-entry {
+                border: 0px solid;
+                border-top-width: 1px;
+                border-color: rgba(0, 0, 0, 0.2);
+                padding: 5px;
+                padding-top: 10px;
+            }
+
+            .slider-value-label {
+                width: 75px;
+                overflow-wrap: break-word;
+                font-size: 13px;
+            }
+
+            .min {
+                text-align: right;
+            }
+
+            .max {
+                text-align: left;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-slider', {
+            ready: function () {
+            },
+
+            updateResponse: function (event, detail, sender) {
+                if (this.oe.arrayPrompts === undefined) {
+                    this.fire('change:response');
+                } else {
+                    var arrayid = sender.attributes['data-arrayid'].value;
+                    this.response.value[arrayid] = sender.value;
+                    this.fire('change:response');
+                }
+            }
+        });
+    </script>
+</polymer-element>

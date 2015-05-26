@@ -20,7 +20,7 @@ Mn.PolymerView = Marionette.PolymerView = PolymerView;
 Backbone.Radio.DEBUG = true;
 
 // The 'request controller' for the templates
-_.templateSettings.varialbe = 'rc';
+_.templateSettings.variable = 'rc';
 
 // Determine local storage is active or not
 // This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
@@ -28,6 +28,8 @@ Backbone.Collection.prototype.local = true;
 Backbone.Collection.prototype.remote = true;
 Backbone.Model.prototype.local = true;
 Backbone.Model.prototype.remote = true;
+
+window.RESIZE_WIDTH = 900;
 
 // Create the application as a global object
 // There probably is a better modular way to do this, but

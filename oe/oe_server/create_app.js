@@ -5,6 +5,7 @@
 
 var express = require('express');         // The web framework
 var inspect = require('util').inspect;
+var log = require('util').log;
 
 var app = express();
 //app.engine('ejs', require('ejs').renderFile);
@@ -16,7 +17,7 @@ require('./session_setup')(app);
 
 // Specific paths to deal the the Backbone router
 var sendOEApp = function (req, res, next) {
-    console.log('Send the OE app');
+    log('Send the OE app');
     res.locals.inspect = inspect;
     res.render('index.ejs',
         {
@@ -24,6 +25,7 @@ var sendOEApp = function (req, res, next) {
             oeModules: oeModules
         });
 };
+// Make sure to send the OE *only* if the route is / and no other
 app.use(/\/$/, sendOEApp);
 app.use('/pool/*', sendOEApp);
 
@@ -35,6 +37,8 @@ app.use('/oe_client', express.static(appRoot + '/oe/oe_client'));
 app.use('/bower_components/', express.static(appRoot + '/oe/bower_components'));
 app.use('/oe_modules', express.static(appRoot + '/oe/oe_modules'));
 app.use('/built.js', express.static(appRoot + '/built.js'));
+app.use('/oe.css', express.static(appRoot + '/oe/oe_client/oe.css'));
+app.use('/css', express.static(appRoot + '/oe/oe_client/css'));
 app.use('/demo', express.static(appRoot + '/oe/oe_client/components/demo-oe-eddi-promptbar.html'));
 
 // NOTE: do these two routes last.

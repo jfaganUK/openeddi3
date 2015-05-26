@@ -35,21 +35,25 @@ module.exports = Backbone.Model.extend({
         // it is coerced to an array, this fixes that
         if (this.attributes.details instanceof Array) {
             if (!this.attributes.details.length) {
-                this.attributes.details = {};
+                this.set('details', {});
             }
         }
 
-        this.attributes.details[key] = val;
-        this.trigger('reset');
+        var details = _.clone(this.get('details'));
+        details[key] = val;
+        this.set('details', details);
     },
 
     appendToList: function (x) {
-        var ix = _.indexOf(this.attributes.lists, x);
+        // This is the best way to change nested attributes
+        // so that they actually fire the change, and set the model.changed.
+        var lists = _.clone(this.get('lists'));
+        var ix = _.indexOf(lists, x);
         if (ix === -1) {
-            this.attributes.lists.push(x);
+            lists.push(x);
         }
 
-        this.trigger('reset');
+        this.set('lists', lists);
         this.save();
     },
 
@@ -57,16 +61,16 @@ module.exports = Backbone.Model.extend({
         var ix = _.indexOf(this.attributes.lists, x);
 
         if (ix > -1) {
-            this.attributes.lists.splice(ix, 1);
+            var lists = _.clone(this.get('lists'));
+            lists.splice(ix, 1);
 
             // if the lists are totally empty, destroy the model
-            if (this.attributes.lists.length === 0) {
+            if (lists.length === 0) {
                 this.destroy();
                 return;
             }
 
-            // if the list is not empty, just trigger the change event
-            this.trigger('reset');
+            this.set('lists', lists);
             this.save();
         }
     },

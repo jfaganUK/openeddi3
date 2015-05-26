@@ -25,6 +25,9 @@ var App = Marionette.Application.extend({
         this.loadPoolQueue = [
             this.fetchCurrentPool.bind(this)
         ];
+
+        this.mediaQuery();
+
     },
 
     listenRadioChannels: function() {
@@ -51,12 +54,33 @@ var App = Marionette.Application.extend({
         this.channels.pool = Backbone.Radio.channel('pool');
         // Response channel. Events, commands, and data for when the user provides responses to the eddis.
         this.channels.response = Backbone.Radio.channel('response');
+        // Media channel. For media changes and queries.
+        this.channels.media = Backbone.Radio.channel('media');
 
         // For debugging, let's listen on on the events
         Backbone.Radio.tuneIn('navigation');
         Backbone.Radio.tuneIn('respondent');
         Backbone.Radio.tuneIn('pool');
         Backbone.Radio.tuneIn('response');
+        Backbone.Radio.tuneIn('media');
+    },
+
+    mediaQuery: function () {
+        // On window resize, trigger the media change event
+        this.wideLayout = $(window).width() >= window.RESIZE_WIDTH;
+        $(window).resize(_.bind(function () {
+            if ($(window).width() < window.RESIZE_WIDTH) {
+                if (this.wideLayout) {
+                    this.wideLayout = false;
+                    this.channels.media.trigger('window-resize', {wide: false});
+                }
+            } else {
+                if (!this.wideLayout) {
+                    this.wideLayout = true;
+                    this.channels.media.trigger('window-resize', {wide: true});
+                }
+            }
+        }, this));
     },
 
     loadLanding: function() {

@@ -7,6 +7,13 @@
 <polymer-element name="oe-shorttext" attributes="oe response">
     <template>
         <paper-input class="oe-shorttext-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>
+        <style>
+            .oe-shorttext-input {
+                margin-left: 10px;
+                margin-right: 5px;
+                width: 90%;
+            }
+        </style>
     </template>
     <script>
         Polymer('oe-shorttext', {

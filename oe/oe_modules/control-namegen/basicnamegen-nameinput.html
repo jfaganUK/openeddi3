@@ -6,13 +6,17 @@
 
 <polymer-element name="oe-basicnamegen-nameinput" attributes="oe response">
     <template>
-        <p>{{oe.prompt}}</p>
-        <paper-input class="oe-nameinput" label="{{oe.prompt}}" value="{{newName}}">
-            <core-a11y-keys keys="enter" on-keys-pressed="{{addNewName}}"></core-a11y-keys>
-        </paper-input>
-        <paper-button raise>Add Name</paper-button>
+        <div horizontal layout>
+            <paper-input class="oe-nameinput" label="{{oe.prompt}}" value="{{newName}}" flex>
+                <core-a11y-keys keys="enter" on-keys-pressed="{{addNewName}}"></core-a11y-keys>
+            </paper-input>
+            <paper-button on-tap="{{addNewName}}" raise>Add Name</paper-button>
+        </div>
+        <style>
+        </style>
     </template>
     <script>
+        // TODO make the focus change to the input after each input
         //noinspection JSUnusedGlobalSymbols
         Polymer('oe-basicnamegen-nameinput', {
             ready: function () {

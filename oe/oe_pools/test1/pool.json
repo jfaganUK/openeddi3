@@ -12,7 +12,8 @@
       "3",
       "4",
       "5",
-      "6"
+      "6",
+      "7"
     ],
     "dateCreated": "2015-03-09 11:18:23-04:00"
   },
@@ -38,6 +39,11 @@
     {
       "sheetid": 6,
       "title": "Sheet 6",
+      "description": "describe the sheet"
+    },
+    {
+      "sheetid": 7,
+      "title": "Sheet 7",
       "description": "describe the sheet"
     }
   ],
@@ -87,7 +93,7 @@
       "eid": "103",
       "sheetid": "1",
       "poolid": "test1",
-      "sortIndex": 1,
+      "sortIndex": 2,
       "title": "respondentAge",
       "controlmodule": "radiolist",
       "prompt": "Which range best describes your age?",
@@ -138,10 +144,67 @@
       "eid": "201",
       "sheetid": "2",
       "poolid": "test1",
-      "sortIndex": 0,
+      "sortIndex": 3,
       "title": "aBadName",
       "controlmodule": "shorttext",
       "prompt": "Tell me something bad"
+    },
+    {
+      "eid": "104",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": 4,
+      "title": "neuroticism",
+      "controlmodule": "oeslider",
+      "prompt": "Respond to each statement based on your assessment of how accurately it describes you.",
+      "arrayPrompts": [
+        {
+          "id": 0,
+          "prompt": "I am relaxed most of the time."
+        },
+        {
+          "id": 1,
+          "prompt": "I dislike myself"
+        },
+        {
+          "id": 2,
+          "prompt": "I worry about things"
+        },
+        {
+          "id": 3,
+          "prompt": "I panic easily"
+        },
+        {
+          "id": 4,
+          "prompt": "I am very pleased with myself"
+        },
+        {
+          "id": 5,
+          "prompt": "I rarely get irritated"
+        },
+        {
+          "id": 6,
+          "prompt": "I get stressed out easily"
+        },
+        {
+          "id": 7,
+          "prompt": "I am often down in the dumps"
+        }
+      ],
+      "ranges": {
+        "minValue": {
+          "label": "Very Inaccurate",
+          "value": 1
+        },
+        "default": {
+          "label": "Neither inaccurate or accurate",
+          "value": 4
+        },
+        "maxValue": {
+          "label": "Very Accurate",
+          "value": 7
+        }
+      }
     },
     {
       "eid": "202",
@@ -238,6 +301,20 @@
             "value": "Moby Dick"
           }
         ]
+      }
+    },
+    {
+      "eid": "701",
+      "sheetid": "7",
+      "poolid": "test1",
+      "sortIndex": 0,
+      "title": "nodelinkTies",
+      "controlmodule": "nodelink",
+      "prompt": "Connect people together if they have communicated in the last 30 days.",
+      "tieDetails": {
+        "relation": "communicate",
+        "type": "undirected",
+        "weighted": false
       }
     }
   ]

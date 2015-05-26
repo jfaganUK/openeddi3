@@ -1,0 +1,15 @@
+{
+  "name": "nodelink",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "Node link diagram for visualization and network modification.",
+  "components": {
+    "nameinput": "oe-nodelink.html"
+  },
+  "templates": {
+    "eddicontrol": "templateNodeLink.ejs"
+  },
+  "views": {
+    "eddicontrol": "NodeLink"
+  }
+}

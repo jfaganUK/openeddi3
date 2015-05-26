@@ -14,10 +14,23 @@ module.exports = Marionette.LayoutView.extend({
 
     initialize: function (opts) {
         this.sheetid = app.appState.get('sheetid');
+
+        app.channels.media.on('window-resize', function () {
+            // For some reason this is not consistent
+            //this.eddispace.$el.toggleClass('wide');
+            this.$el.find('#oe-sheet-eddi-space').toggleClass('wide')
+        }, this);
     },
 
     onShow: function() {
         this.showEddis();
+    },
+
+    onRender: function () {
+        // Media query
+        if (app.wideLayout) {
+            this.$el.find('#oe-sheet-eddi-space').addClass('wide');
+        }
     },
 
     showEddis: function() {

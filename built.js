@@ -21,7 +21,7 @@ var Marionette = require('marionette');
 Backbone.Radio.DEBUG = true;
 
 // The 'request controller' for the templates
-_.templateSettings.varialbe = 'rc';
+    _.templateSettings.variable = 'rc';
 
 // Determine local storage is active or not
 // This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
@@ -29,6 +29,8 @@ _.templateSettings.varialbe = 'rc';
     Backbone.Collection.prototype.remote = true;
     Backbone.Model.prototype.local = true;
     Backbone.Model.prototype.remote = true;
+
+    window.RESIZE_WIDTH = 900;
 
 // Create the application as a global object
 // There probably is a better modular way to do this, but
@@ -727,7 +729,7 @@ $(document).ready(function () {
                         var results = {};
                         async.eachSeries(_keys(tasks), function (k, callback) {
                             tasks[k](function (err) {
-                                var args = Array.prototype.slice.call(arguments, 1);
+                    var args = Array.prototype.slice.call(arguments, 1);
                                 if (args.length <= 1) {
                                     args = args[0];
                     }
@@ -905,10 +907,10 @@ $(document).ready(function () {
                                     workers -= 1;
                                     if (task.callback) {
                                         task.callback.apply(task, arguments);
-                                    }
+                        }
                                     if (q.drain && q.tasks.length + workers === 0) {
                                         q.drain();
-                                    }
+                        }
                                     q.process();
                     };
                                 var cb = only_once(next);
@@ -27969,23 +27971,29 @@ return jQuery;
     }, {}],
     9: [function (require, module, exports) {
 var OEModules = {};
+        OEModules.alterties = require('./oe_modules/control-alter-ties/client-index');
         OEModules.basicnameinterpret = require('./oe_modules/control-basic-nameinterpret/client-index');
         OEModules.checklist = require('./oe_modules/control-checklist/client-index');
         OEModules.basicnamegen = require('./oe_modules/control-namegen/client-index');
         OEModules.namepick = require('./oe_modules/control-namepick/client-index');
+        OEModules.nodelink = require('./oe_modules/control-nodelink/client-index');
         OEModules.radiolist = require('./oe_modules/control-radiolist/client-index');
 OEModules.shorttext = require('./oe_modules/control-shorttext/client-index');
+        OEModules.oeslider = require('./oe_modules/control-slider/client-index');
         OEModules.namelist = require('./oe_modules/model-namelist/client-index');
 module.exports = OEModules;
 
     }, {
-        "./oe_modules/control-basic-nameinterpret/client-index": 45,
-        "./oe_modules/control-checklist/client-index": 50,
-        "./oe_modules/control-namegen/client-index": 57,
-        "./oe_modules/control-namepick/client-index": 63,
-        "./oe_modules/control-radiolist/client-index": 66,
-        "./oe_modules/control-shorttext/client-index": 69,
-        "./oe_modules/model-namelist/client-index": 76
+        "./oe_modules/control-alter-ties/client-index": 41,
+        "./oe_modules/control-basic-nameinterpret/client-index": 46,
+        "./oe_modules/control-checklist/client-index": 51,
+        "./oe_modules/control-namegen/client-index": 58,
+        "./oe_modules/control-namepick/client-index": 64,
+        "./oe_modules/control-nodelink/client-index": 68,
+        "./oe_modules/control-radiolist/client-index": 70,
+        "./oe_modules/control-shorttext/client-index": 73,
+        "./oe_modules/control-slider/client-index": 77,
+        "./oe_modules/model-namelist/client-index": 84
     }],
     10: [function (require, module, exports) {
 /**
@@ -28015,6 +28023,9 @@ var App = Marionette.Application.extend({
         this.loadPoolQueue = [
             this.fetchCurrentPool.bind(this)
         ];
+
+        this.mediaQuery();
+
     },
 
     listenRadioChannels: function() {
@@ -28041,12 +28052,33 @@ var App = Marionette.Application.extend({
         this.channels.pool = Backbone.Radio.channel('pool');
         // Response channel. Events, commands, and data for when the user provides responses to the eddis.
         this.channels.response = Backbone.Radio.channel('response');
+        // Media channel. For media changes and queries.
+        this.channels.media = Backbone.Radio.channel('media');
 
         // For debugging, let's listen on on the events
         Backbone.Radio.tuneIn('navigation');
         Backbone.Radio.tuneIn('respondent');
         Backbone.Radio.tuneIn('pool');
         Backbone.Radio.tuneIn('response');
+        Backbone.Radio.tuneIn('media');
+    },
+
+    mediaQuery: function () {
+        // On window resize, trigger the media change event
+        this.wideLayout = $(window).width() >= window.RESIZE_WIDTH;
+        $(window).resize(_.bind(function () {
+            if ($(window).width() < window.RESIZE_WIDTH) {
+                if (this.wideLayout) {
+                    this.wideLayout = false;
+                    this.channels.media.trigger('window-resize', {wide: false});
+                }
+            } else {
+                if (!this.wideLayout) {
+                    this.wideLayout = true;
+                    this.channels.media.trigger('window-resize', {wide: true});
+                }
+            }
+        }, this));
     },
 
     loadLanding: function() {
@@ -28870,6 +28902,7 @@ var PromptBarView = require('../views/view-eddi-promptbar');
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
+    className: 'oe-basic-eddi',
     regions: {
         promptbar: '#oe-layout-eddi-promptbar',
         controlspace: '#oe-layout-eddi-controlspace'
@@ -28983,10 +29016,23 @@ module.exports = Marionette.LayoutView.extend({
 
     initialize: function (opts) {
         this.sheetid = app.appState.get('sheetid');
+
+        app.channels.media.on('window-resize', function () {
+            // For some reason this is not consistent
+            //this.eddispace.$el.toggleClass('wide');
+            this.$el.find('#oe-sheet-eddi-space').toggleClass('wide')
+        }, this);
     },
 
     onShow: function() {
         this.showEddis();
+    },
+
+    onRender: function () {
+        // Media query
+        if (app.wideLayout) {
+            this.$el.find('#oe-sheet-eddi-space').addClass('wide');
+        }
     },
 
     showEddis: function() {
@@ -29550,6 +29596,20 @@ var PolymerView = require('./marionette.polymerview');
     }, {"../templates/template-pool-header.ejs": 34, "./marionette.polymerview": 35}],
     41: [function (require, module, exports) {
         /**
+         * Created by jfagan on 5/17/15.
+         * oe/oe_modules/control-alter-ties/client-index.js:3
+         */
+        'use strict';
+
+        var views = {};
+        var templates = {};
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+
+    }, {}],
+    42: [function (require, module, exports) {
+        /**
          * Created by jfagan on 5/12/15.
          * oe/oe_modules/control-basic-nameinterpret/NICollectionView.js:3
          */
@@ -29565,8 +29625,8 @@ var PolymerView = require('./marionette.polymerview');
                 };
             }
         });
-    }, {"./NINameLayoutView": 42}],
-    42: [function (require, module, exports) {
+    }, {"./NINameLayoutView": 43}],
+    43: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/12/15.
          * oe/oe_modules/control-basic-nameinterpret/NINameLayoutView.js
@@ -29628,11 +29688,11 @@ var PolymerView = require('./marionette.polymerview');
         });
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "../model-namelist/NameModel": 73,
-        "./NINameTag": 43,
-        "./templateNINameLayout.ejs": 46
+        "../model-namelist/NameModel": 81,
+        "./NINameTag": 44,
+        "./templateNINameLayout.ejs": 47
     }],
-    43: [function (require, module, exports) {
+    44: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/12/15.
          * oe/oe_modules/control-basic-nameinterpret/NINameTag.js:3
@@ -29646,8 +29706,8 @@ var PolymerView = require('./marionette.polymerview');
             template: template
         });
 
-    }, {"../model-namelist/NameModel": 73, "./templateNINameTag.ejs": 47}],
-    44: [function (require, module, exports) {
+    }, {"../model-namelist/NameModel": 81, "./templateNINameTag.ejs": 48}],
+    45: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/10/15.
          * oe/oe_modules/control-basic-nameinterpret/ViewBasicNameInterpret.js:3
@@ -29684,8 +29744,8 @@ var PolymerView = require('./marionette.polymerview');
         module.exports = NILayoutView;
 
 
-    }, {"../../oe_client/models/model-eddi": 23, "./NICollectionView": 41, "./templateNameInterpret.ejs": 48}],
-    45: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 23, "./NICollectionView": 42, "./templateNameInterpret.ejs": 49}],
+    46: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/10/15.
          *
@@ -29700,19 +29760,19 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./ViewBasicNameInterpret": 44, "./templateNameInterpret.ejs": 48, "./templateOEBasicNameInterpreter.ejs": 49}],
-    46: [function (require, module, exports) {
+    }, {"./ViewBasicNameInterpret": 45, "./templateNameInterpret.ejs": 49, "./templateOEBasicNameInterpreter.ejs": 50}],
+    47: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
                 __p += __j.call(arguments, '');
             };
-            __p += '<paper-shadow class="NameInterpreterBox"><div id="niNameLayoutName"></div><div id="niNameLayoutControl"></div></paper-shadow><style>.NameInterpreterBox {\n        margin-top: 5px;\n        margin-bottom: 5px;\n    }\n\n    #niNameLayoutName {\n\n    }</style>';
+            __p += '<paper-shadow class="NameInterpreterBox"><div id="niNameLayoutName"></div><div id="niNameLayoutControl"></div></paper-shadow><style>.NameInterpreterBox {\n        margin: 10px;\n        background-color: white;\n    }\n\n    #niNameLayoutName {\n\n    }</style>';
             return __p;
         };
 
     }, {"lodash": 7}],
-    47: [function (require, module, exports) {
+    48: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29725,7 +29785,7 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    48: [function (require, module, exports) {
+    49: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29736,10 +29796,10 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    49: [function (require, module, exports) {
+    50: [function (require, module, exports) {
         arguments[4][29][0].apply(exports, arguments)
     }, {"dup": 29, "lodash": 7}],
-    50: [function (require, module, exports) {
+    51: [function (require, module, exports) {
         /**
  * Created by jfagan on 4/7/15.
          * The index file for the checklist module
@@ -29761,11 +29821,11 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.views = views;
         module.exports.templates = templates;
 
-    }, {"./templateChecklist.ejs": 51, "./viewChecklist": 52}],
-    51: [function (require, module, exports) {
+    }, {"./templateChecklist.ejs": 52, "./viewChecklist": 53}],
+    52: [function (require, module, exports) {
         arguments[4][29][0].apply(exports, arguments)
     }, {"dup": 29, "lodash": 7}],
-    52: [function (require, module, exports) {
+    53: [function (require, module, exports) {
         /**
          * Created by jfagan on 3/24/15.
          * oe/oe_modules/control-checklist/viewChecklist.js
@@ -29777,7 +29837,6 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports = PolymerView.extend({
             tagName: 'oe-checklist',
-            //class: 'oe-checklist',
             model: EddiModel,
             template: template,
             initialize: function () {
@@ -29799,9 +29858,9 @@ var PolymerView = require('./marionette.polymerview');
     }, {
         "../../oe_client/models/model-eddi": 23,
         "../../oe_client/views/marionette.polymerview": 35,
-        "./templateChecklist.ejs": 51
+        "./templateChecklist.ejs": 52
     }],
-    53: [function (require, module, exports) {
+    54: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/5/15.
          * oe/oe_modules/control-namegen/BasicNameCard.js
@@ -29827,8 +29886,8 @@ var PolymerView = require('./marionette.polymerview');
         });
 
 
-    }, {"../../oe_client/views/marionette.polymerview": 35, "./templateBasicNameCard.ejs": 58}],
-    54: [function (require, module, exports) {
+    }, {"../../oe_client/views/marionette.polymerview": 35, "./templateBasicNameCard.ejs": 59}],
+    55: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/29/15.
          * oe/oe_modules/control-namegen/BasicNameGen-NameInput.js
@@ -29848,9 +29907,9 @@ var PolymerView = require('./marionette.polymerview');
     }, {
         "../../oe_client/models/model-eddi": 23,
         "../../oe_client/views/marionette.polymerview": 35,
-        "./templateBasicNameGen-NameInput.ejs": 59
+        "./templateBasicNameGen-NameInput.ejs": 60
     }],
-    55: [function (require, module, exports) {
+    56: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/5/15.
          * oe/oe_modules/control-namegen/BasicNameGen-Names.js
@@ -29865,17 +29924,20 @@ var PolymerView = require('./marionette.polymerview');
                 this.childViewOptions = {
                     namelist: this.options.namelist
                 };
+                this.collection.on('change:lists', this.collectionChanged, this);
             },
             filter: function (child, index, collection) {
                 return child.inList(this.options.namelist);
             },
+            collectionChanged: function () {
+                this.render();
+            },
             onRender: function () {
-                console.log('Name collection rendering');
             }
         });
 
-    }, {"./BasicNameCard": 53}],
-    56: [function (require, module, exports) {
+    }, {"./BasicNameCard": 54}],
+    57: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/27/15.
          * oe/oe_modules/control-namegen/BasicNameGenerator.js
@@ -29915,11 +29977,11 @@ var PolymerView = require('./marionette.polymerview');
         });
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "./BasicNameGen-NameInput": 54,
-        "./BasicNameGen-Names": 55,
-        "./templateBasicNamegen.ejs": 60
+        "./BasicNameGen-NameInput": 55,
+        "./BasicNameGen-Names": 56,
+        "./templateBasicNamegen.ejs": 61
     }],
-    57: [function (require, module, exports) {
+    58: [function (require, module, exports) {
         /**
          *
          * oe/oe_modules/control-namegen/client-index.js
@@ -29934,25 +29996,25 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./BasicNameGenerator": 56, "./templateBasicNamegen.ejs": 60}],
-    58: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./BasicNameGenerator": 57, "./templateBasicNamegen.ejs": 61}],
     59: [function (require, module, exports) {
         arguments[4][29][0].apply(exports, arguments)
     }, {"dup": 29, "lodash": 7}],
     60: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    61: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
                 __p += __j.call(arguments, '');
             };
-            __p += '<div id="oe-basicnamegen-nameinput"></div><div id="oe-basicnamegen-names"></div>';
+            __p += '<div id="oe-basicnamegen-nameinput"></div><div id="oe-basicnamegen-names"></div><style>#oe-basicnamegen-nameinput {\n        margin-left: 10px;\n        margin-right: 5px;\n    }</style>';
             return __p;
         };
 
     }, {"lodash": 7}],
-    61: [function (require, module, exports) {
+    62: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/8/15.
          * oe/oe_modules/control-namepick/NamePick-Name.js:3
@@ -29967,7 +30029,7 @@ var PolymerView = require('./marionette.polymerview');
                 // Make the namelist convient to access
                 this.namelist = options.namelist;
                 // Add the namelist to the oe object here, so that the component can read it
-                var oe = this.model.attributes.oe || {};
+                var oe = _.clone(this.model.get('oe')) || {};
                 oe.namelist = this.namelist;
                 oe.inlist = this.model.inList(this.namelist);
                 this.model.set('oe', oe);
@@ -29975,18 +30037,21 @@ var PolymerView = require('./marionette.polymerview');
                 this.$el.on('toggle-name', _.bind(this.toggleName, this));
             },
             toggleName: function () {
+                var oe = _.clone(this.model.get('oe'));
                 if (this.model.inList(this.namelist)) {
                     this.model.removeFromList(this.namelist);
-                    this.model.attributes.oe.inlist = false;
+                    oe.inlist = false;
+                    this.model.set('oe', oe);
                 } else {
                     this.model.appendToList(this.namelist);
-                    this.model.attributes.oe.inlist = true;
+                    oe.inlist = true;
+                    this.model.set('oe', oe);
                 }
             }
         });
 
-    }, {"./templateNamePickName.ejs": 65}],
-    62: [function (require, module, exports) {
+    }, {"./templateNamePickName.ejs": 66}],
+    63: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/8/15.
          * oe/oe_modules/control-namepick/NamePick.js:3
@@ -30032,8 +30097,8 @@ var PolymerView = require('./marionette.polymerview');
         });
 
 
-    }, {"../../oe_client/models/model-eddi": 23, "./NamePick-Name": 61, "./templateNamePick.ejs": 64}],
-    63: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 23, "./NamePick-Name": 62, "./templateNamePick.ejs": 65}],
+    64: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/8/15.
          * oe/oe_modules/control-namepick/client-index.js:3
@@ -30047,8 +30112,8 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./NamePick": 62, "./templateNamePick.ejs": 64}],
-    64: [function (require, module, exports) {
+    }, {"./NamePick": 63, "./templateNamePick.ejs": 65}],
+    65: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -30059,10 +30124,82 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    65: [function (require, module, exports) {
+    66: [function (require, module, exports) {
         arguments[4][29][0].apply(exports, arguments)
     }, {"dup": 29, "lodash": 7}],
-    66: [function (require, module, exports) {
+    67: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/18/15.
+         * oe/oe_modules/control-nodelink/NodeLink.js:3
+         */
+        'use strict';
+
+        var template = require('./templateNodeLink.ejs');
+        var Graph = require('../model-namelist/GraphModel');
+
+        module.exports = Mn.PolymerView.extend({
+            tagName: 'oe-nodelink',
+            template: template,
+            initialize: function () {
+                // Set the operations attribute
+                if (!this.model.get('response').operations) {
+                    var response = _.clone(this.model.get('response'));
+                    response.operations = [];
+                    this.model.set('response', response);
+                }
+
+                // Create the graph object
+                this._createGraph();
+            },
+
+            // The Graph is an object that is bound to the component
+            // The real data we want is stored in each of the nodes in the namelist collection / model
+            // This just provides an interface to the component
+            _createGraph: function () {
+                var graph = new Graph();
+                var namelist = this.model.get('namelist');
+                var nodes;
+
+                // Set the nodes
+                // If there is actually a namelist, filter it down
+                if (namelist) {
+                    nodes = app.currentPool.namelist.namesInList(namelist);
+                } else {
+                    nodes = app.currentPool.namelist.models;
+                }
+                graph.set('nodes', nodes);
+
+                // Set the edge details
+                graph.set('tieDetails', this.model.get('tieDetails'));
+
+                // Build the ties
+                var ties = [];
+                graph.set('ties', ties);
+
+                this.model.set('graph', graph);
+            }
+        });
+
+    }, {"../model-namelist/GraphModel": 79, "./templateNodeLink.ejs": 69}],
+    68: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/18/15.
+         * oe/oe_modules/control-nodelink/client-index.js:3
+         */
+        'use strict';
+
+        var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./NodeLink');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+    }, {"./NodeLink": 67}],
+    69: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    70: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/15/15.
          * oe/oe_modules/control-radiolist/client-index.js
@@ -30078,11 +30215,11 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.views = views;
         module.exports.templates = templates;
 
-    }, {"./templateRadiolist.ejs": 67, "./viewRadiolist": 68}],
-    67: [function (require, module, exports) {
+    }, {"./templateRadiolist.ejs": 71, "./viewRadiolist": 72}],
+    71: [function (require, module, exports) {
         arguments[4][29][0].apply(exports, arguments)
     }, {"dup": 29, "lodash": 7}],
-    68: [function (require, module, exports) {
+    72: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/15/15.
          * oe/oe_modules/control-radiolist/viewRadiolist.js
@@ -30118,9 +30255,9 @@ var PolymerView = require('./marionette.polymerview');
     }, {
         "../../oe_client/models/model-eddi": 23,
         "../../oe_client/views/marionette.polymerview": 35,
-        "./templateRadiolist.ejs": 67
+        "./templateRadiolist.ejs": 71
     }],
-    69: [function (require, module, exports) {
+    73: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/7/15.
  * The index file for the shorttext file
@@ -30142,11 +30279,11 @@ templates.eddicontrol = require('./templateShorttext.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateShorttext.ejs": 70, "./viewShorttext": 71}],
-    70: [function (require, module, exports) {
+    }, {"./templateShorttext.ejs": 74, "./viewShorttext": 75}],
+    74: [function (require, module, exports) {
         arguments[4][29][0].apply(exports, arguments)
     }, {"dup": 29, "lodash": 7}],
-    71: [function (require, module, exports) {
+    75: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-shorttext/view-shorttext.js
@@ -30166,9 +30303,82 @@ module.exports = PolymerView.extend({
     }, {
         "../../oe_client/models/model-eddi": 23,
         "../../oe_client/views/marionette.polymerview": 35,
-        "./templateShorttext.ejs": 70
+        "./templateShorttext.ejs": 74
     }],
-    72: [function (require, module, exports) {
+    76: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/17/15.
+         * oe/oe_modules/control-slider/SliderControl.js:3
+         */
+
+        var template = require('./templateSlider.ejs');
+
+        module.exports = Mn.PolymerView.extend({
+            tagName: 'oe-slider',
+            template: template,
+            initialize: function () {
+
+                // Have to initialize the values, and the array values
+                if (this.model.get('oe').arrayPrompts) {
+                    this._initializeArray();
+                } else {
+                    var response = _.clone(this.model.get('response'));
+                    response.value = this.model.get('oe').ranges.default.value;
+                    this.model.set('response', response);
+                }
+            },
+            _initializeArray: function () {
+                var response = _.clone(this.model.get('response'));
+                var defaultValue = this.model.get('oe').ranges.default.value;
+                var arrayPrompts = this.model.get('oe').arrayPrompts;
+                if (response.value === null || _.keys(response.value).length !== arrayPrompts.length) {
+                    response.value = {};
+                    _(arrayPrompts).forEach(function (x) {
+                        response.value[x.id] = defaultValue;
+                    }).value();
+                    this.model.set('response', response);
+                }
+            }
+        });
+
+
+    }, {"./templateSlider.ejs": 78}],
+    77: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/17/15.
+         * oe/oe_modules/control-slider/client-index.js
+         */
+
+        var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./SliderControl');
+        templates.eddicontrol = require('./templateSlider.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+
+
+    }, {"./SliderControl": 76, "./templateSlider.ejs": 78}],
+    78: [function (require, module, exports) {
+        arguments[4][29][0].apply(exports, arguments)
+    }, {"dup": 29, "lodash": 7}],
+    79: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/18/15.
+         * oe/oe_modules/model-namelist/GraphModel.js:3
+         */
+        'use strict';
+
+        module.exports = Backbone.Model.extend({
+            defaults: function () {
+                return {
+                    message: 'this is the backbone model in a component'
+                };
+            }
+        });
+    }, {}],
+    80: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/27/15.
          * oe/oe_modules/control-shorttext/NameCollection.js
@@ -30216,8 +30426,8 @@ module.exports = PolymerView.extend({
             }
 
         });
-    }, {"./NameModel": 73}],
-    73: [function (require, module, exports) {
+    }, {"./NameModel": 81}],
+    81: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/23/15.
          * oe/oe_modules/model-namelist/NameModel.js
@@ -30255,21 +30465,25 @@ module.exports = PolymerView.extend({
                 // it is coerced to an array, this fixes that
                 if (this.attributes.details instanceof Array) {
                     if (!this.attributes.details.length) {
-                        this.attributes.details = {};
+                        this.set('details', {});
                     }
                 }
 
-                this.attributes.details[key] = val;
-                this.trigger('reset');
+                var details = _.clone(this.get('details'));
+                details[key] = val;
+                this.set('details', details);
             },
 
             appendToList: function (x) {
-                var ix = _.indexOf(this.attributes.lists, x);
+                // This is the best way to change nested attributes
+                // so that they actually fire the change, and set the model.changed.
+                var lists = _.clone(this.get('lists'));
+                var ix = _.indexOf(lists, x);
                 if (ix === -1) {
-                    this.attributes.lists.push(x);
+                    lists.push(x);
                 }
 
-                this.trigger('reset');
+                this.set('lists', lists);
                 this.save();
             },
 
@@ -30277,16 +30491,16 @@ module.exports = PolymerView.extend({
                 var ix = _.indexOf(this.attributes.lists, x);
 
                 if (ix > -1) {
-                    this.attributes.lists.splice(ix, 1);
+                    var lists = _.clone(this.get('lists'));
+                    lists.splice(ix, 1);
 
                     // if the lists are totally empty, destroy the model
-                    if (this.attributes.lists.length === 0) {
+                    if (lists.length === 0) {
                         this.destroy();
                         return;
                     }
 
-                    // if the list is not empty, just trigger the change event
-                    this.trigger('reset');
+                    this.set('lists', lists);
                     this.save();
                 }
             },
@@ -30421,7 +30635,7 @@ module.exports = PolymerView.extend({
                             if (val.match(/[a-zA-Z]/) === null) {
                                 val = parseInt(val);
                     }
-                        }
+                }
                         if (typeof val === 'undefined') {
                             results.push(false);
                             continue;
@@ -30444,7 +30658,7 @@ module.exports = PolymerView.extend({
                                 results.push(null);
                                 break;
                         }
-                    }
+            }
 
                     // if there is more than one condition, test them with the group comparator
                     // otherwise just return the first item in results
@@ -30474,7 +30688,7 @@ module.exports = PolymerView.extend({
 
         });
     }, {"../../oe_client/helpers/guid": 16}],
-    74: [function (require, module, exports) {
+    82: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/4/15.
          * oe/oe_modules/model-namelist/NamelistPrep.js:3
@@ -30511,8 +30725,8 @@ module.exports = PolymerView.extend({
             this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
         };
 
-    }, {"../../oe_client/application": 10, "./NameCollection": 72}],
-    75: [function (require, module, exports) {
+    }, {"../../oe_client/application": 10, "./NameCollection": 80}],
+    83: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/1/15.
          * oe/oe_modules/model-namelist/NamelistRadio.js
@@ -30556,7 +30770,7 @@ module.exports = PolymerView.extend({
 
 
     }, {"../../oe_client/application": 10}],
-    76: [function (require, module, exports) {
+    84: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/22/15.
          *
@@ -30579,5 +30793,5 @@ module.exports = PolymerView.extend({
 
         module.exports.models = models;
         module.exports.views = views;
-    }, {"./NameCollection": 72, "./NameModel": 73, "./NamelistPrep": 74, "./NamelistRadio": 75}]
+    }, {"./NameCollection": 80, "./NameModel": 81, "./NamelistPrep": 82, "./NamelistRadio": 83}]
 }, {}, [1]);

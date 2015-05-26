@@ -1,0 +1,31 @@
+
+#oe-sheet-eddi-space {
+}
+
+#oe-sheet-eddi-space.wide {
+    max-width: 560px;
+    margin: 48px auto 0;
+}
+
+.oe-basic-eddi {
+    background-color: #f1f1f1;
+}
+
+.wide .oe-basic-eddi {
+    margin-bottom: 10px;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.258824) 0px 2px 5px 0px;
+    box-shadow: rgba(0, 0, 0, 0.258824) 0px 2px 5px 0px;
+    border-radius: 2px;
+    display: block;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    position: relative;
+    width: 512px;
+}
+
+.oe-eddi-promptbar {
+    background-color: #ffe0ad;
+    color: #212121;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.14902);
+    border-radius: 0px;
+}

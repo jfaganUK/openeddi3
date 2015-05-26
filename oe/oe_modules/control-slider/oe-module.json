@@ -1,0 +1,15 @@
+{
+  "name": "oeslider",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "A basic slider control.",
+  "components": {
+    "eddicontrol": "oe-slider.html"
+  },
+  "templates": {
+    "eddicontrol": "templateSlider.ejs"
+  },
+  "views": {
+    "eddicontrol": "SliderControl.js"
+  }
+}

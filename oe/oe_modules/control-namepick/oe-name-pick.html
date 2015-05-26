@@ -3,9 +3,9 @@
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
 <link rel="import" href="/bower_components/paper-ripple/paper-ripple.html"/>
 
-<polymer-element name="oe-name-pick" attributes="oe name namelist inlist">
+<polymer-element name="oe-name-pick" attributes="oe name namelist lists">
     <template>
-        <paper-shadow id="nameCard" class="{{ {nameInListCard: oe.inlist} | tokenList}}">
+        <paper-shadow id="nameCard" class="{{ {nameInListCard: oe.inlist, nameNotInListCard: !oe.inlist} | tokenList}}">
             <section id="namePickCard">
                 <div horizontal layout>
                     <paper-icon-button icon="done" id="pickName" on-tap="{{pickName}}"
@@ -30,7 +30,13 @@
             }
 
             .nameInListCard {
-                background-color: rgb(242, 224, 199);
+                background-color: #f0fab4;
+                transition: background-color 0.5s ease;
+            }
+
+            .nameNotInListCard {
+                background-color: white;
+                transition: background-color 0.5s ease;
             }
 
             #nameCardName {

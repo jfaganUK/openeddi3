@@ -9,7 +9,6 @@ var template = require('./templateChecklist.ejs');
 
 module.exports = PolymerView.extend({
     tagName: 'oe-checklist',
-    //class: 'oe-checklist',
     model: EddiModel,
     template: template,
     initialize: function () {

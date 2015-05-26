@@ -12,11 +12,14 @@ module.exports = Mn.CollectionView.extend({
         this.childViewOptions = {
             namelist: this.options.namelist
         };
+        this.collection.on('change:lists', this.collectionChanged, this);
     },
     filter: function (child, index, collection) {
         return child.inList(this.options.namelist);
     },
+    collectionChanged: function () {
+        this.render();
+    },
     onRender: function () {
-        console.log('Name collection rendering');
     }
 });

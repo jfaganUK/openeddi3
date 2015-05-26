@@ -12,7 +12,7 @@ module.exports = Mn.PolymerView.extend({
         // Make the namelist convient to access
         this.namelist = options.namelist;
         // Add the namelist to the oe object here, so that the component can read it
-        var oe = this.model.attributes.oe || {};
+        var oe = _.clone(this.model.get('oe')) || {};
         oe.namelist = this.namelist;
         oe.inlist = this.model.inList(this.namelist);
         this.model.set('oe', oe);
@@ -20,12 +20,15 @@ module.exports = Mn.PolymerView.extend({
         this.$el.on('toggle-name', _.bind(this.toggleName, this));
     },
     toggleName: function () {
+        var oe = _.clone(this.model.get('oe'));
         if (this.model.inList(this.namelist)) {
             this.model.removeFromList(this.namelist);
-            this.model.attributes.oe.inlist = false;
+            oe.inlist = false;
+            this.model.set('oe', oe);
         } else {
             this.model.appendToList(this.namelist);
-            this.model.attributes.oe.inlist = true;
+            oe.inlist = true;
+            this.model.set('oe', oe);
         }
     }
 });

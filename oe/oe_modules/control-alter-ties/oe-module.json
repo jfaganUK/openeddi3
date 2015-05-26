@@ -1,0 +1,15 @@
+{
+  "name": "alterties",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "This is a simple sequential tie generator between alters in an ego network.",
+  "components": {
+    "eddicontrol": "oe-alter-ties.html"
+  },
+  "templates": {
+    "eddicontrol": "templateAlterTies"
+  },
+  "views": {
+    "eddicontrol": "AlterTies"
+  }
+}

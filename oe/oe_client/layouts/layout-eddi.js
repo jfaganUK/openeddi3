@@ -8,6 +8,7 @@ var PromptBarView = require('../views/view-eddi-promptbar');
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
+    className: 'oe-basic-eddi',
     regions: {
         promptbar: '#oe-layout-eddi-promptbar',
         controlspace: '#oe-layout-eddi-controlspace'
