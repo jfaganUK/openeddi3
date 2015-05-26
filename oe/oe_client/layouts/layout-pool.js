@@ -35,8 +35,6 @@ module.exports = Marionette.LayoutView.extend({
     },
 
     onShow: function () {
-        // TODO: I think the load sheet should be handled by the pool view
-
         // Load the pool header
         var HeaderView = require('../views/view-pool-header');
         var headerView = new HeaderView({model: app.currentPool});

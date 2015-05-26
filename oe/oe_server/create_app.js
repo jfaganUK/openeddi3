@@ -6,6 +6,7 @@
 var express = require('express');         // The web framework
 var inspect = require('util').inspect;
 var log = require('util').log;
+var favicon = require('serve-favicon');
 
 var app = express();
 //app.engine('ejs', require('ejs').renderFile);
@@ -40,6 +41,7 @@ app.use('/built.js', express.static(appRoot + '/built.js'));
 app.use('/oe.css', express.static(appRoot + '/oe/oe_client/oe.css'));
 app.use('/css', express.static(appRoot + '/oe/oe_client/css'));
 app.use('/demo', express.static(appRoot + '/oe/oe_client/components/demo-oe-eddi-promptbar.html'));
+app.use('/favicon.ico', express.static(appRoot + '/oe/oe_client/favicon.ico'));
 
 // NOTE: do these two routes last.
 // The catch for oe_server errors

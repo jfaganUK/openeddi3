@@ -1032,7 +1032,7 @@ $(document).ready(function () {
                                 cargo.drained = false;
                                 if (cargo.saturated && tasks.length === payload) {
                                     cargo.saturated();
-                                }
+                    }
                             });
                             async.setImmediate(cargo.process);
                         },
@@ -28985,8 +28985,6 @@ module.exports = Marionette.LayoutView.extend({
     },
 
     onShow: function () {
-        // TODO: I think the load sheet should be handled by the pool view
-
         // Load the pool header
         var HeaderView = require('../views/view-pool-header');
         var headerView = new HeaderView({model: app.currentPool});
@@ -30639,7 +30637,7 @@ module.exports = PolymerView.extend({
                         if (typeof val === 'undefined') {
                             results.push(false);
                             continue;
-                        }
+                }
                         switch (conds[i].comparator) {
                             case '===':
                                 results.push(val === conds[i].value);

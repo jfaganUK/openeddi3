@@ -57,6 +57,7 @@
     "pg-hstore": "~2.3.1",
     "colors": "~1.0.3",
     "queue-async": "~1.0.7",
-    "async": "~0.9.0"
+    "async": "~0.9.0",
+    "serve-favicon": "~2.2.1"
   }
 }
