@@ -1,4 +1,10 @@
 @import url("css/sheet.css");
+@import url("css/landing.css");
+
+body {
+    font-family: 'RobotoDraft', sans serif;
+    background: url('/assets/squairy_light.png') repeat;
+}
 
 .dark-primary-color {
     background-color: #0097A7;

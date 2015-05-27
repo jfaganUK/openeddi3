@@ -13,8 +13,8 @@
 
 .wide .oe-basic-eddi {
     margin-bottom: 10px;
-    -webkit-box-shadow: rgba(0, 0, 0, 0.258824) 0px 2px 5px 0px;
-    box-shadow: rgba(0, 0, 0, 0.258824) 0px 2px 5px 0px;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
+    box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
     border-radius: 2px;
     display: block;
     overflow-x: hidden;
@@ -27,5 +27,5 @@
     background-color: #ffe0ad;
     color: #212121;
     border-bottom: 1px solid rgba(0, 0, 0, 0.14902);
-    border-radius: 0px;
+    border-radius: 0;
 }

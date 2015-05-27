@@ -3,7 +3,7 @@
   {
     "poolid": "test1",
     "title": "OpenEddi Test 01",
-    "subtitle": "A new generation of data collection and interaction.",
+    "description": "A new generation of flexible, interactive, and engaging data collection.",
     "intro": "Introduction goes here.",
     "outtro": "The exit message goes here.",
     "sheetOrder": [

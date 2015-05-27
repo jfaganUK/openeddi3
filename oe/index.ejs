@@ -9,8 +9,9 @@
 
     <link rel="stylesheet" href="oe.css">
 
+    <script src="/bower_components/webcomponentsjs/webcomponents.min.js"></script>
     <script src="/bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
+
     <link rel="import" href="/bower_components/polymer/polymer.html">
 
     <!------- POLYMER WEB-COMPONENTS ------->
@@ -19,6 +20,7 @@
     <link rel="import" href="/bower_components/font-roboto/roboto.html">
     <link rel="import" href="/bower_components/core-header-panel/core-header-panel.html">
     <link rel="import" href="/bower_components/core-icon-button/core-icon-button.html"/>
+    <link rel="import" href="/bower_components/core-scroll-header-panel/core-scroll-header-panel.html"/>
 
     <!------- OE COMPONENTS ---------------->
     <!-- These are the basic components of every OE Pool -->
@@ -26,10 +28,7 @@
     <link rel="import" href="/oe_client/components/oe-eddi-promptbar.html">
     <link rel="import" href="/oe_client/components/oe-pool-header.html"/>
 
-    <!-- TODO: Need to dynamically load the modules here -->
     <!------- OE MODULE COMPONENTS ------------->
-    <link rel="import" href="/oe_modules/control-shorttext/shorttext.html">
-    <link rel="import" href="/oe_modules/control-checklist/checklist.html"/>
 
     <% inspect(oeModules) %>
     <% for (var k in oeModules) {
@@ -46,12 +45,6 @@
     }
     }
     %>
-
-    <style>
-        body {
-            font-family: 'RobotoDraft', sans serif;
-        }
-    </style>
 
 </head>
 <body unresolved fullbleed vertical layout>

@@ -2,24 +2,52 @@
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/core-icons/core-icons.html">
 
-<polymer-element name="pool-listing-landing" attributes="poolTitle dateCreated oe">
+<polymer-element name="pool-listing-landing" attributes="poolTitle dateCreated description oe">
     <template>
-        <div class="pool-listing">
+        <div class="pool-listing" layout vertical>
             <content select="h2"></content>
             <h2>{{poolTitle}}</h2>
-            <p>{{dateCreated}}</p>
-            <paper-button on-tap="{{createNewPool}}"><core-icon icon="create"></core-icon>Start New Pool</paper-button>
+
+            <div class="pool-desc">{{description}}</div>
+            <span class="date-created">{{dateCreated}}</span>
+            <paper-button raised on-tap="{{createNewPool}}" class="start-button">
+                <core-icon icon="create"></core-icon>
+                Start
+            </paper-button>
         </div>
         <style>
-            polyfill-next-selector {content: 'h2'; }
-            ::content h2 {
-                color: red;
+            :host {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 320px;
+            }
+
+            .date-created {
+                font-size: 7px;
+                position: absolute;
+                bottom: 5px;
+                left: 5px;
+                color: rgba(0, 0, 0, 0.50);
+            }
+
+            .pool-desc {
+                margin-bottom: 10px;
+            }
+
+            .start-button {
+                background-color: rgb(27, 85, 170);
+                color: white;
             }
         </style>
     </template>
     <script>
+        //noinspection JSUnusedGlobalSymbols
         Polymer('pool-listing-landing', {
-            createNewPool: function(e) {
+            createNewPool: function () {
                 this.fire('start-new-pool');
             }
         });

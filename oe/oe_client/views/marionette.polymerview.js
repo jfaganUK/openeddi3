@@ -14,6 +14,7 @@
 
 module.exports = Marionette.ItemView.extend({
     constructor: function (options) {
+        console.log('[marionette.polymer] Constructing view');
         Marionette.View.prototype.constructor.apply(this, arguments);
         this._setPublishedKeys();
         this._initAttrsFromModel();
@@ -62,7 +63,7 @@ module.exports = Marionette.ItemView.extend({
     _setElAttrs: function (attributes) {
         var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
         _.each(attributeNames, this._setElAttr, this);
-        this.el.fire('attributes-updated', this.model);
+        //this.el.fire('attributes-updated', this.model);
     },
 
     _setElAttr: function (attributeName) {

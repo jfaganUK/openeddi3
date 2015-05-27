@@ -6,6 +6,7 @@
      */
 
 
+//var WebComponents = require('webcomponents');
 var $ = require('jquery');
 var _ = require('lodash');
 var Backbone = require('backbone');
@@ -901,7 +902,7 @@ $(document).ready(function () {
                                 var task = q.tasks.shift();
                                 if (q.empty && q.tasks.length === 0) {
                                     q.empty();
-                                }
+                    }
                                 workers += 1;
                                 var next = function () {
                                     workers -= 1;
@@ -28935,6 +28936,15 @@ var template = require('../templates/template-layout-landing.ejs')();
 
 module.exports = Marionette.LayoutView.extend({
     template: _.template(template),
+    tagName: 'core-scroll-header-panel',
+    attributes: function () {
+        return ( {
+            'flex': '',
+            'layout': '',
+            'vertical': ''
+        });
+    },
+    id: 'oeLandingContainer',
     regions: {
         header: '#oe-landing-header',
         pools: '#oe-landing-pools',
@@ -28942,7 +28952,6 @@ module.exports = Marionette.LayoutView.extend({
     },
 
     initialize: function(opts) {
-
     }
 });
 
@@ -29384,7 +29393,9 @@ return __p;
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='';
+    __p += '' +
+        ((__t = ( rc.poolTitle )) == null ? '' : __t) +
+        '';
 return __p;
 };
 
@@ -29402,7 +29413,7 @@ return __p;
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<div id="oe-landing-header">Header</div><div id="oe-landing-pools">Pools</div><div id="oe-landing-footer">Footer</div>';
+    __p += '<div id="oe-landing-header"><div class="oe-title-logo" layout center-justified><img src="/assets/oe-title-logo.svg" class="oe-title-logo" alt="OpenEddi Title Logo"></div></div><core-animated-pages transitions="cross-fade"><div id="oe-landing-pools">Pools</div></core-animated-pages><div id="oe-landing-footer">Footer</div>';
 return __p;
 };
 
@@ -29426,8 +29437,16 @@ return __p;
 
     }, {"lodash": 7}],
     34: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
+            __p += '';
+            return __p;
+        };
+
+    }, {"lodash": 7}],
     35: [function (require, module, exports) {
 //Copyright (c) 2014, Jeremy Fairbank <elpapapollo@gmail.com>
 //
@@ -29445,6 +29464,7 @@ return __p;
 
 module.exports = Marionette.ItemView.extend({
     constructor: function (options) {
+        console.log('[marionette.polymer] Constructing view');
         Marionette.View.prototype.constructor.apply(this, arguments);
         this._setPublishedKeys();
         this._initAttrsFromModel();
@@ -29493,7 +29513,7 @@ module.exports = Marionette.ItemView.extend({
     _setElAttrs: function (attributes) {
         var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
         _.each(attributeNames, this._setElAttr, this);
-        this.el.fire('attributes-updated', this.model);
+        //this.el.fire('attributes-updated', this.model);
     },
 
     _setElAttr: function (attributeName) {
@@ -29552,6 +29572,7 @@ module.exports = PolymerView.extend({
     template: require('../templates/template-landing-pool-listing.ejs'),
     initialize: function() {
         this.$el.on('start-new-pool', _.bind(this.newPool, this));
+        this.el.poolTitle = "Exciting!";
     },
 
     newPool: function() {
@@ -29574,6 +29595,13 @@ module.exports = PolymerView.extend({
 var PoolListingView = require('./view-landing-pool-listing');
 
 module.exports = Marionette.CollectionView.extend({
+    attributes: function () {
+        return ( {
+            'flex': '',
+            'layout': '',
+            'vertical': ''
+        });
+    },
     childView: PoolListingView
 });
     }, {"./view-landing-pool-listing": 38}],
@@ -29795,8 +29823,8 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {"lodash": 7}],
     50: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     51: [function (require, module, exports) {
         /**
  * Created by jfagan on 4/7/15.
@@ -29821,8 +29849,8 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {"./templateChecklist.ejs": 52, "./viewChecklist": 53}],
     52: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     53: [function (require, module, exports) {
         /**
          * Created by jfagan on 3/24/15.
@@ -29996,11 +30024,11 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.templates = templates;
     }, {"./BasicNameGenerator": 57, "./templateBasicNamegen.ejs": 61}],
     59: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     60: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     61: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
@@ -30123,8 +30151,8 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {"lodash": 7}],
     66: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     67: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/18/15.
@@ -30195,8 +30223,8 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.templates = templates;
     }, {"./NodeLink": 67}],
     69: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     70: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/15/15.
@@ -30215,8 +30243,8 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {"./templateRadiolist.ejs": 71, "./viewRadiolist": 72}],
     71: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     72: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/15/15.
@@ -30279,8 +30307,8 @@ module.exports.templates = templates;
 
     }, {"./templateShorttext.ejs": 74, "./viewShorttext": 75}],
     74: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     75: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
@@ -30359,8 +30387,8 @@ module.exports = PolymerView.extend({
 
     }, {"./SliderControl": 76, "./templateSlider.ejs": 78}],
     78: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][34][0].apply(exports, arguments)
+    }, {"dup": 34, "lodash": 7}],
     79: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/18/15.
@@ -30655,7 +30683,7 @@ module.exports = PolymerView.extend({
                                 console.log('Missing / bad comparator!');
                                 results.push(null);
                                 break;
-                        }
+                }
             }
 
                     // if there is more than one condition, test them with the group comparator

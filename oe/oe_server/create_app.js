@@ -42,6 +42,7 @@ app.use('/oe.css', express.static(appRoot + '/oe/oe_client/oe.css'));
 app.use('/css', express.static(appRoot + '/oe/oe_client/css'));
 app.use('/demo', express.static(appRoot + '/oe/oe_client/components/demo-oe-eddi-promptbar.html'));
 app.use('/favicon.ico', express.static(appRoot + '/oe/oe_client/favicon.ico'));
+app.use('/assets', express.static(appRoot + '/oe/oe_client/assets'));
 
 // NOTE: do these two routes last.
 // The catch for oe_server errors

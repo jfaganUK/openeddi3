@@ -28,6 +28,7 @@ function getPoolListings(req, res, next) {
         var poolListing = {
             title: pool.pool.title,
             poolid: pool.pool.poolid,
+            description: pool.pool.description,
             numberOfSheets: pool.sheets.length,
             numberOfEddis: pool.eddis.length,
             dateCreated: pool.pool.dateCreated

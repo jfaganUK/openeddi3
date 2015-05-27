@@ -12,6 +12,7 @@ module.exports = PolymerView.extend({
     template: require('../templates/template-landing-pool-listing.ejs'),
     initialize: function() {
         this.$el.on('start-new-pool', _.bind(this.newPool, this));
+        this.el.poolTitle = "Exciting!";
     },
 
     newPool: function() {
