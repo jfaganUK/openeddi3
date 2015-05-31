@@ -10,6 +10,7 @@ var Graph = require('../model-namelist/GraphModel');
 module.exports = Mn.PolymerView.extend({
     tagName: 'oe-nodelink',
     template: template,
+    _publishedKeys: ['oe', 'response', 'graph'],
     initialize: function () {
         // Set the operations attribute
         if (!this.model.get('response').operations) {

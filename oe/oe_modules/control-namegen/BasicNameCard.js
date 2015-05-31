@@ -9,6 +9,7 @@ var template = require('./templateBasicNameCard.ejs');
 module.exports = PolymerView.extend({
     template: template,
     tagName: 'oe-basic-name-card',
+    _publishedKeys: ['oe', 'name'],
     initialize: function (options) {
         this.namelist = options.namelist;
         this.$el.on('remove-name', _.bind(this.removeName, this));

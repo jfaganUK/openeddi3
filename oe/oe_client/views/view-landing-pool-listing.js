@@ -3,16 +3,15 @@
  */
 "use strict";
 
-var PolymerView = require('./marionette.polymerview');
 var PoolListingModel = require('../models/model-pool-listing');
 
-module.exports = PolymerView.extend({
+module.exports = Mn.PolymerView.extend({
     tagName: 'pool-listing-landing',
     model: PoolListingModel,
     template: require('../templates/template-landing-pool-listing.ejs'),
+    _publishedKeys: ['poolTitle', 'dateCreated', 'description', 'oe'],
     initialize: function() {
         this.$el.on('start-new-pool', _.bind(this.newPool, this));
-        this.el.poolTitle = "Exciting!";
     },
 
     newPool: function() {

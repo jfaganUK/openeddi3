@@ -3,14 +3,14 @@
  * oe/oe_modules/control-shorttext/view-shorttext.js
  */
 
-var PolymerView = require('../../oe_client/views/marionette.polymerview');
 var EddiModel = require('../../oe_client/models/model-eddi');
 var template = require('./templateShorttext.ejs');
 
-module.exports = PolymerView.extend({
+module.exports = Mn.PolymerView.extend({
     tagName: 'oe-shorttext',
     model: EddiModel,
-    template: template
+    template: template,
+    _publishedKeys: ['oe', 'response']
 });
 
 

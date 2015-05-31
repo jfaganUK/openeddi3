@@ -31,6 +31,15 @@ module.exports = Backbone.Model.extend({
         this.eddis = new EddiCollection();
         this.sheets = new SheetColllection(this.toJSON().sheets);
 
+        // The sheetid is supposed to be a string. But if it receives a "1" from the server it will
+        // coerce it to a Number automatically
+        var sheets = this.get('sheets');
+        _.each(sheets, function (sht) {
+            if (_.isNumber(sht.sheetid)) {
+                sht.sheetid = sht.sheetid.toString();
+            }
+        });
+
         this.set('poolLength', this.get('pool').sheetOrder.length);
 
         // If it's a new pool, then create the question logic for everything

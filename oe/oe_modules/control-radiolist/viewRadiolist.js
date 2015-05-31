@@ -11,6 +11,7 @@ module.exports = PolymerView.extend({
     tagName: 'oe-radiolist',
     model: EddiModel,
     template: template,
+    _publishedKeys: ['oe', 'response'],
     initialize: function () {
         this._initializeSelected();
     },
@@ -29,3 +30,4 @@ module.exports = PolymerView.extend({
         }
     }
 });
+

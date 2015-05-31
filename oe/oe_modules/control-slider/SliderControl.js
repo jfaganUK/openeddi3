@@ -8,6 +8,7 @@ var template = require('./templateSlider.ejs');
 module.exports = Mn.PolymerView.extend({
     tagName: 'oe-slider',
     template: template,
+    _publishedKeys: ['oe', 'response'],
     initialize: function () {
 
         // Have to initialize the values, and the array values

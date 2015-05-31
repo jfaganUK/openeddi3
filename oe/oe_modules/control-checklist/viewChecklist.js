@@ -11,6 +11,7 @@ module.exports = PolymerView.extend({
     tagName: 'oe-checklist',
     model: EddiModel,
     template: template,
+    _publishedKeys: ['oe', 'response'],
     initialize: function () {
         this._initializeCheckboxArray();
     },

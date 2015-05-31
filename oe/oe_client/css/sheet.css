@@ -1,3 +1,8 @@
+/*
+ * Max width set to 560 px. This might be a good place for SASS or LESS, right?
+ *
+ */
+
 
 #oe-sheet-eddi-space {
 }
@@ -5,6 +10,19 @@
 #oe-sheet-eddi-space.wide {
     max-width: 560px;
     margin: 48px auto 0;
+}
+
+#oe-pool-footer {
+    background: white;
+    box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
+    width: 540px;
+    margin: 16px auto;
+    padding: 10px;
+}
+
+#oe-footer-logo > img {
+    height: 35px;
+    width: 35px;
 }
 
 .oe-basic-eddi {
@@ -20,7 +38,7 @@
     overflow-x: hidden;
     overflow-y: hidden;
     position: relative;
-    width: 512px;
+    width: 560px;
 }
 
 .oe-eddi-promptbar {

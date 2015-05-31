@@ -39,6 +39,11 @@ module.exports = Marionette.LayoutView.extend({
         var HeaderView = require('../views/view-pool-header');
         var headerView = new HeaderView({model: app.currentPool});
         this.header.show(headerView);
+
+        // Load the pool footer
+        var FooterView = require('../views/view-pool-footer');
+        var footerView = new FooterView({model: app.appState});
+        this.footer.show(footerView);
     },
 
     onRender: function () {

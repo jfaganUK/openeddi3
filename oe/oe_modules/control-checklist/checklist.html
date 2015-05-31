@@ -6,26 +6,31 @@
 <polymer-element name="oe-checklist" attributes="oe response">
     <template>
         <!--<paper-input class="oe-checklist-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>-->
-        <template repeat="{{ arrayPrompt in oe.arrayPrompts }}">
-            <core-label horizontal layout id="{{oe.eid + '-' + arrayPrompt.arrayid}}">
-                <paper-checkbox for role="checkbox"
-                                class="oe-checklist-checkbox"
-                                aria-labelledby="{{oe.eid + '-' + arrayPrompt.arrayid}}"
-                                on-change="{{oeCheckboxChanged}}"
-                                aria-checked="{{response.value[arrayPrompt.arrayid] ? true : false }}"
-                                data-arrayid="{{arrayPrompt.arrayid}}"
-                                checked?="{{response.value[arrayPrompt.arrayid]}}"
-                        ></paper-checkbox>
-                <div vertical layout>
-                    {{ arrayPrompt.prompt }}
-                </div>
-            </core-label>
-            <br>
-        </template>
+        <div class="oe-checklist-container">
+            <template repeat="{{ arrayPrompt in oe.arrayPrompts }}">
+                <core-label horizontal layout id="{{oe.eid + '-' + arrayPrompt.arrayid}}">
+                    <paper-checkbox for role="checkbox"
+                                    class="oe-checklist-checkbox"
+                                    aria-labelledby="{{oe.eid + '-' + arrayPrompt.arrayid}}"
+                                    on-change="{{oeCheckboxChanged}}"
+                                    aria-checked="{{response.value[arrayPrompt.arrayid] ? true : false }}"
+                                    data-arrayid="{{arrayPrompt.arrayid}}"
+                                    checked?="{{response.value[arrayPrompt.arrayid]}}"
+                            ></paper-checkbox>
+                    <div vertical layout>
+                        {{ arrayPrompt.prompt }}
+                    </div>
+                </core-label>
+                <br>
+            </template>
+        </div>
         <style>
+            .oe-checklist-container {
+                margin-top: 10px;
+            }
             .oe-checklist-checkbox {
                 padding-right: 20px;
-                margin-left: 10px;
+                margin-left: 20px;
             }
 
             :host {

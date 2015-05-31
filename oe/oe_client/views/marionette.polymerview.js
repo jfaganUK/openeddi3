@@ -23,7 +23,8 @@ module.exports = Marionette.ItemView.extend({
     },
 
     _setPublishedKeys: function () {
-        this._publishedKeys = _.keys(this.el.publish);
+        // This won't work in a polyfill, so we have to manually set the published keys
+        //this._publishedKeys = _.keys(this.el.publish);
     },
 
     _initAttrsFromModel: function () {
@@ -63,7 +64,9 @@ module.exports = Marionette.ItemView.extend({
     _setElAttrs: function (attributes) {
         var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
         _.each(attributeNames, this._setElAttr, this);
+        // This won't work under a polyfill. We will have to take another approach
         //this.el.fire('attributes-updated', this.model);
+        app.channels.pool.trigger('attributes-updated', this.model);
     },
 
     _setElAttr: function (attributeName) {

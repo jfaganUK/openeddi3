@@ -6,6 +6,10 @@ body {
     background: url('/assets/squairy_light.png') repeat;
 }
 
+.hidden {
+    display: none;
+}
+
 .dark-primary-color {
     background-color: #0097A7;
 }

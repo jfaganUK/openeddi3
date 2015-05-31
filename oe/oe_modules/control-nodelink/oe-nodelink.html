@@ -72,9 +72,23 @@
     <script>
         //noinspection JSUnusedLocalSymbols,JSUnusedGlobalSymbols
         Polymer('oe-nodelink', {
-
             ready: function () {
-                this.addEventListener('attributes-updated', this.setupNodeLink);
+                // I used to to just have this listener, but with the polyfill, I can't fire events
+                // external to the element.
+                // this.addEventListener('attributes-updated', this.setupNodeLink);
+                if (this.oe) {
+                    this.setupNodeLink();
+                } else {
+                    console.log('[nodelink] Node-link ready!');
+                    function isThisEddi(ev) {
+                        var eid = ev.get('eid');
+                        if (this.oe && this.oe.eid && this.oe.eid === eid) {
+                            this.setupNodeLink();
+                        }
+                    }
+
+                    app.channels.pool.on('attributes-updated', _.bind(isThisEddi, this));
+                }
             },
 
             updateResponse: function (event, detail, sender) {
@@ -85,7 +99,8 @@
 
                 // With backbone we just say 'once', but in this case
                 // I just want to remove the listener without using backbone to do it
-                this.removeEventListener('attributes-updated', this.setupNodeLink, false);
+//                this.removeEventListener('attributes-updated', this.setupNodeLink, false);
+                app.channels.pool.off('attributes-updated');
 
                 // This sucks. I want to blow this eddi up bigger.
                 this.touchHeight = $(window).height() * 0.9;

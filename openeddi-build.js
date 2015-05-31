@@ -7,6 +7,8 @@
 var browserify = require('browserify');
 var fs = require('fs');
 
+var dev = true;
+
 require('./include-oe-modules')();
 
 // Browserify the primary app file, every branches from here

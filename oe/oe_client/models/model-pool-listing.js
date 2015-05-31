@@ -17,8 +17,6 @@ module.exports = Backbone.Model.extend({
         if(this.attributes.title) {
             this.attributes.poolTitle = this.attributes.title;
         }
-
-        //this.id = this.cid;
     }
 });
 

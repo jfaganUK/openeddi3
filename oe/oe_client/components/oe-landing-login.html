@@ -1,0 +1,32 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/core-label/core-label.html">
+
+<polymer-element name="oe-landing-login" attributes="oe">
+    <template>
+        <div id="login-container" vertical layout>
+            <paper-input label="Username"></paper-input>
+            <paper-input label="Password"></paper-input>
+            <paper-button id="login-button">Login</paper-button>
+        </div>
+        <style>
+            #login-container {
+                background: white;
+                box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
+                width: 540px;
+                margin: 16px auto;
+                padding: 10px;
+            }
+
+            #login-button {
+                background-color: rgb(27, 85, 170);
+                color: white;
+            }
+        </style>
+    </template>
+    <script>
+        Polymer('oe-landing-login', {});
+    </script>
+
+</polymer-element>

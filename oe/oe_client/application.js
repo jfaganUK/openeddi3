@@ -28,15 +28,18 @@ var App = Marionette.Application.extend({
 
         this.mediaQuery();
 
+        this.landingView = new LandingView;
     },
 
     listenRadioChannels: function() {
         this.channels.navigation.comply('load-landing', this.loadLanding, this);
         this.channels.navigation.comply('load-pool', this.loadPool, this);
         this.channels.navigation.comply('new-pool', this.newPool, this);
+        this.channels.navigation.comply('load-landing-login', this.loadLogin, this);
 
         this.channels.navigation.comply('pool-prev-sheet', this.prevSheet, this);
         this.channels.navigation.comply('pool-next-sheet', this.nextSheet, this);
+        this.channels.navigation.comply('pool-exit', this.exitPool, this);
 
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
@@ -84,9 +87,10 @@ var App = Marionette.Application.extend({
     },
 
     loadLanding: function() {
-        var landingView = new LandingView;
+        var self = this;
         //noinspection JSUnresolvedVariable
-        this.appSpace.show(landingView);
+        this.landingView = new LandingView;
+        this.appSpace.show(this.landingView);
 
         // Grab the existing pools
         var PoolListingsCollection = require('./collections/collection-pool-listings');
@@ -100,7 +104,7 @@ var App = Marionette.Application.extend({
             console.log('--- PoolListingsSynced');
             poolListingsView = new PoolListingsView({collection: this});
             //noinspection JSUnresolvedVariable
-            landingView.pools.show(poolListingsView);
+            self.landingView.content.show(poolListingsView);
         });
     },
 
@@ -160,6 +164,12 @@ var App = Marionette.Application.extend({
 
     },
 
+    loadLogin: function () {
+        var LandingLogin = require('./views/view-landing-login');
+        var landingLogin = new LandingLogin({model: app.appState});
+        this.landingView.content.show(landingLogin);
+    },
+
     poolLaunch: function () {
 
         // Set the appState variables
@@ -203,6 +213,7 @@ var App = Marionette.Application.extend({
             this.poolView.sheetView = new SheetView;
             //noinspection JSUnresolvedVariable
             this.poolView.sheet.show(this.poolView.sheetView);
+            this.channels.navigation.trigger('sheet-loaded');
         }
     },
 
@@ -248,6 +259,18 @@ var App = Marionette.Application.extend({
         }
 
         this.loadSheet(e);
+    },
+
+    exitPool: function () {
+
+        // Save all the things
+        app.currentPool.eddis.each(function (x) {
+            x.save();
+        });
+
+        // Navigate back to the main page
+        app.router.navigate('', {trigger: true});
+
     },
 
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript

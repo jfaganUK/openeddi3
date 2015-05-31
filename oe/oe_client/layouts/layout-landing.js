@@ -19,8 +19,8 @@ module.exports = Marionette.LayoutView.extend({
     id: 'oeLandingContainer',
     regions: {
         header: '#oe-landing-header',
-        pools: '#oe-landing-pools',
-        footer: '#oe-landing-footer'
+        content: '#oe-landing-content',
+        footer: 'oe-landing-footer'
     },
 
     initialize: function(opts) {
