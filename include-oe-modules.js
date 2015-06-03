@@ -14,7 +14,11 @@ var fs = require('fs');
 global.appRoot = __dirname;
 
 module.exports = function () {
-    var oeModules = require('./oe/oe_server/load-oe-module-information')();
+    var oeModules;
+
+    require('./oe/oe_server/load-oe-module-information')(function (d) {
+        oeModules = d;
+    });
 
     var o = "";
 

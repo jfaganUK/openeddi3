@@ -16,6 +16,7 @@ module.exports = Backbone.Model.extend({
     initialize: function() {
         var self = this;
         this.set('puid', guid());
+        app.appState.set('puid', this.get('puid'));
 
         // First the model is initialized
         // Then when it's synced, it attempts to sync the eddis

@@ -37,6 +37,7 @@ module.exports = function (app) {
     require('./api-responses')(router);
     require('./api-pool-listings')(router);
     require('./api-pool-respondent')(router);
+    require('./api-user-auth')(router);
 
     // OE Modules with APIs
     var m = {},

@@ -6,6 +6,7 @@
 
 var async = require('async');
 var LandingView = require('./layouts/layout-landing');
+var UserModel = require('./models/model-user');
 var guid = require('./helpers/guid');
 
 var App = Marionette.Application.extend({
@@ -28,7 +29,8 @@ var App = Marionette.Application.extend({
 
         this.mediaQuery();
 
-        this.landingView = new LandingView;
+        this.user = new UserModel;
+
     },
 
     listenRadioChannels: function() {
@@ -41,6 +43,8 @@ var App = Marionette.Application.extend({
         this.channels.navigation.comply('pool-next-sheet', this.nextSheet, this);
         this.channels.navigation.comply('pool-exit', this.exitPool, this);
 
+        this.channels.user.comply('login', this.attemptLogin, this);
+
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
             console.log('-- Response Updated: ' + e.attributes.eid);
@@ -51,8 +55,8 @@ var App = Marionette.Application.extend({
     registerRadioChannels: function() {
         // Navigation channel. Listen how the user moves around the site.
         this.channels.navigation = Backbone.Radio.channel('navigation');
-        // Respondent channel. Listen to events on the respondent activity.
-        this.channels.respondent = Backbone.Radio.channel('respondent');
+        // User channel. Logins, logouts, authentication events, etc.
+        this.channels.user = Backbone.Radio.channel('user');
         // Pool channel. Events related to the oe pool.
         this.channels.pool = Backbone.Radio.channel('pool');
         // Response channel. Events, commands, and data for when the user provides responses to the eddis.
@@ -62,7 +66,7 @@ var App = Marionette.Application.extend({
 
         // For debugging, let's listen on on the events
         Backbone.Radio.tuneIn('navigation');
-        Backbone.Radio.tuneIn('respondent');
+        Backbone.Radio.tuneIn('user');
         Backbone.Radio.tuneIn('pool');
         Backbone.Radio.tuneIn('response');
         Backbone.Radio.tuneIn('media');
@@ -86,13 +90,20 @@ var App = Marionette.Application.extend({
         }, this));
     },
 
+    showLanding: function () {
+        if (!this.landingView) {
+            this.landingView = new LandingView;
+            this.appSpace.show(this.landingView);
+        }
+    },
+
     loadLanding: function() {
         var self = this;
-        //noinspection JSUnresolvedVariable
-        this.landingView = new LandingView;
-        this.appSpace.show(this.landingView);
+
+        this.showLanding();
 
         // Grab the existing pools
+        this.router.navigate('landing/listings');
         var PoolListingsCollection = require('./collections/collection-pool-listings');
         var poolListingsCollection = new PoolListingsCollection();
         poolListingsCollection.fetch();
@@ -165,6 +176,9 @@ var App = Marionette.Application.extend({
     },
 
     loadLogin: function () {
+        app.router.navigate('admin/login');
+
+        this.showLanding();
         var LandingLogin = require('./views/view-landing-login');
         var landingLogin = new LandingLogin({model: app.appState});
         this.landingView.content.show(landingLogin);
@@ -196,6 +210,7 @@ var App = Marionette.Application.extend({
         // Defined in the oe.js launch
         //noinspection JSUnresolvedVariable
         this.appSpace.show(this.poolView);
+        delete this.landingView;
 
         this.loadSheet();
     },
@@ -271,6 +286,25 @@ var App = Marionette.Application.extend({
         // Navigate back to the main page
         app.router.navigate('', {trigger: true});
 
+    },
+
+    attemptLogin: function (creds) {
+        console.log('[attemptLogin] Attempting login... ');
+        console.log(creds);
+
+        this.user.login(creds, {
+            success: function (mod, res) {
+                console.log("SUCCESS", mod, res);
+                app.channels.user.trigger('login-success');
+            },
+            error: function (err) {
+                console.log("ERROR", err);
+                app.channels.user.trigger('login-failed');
+            }
+        });
+
+
+        this.user.login(creds);
     },
 
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript

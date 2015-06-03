@@ -8,7 +8,7 @@ var fs = require('fs');
 var _ = require('lodash');
 var path = require('path');
 
-module.exports = function() {
+module.exports = function (callback) {
     var modPath = appRoot + '/oe/oe_modules/';
     var oeModules = {};
 
@@ -28,7 +28,10 @@ module.exports = function() {
         jsonData.urlPath = '/oe_modules/' + d;
         oeModules[jsonData.name] = jsonData;
     });
-    return oeModules;
+
+
+    callback(oeModules);
+
 };
 
 

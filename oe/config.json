@@ -1,0 +1,15 @@
+{
+  "db": {
+    "forceSync": true,
+    "database": "openeddi",
+    "username": "openeddi",
+    "password": "openeddi"
+  },
+  "adminAccount": {
+    "username": "admin",
+    "password": "changeThisPassword",
+    "email": "admin@changeThisEmail.com",
+    "firstName": "Admin",
+    "lastName": "McAdmin"
+  }
+}

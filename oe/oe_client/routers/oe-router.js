@@ -8,18 +8,30 @@
  */
 module.exports = Backbone.Router.extend({
     routes: {
-        '' : 'loadLanding',
-        'pool/' : 'loadLanding',
-        'pool/:poolid' : 'loadPool',
-        'pool/:poolid/:puid' : 'loadPoolPuid',
+        '': 'loadLanding',
+        'landing': 'loadLanding',
+        'landing/listings': 'loadLanding',
+        'admin': 'loadAdmin',
+        'admin/login': 'loadLogin',
+        'pool': 'loadLanding',
+        'pool/:poolid': 'loadPool',
+        'pool/:poolid/:puid': 'loadPoolPuid',
         'pool/:poolid/:puid/sheet/:sheetid' : 'loadPoolPuidSheet'
     },
 
     initialize: function() {
     },
 
+    loadAdmin: function () {
+        app.channels.navigation.command('load-admin');
+    },
+
+    loadLogin: function () {
+        app.channels.navigation.command('load-landing-login');
+    },
+
     loadLanding: function() {
-        this.navigate('');
+        this.navigate('landing');
         app.channels.navigation.command('load-landing');
     },
 

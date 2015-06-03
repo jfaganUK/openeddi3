@@ -81,8 +81,8 @@ $(document).ready(function () {
     "./oe_client/backbone.dualstorage.browserify": 11,
     "./oe_client/backbone.dualstorage.oe.helpers": 12,
     "./oe_client/models/model-appstate": 21,
-    "./oe_client/routers/oe-router": 27,
-    "./oe_client/views/marionette.polymerview": 37,
+    "./oe_client/routers/oe-router": 28,
+    "./oe_client/views/marionette.polymerview": 38,
     "backbone": 5,
     "backbone.radio": 4,
     "jquery": 6,
@@ -27985,16 +27985,16 @@ OEModules.shorttext = require('./oe_modules/control-shorttext/client-index');
 module.exports = OEModules;
 
     }, {
-        "./oe_modules/control-alter-ties/client-index": 45,
-        "./oe_modules/control-basic-nameinterpret/client-index": 50,
-        "./oe_modules/control-checklist/client-index": 55,
-        "./oe_modules/control-namegen/client-index": 62,
-        "./oe_modules/control-namepick/client-index": 68,
-        "./oe_modules/control-nodelink/client-index": 72,
-        "./oe_modules/control-radiolist/client-index": 74,
-        "./oe_modules/control-shorttext/client-index": 77,
-        "./oe_modules/control-slider/client-index": 81,
-        "./oe_modules/model-namelist/client-index": 88
+        "./oe_modules/control-alter-ties/client-index": 46,
+        "./oe_modules/control-basic-nameinterpret/client-index": 51,
+        "./oe_modules/control-checklist/client-index": 56,
+        "./oe_modules/control-namegen/client-index": 63,
+        "./oe_modules/control-namepick/client-index": 69,
+        "./oe_modules/control-nodelink/client-index": 73,
+        "./oe_modules/control-radiolist/client-index": 75,
+        "./oe_modules/control-shorttext/client-index": 78,
+        "./oe_modules/control-slider/client-index": 82,
+        "./oe_modules/model-namelist/client-index": 89
     }],
     10: [function (require, module, exports) {
 /**
@@ -28005,6 +28005,7 @@ module.exports = OEModules;
 
         var async = require('async');
 var LandingView = require('./layouts/layout-landing');
+        var UserModel = require('./models/model-user');
 var guid = require('./helpers/guid');
 
 var App = Marionette.Application.extend({
@@ -28027,7 +28028,8 @@ var App = Marionette.Application.extend({
 
         this.mediaQuery();
 
-        this.landingView = new LandingView;
+        this.user = new UserModel;
+
     },
 
     listenRadioChannels: function() {
@@ -28040,6 +28042,8 @@ var App = Marionette.Application.extend({
         this.channels.navigation.comply('pool-next-sheet', this.nextSheet, this);
         this.channels.navigation.comply('pool-exit', this.exitPool, this);
 
+        this.channels.user.comply('login', this.attemptLogin, this);
+
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
             console.log('-- Response Updated: ' + e.attributes.eid);
@@ -28050,8 +28054,8 @@ var App = Marionette.Application.extend({
     registerRadioChannels: function() {
         // Navigation channel. Listen how the user moves around the site.
         this.channels.navigation = Backbone.Radio.channel('navigation');
-        // Respondent channel. Listen to events on the respondent activity.
-        this.channels.respondent = Backbone.Radio.channel('respondent');
+        // User channel. Logins, logouts, authentication events, etc.
+        this.channels.user = Backbone.Radio.channel('user');
         // Pool channel. Events related to the oe pool.
         this.channels.pool = Backbone.Radio.channel('pool');
         // Response channel. Events, commands, and data for when the user provides responses to the eddis.
@@ -28061,7 +28065,7 @@ var App = Marionette.Application.extend({
 
         // For debugging, let's listen on on the events
         Backbone.Radio.tuneIn('navigation');
-        Backbone.Radio.tuneIn('respondent');
+        Backbone.Radio.tuneIn('user');
         Backbone.Radio.tuneIn('pool');
         Backbone.Radio.tuneIn('response');
         Backbone.Radio.tuneIn('media');
@@ -28085,13 +28089,20 @@ var App = Marionette.Application.extend({
         }, this));
     },
 
+    showLanding: function () {
+        if (!this.landingView) {
+            this.landingView = new LandingView;
+            this.appSpace.show(this.landingView);
+        }
+    },
+
     loadLanding: function() {
         var self = this;
-        //noinspection JSUnresolvedVariable
-        this.landingView = new LandingView;
-        this.appSpace.show(this.landingView);
+
+        this.showLanding();
 
         // Grab the existing pools
+        this.router.navigate('landing/listings');
         var PoolListingsCollection = require('./collections/collection-pool-listings');
         var poolListingsCollection = new PoolListingsCollection();
         poolListingsCollection.fetch();
@@ -28164,6 +28175,9 @@ var App = Marionette.Application.extend({
     },
 
     loadLogin: function () {
+        app.router.navigate('admin/login');
+
+        this.showLanding();
         var LandingLogin = require('./views/view-landing-login');
         var landingLogin = new LandingLogin({model: app.appState});
         this.landingView.content.show(landingLogin);
@@ -28195,6 +28209,7 @@ var App = Marionette.Application.extend({
         // Defined in the oe.js launch
         //noinspection JSUnresolvedVariable
         this.appSpace.show(this.poolView);
+        delete this.landingView;
 
         this.loadSheet();
     },
@@ -28272,6 +28287,25 @@ var App = Marionette.Application.extend({
 
     },
 
+    attemptLogin: function (creds) {
+        console.log('[attemptLogin] Attempting login... ');
+        console.log(creds);
+
+        this.user.login(creds, {
+            success: function (mod, res) {
+                console.log("SUCCESS", mod, res);
+                app.channels.user.trigger('login-success');
+            },
+            error: function (err) {
+                console.log("ERROR", err);
+                app.channels.user.trigger('login-failed');
+            }
+        });
+
+
+        this.user.login(creds);
+    },
+
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript
     // Slightly modifed. It allows for a 401 response (just means we aren't logged in)
     // If there is an error it returns false
@@ -28303,8 +28337,9 @@ var App = Marionette.Application.extend({
         "./layouts/layout-pool": 19,
         "./layouts/layout-sheet": 20,
         "./models/model-pool": 25,
-        "./views/view-landing-login": 40,
-        "./views/view-landing-pool-listings": 42,
+        "./models/model-user": 27,
+        "./views/view-landing-login": 41,
+        "./views/view-landing-pool-listings": 43,
         "async": 2
     }],
     11: [function (require, module, exports) {
@@ -28948,7 +28983,7 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-    }, {"../templates/template-layout-eddi.ejs": 31, "../views/view-eddi-promptbar": 38}],
+    }, {"../templates/template-layout-eddi.ejs": 32, "../views/view-eddi-promptbar": 39}],
     18: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/7/15.
@@ -28979,7 +29014,7 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-    }, {"../templates/template-layout-landing.ejs": 32}],
+    }, {"../templates/template-layout-landing.ejs": 33}],
     19: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/22/15.
@@ -29034,7 +29069,7 @@ module.exports = Marionette.LayoutView.extend({
 });
 
 
-    }, {"../templates/template-layout-pool.ejs": 34, "../views/view-pool-footer": 43, "../views/view-pool-header": 44}],
+    }, {"../templates/template-layout-pool.ejs": 35, "../views/view-pool-footer": 44, "../views/view-pool-header": 45}],
     20: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/23/15.
@@ -29078,7 +29113,7 @@ module.exports = Marionette.LayoutView.extend({
 
 
 });
-    }, {"../templates/template-layout-sheet.ejs": 35, "../views/view-eddis": 39}],
+    }, {"../templates/template-layout-sheet.ejs": 36, "../views/view-eddis": 40}],
     21: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/12/15.
@@ -29311,6 +29346,7 @@ module.exports = Backbone.Model.extend({
     initialize: function() {
         var self = this;
         this.set('puid', guid());
+        app.appState.set('puid', this.get('puid'));
 
         // First the model is initialized
         // Then when it's synced, it attempts to sync the eddis
@@ -29388,6 +29424,112 @@ module.exports = Backbone.Model.extend({
     }, {}],
     27: [function (require, module, exports) {
 /**
+ * Created by jfagan on 5/31/15.
+ * oe/oe_client/models/model-user.js:3
+ *
+ * Note that I liberally borrowed from user alexanderscott and his
+ * Backbone / Express user authentication model.
+ * https://github.com/alexanderscott/backbone-login/blob/master/public/models/SessionModel.js
+ * Uses MIT license.
+ */
+
+module.exports = Backbone.Model.extend({
+    defaults: {
+        id: 0,
+        username: '',
+        name: '',
+        email: ''
+    },
+
+    urlRoot: '/api/auth',
+
+    authUser: function () {
+        var self = this;
+        this.fetch({
+            success: function (mod, res) {
+                console.log('auth success!');
+            },
+            error: function (mod, res) {
+                console.log('auth error!');
+            }
+        });
+    },
+
+    // Fxn to update user attributes after recieving API response
+    updateSessionUser: function (userData) {
+        this.set(_.pick(userData, _.keys(this.defaults)));
+    },
+
+
+    postAuth: function (opts, callback, args) {
+        var self = this;
+        var postData = _.omit(opts, 'method');
+        console.log('[postAuth] Method: ' + opts.method);
+        $.ajax({
+            url: self.urlRoot + '/' + opts.method,
+            contentType: 'application/json',
+            dataType: 'json',
+            type: 'POST',
+            beforeSend: function (xhr) {
+                // Set the CSRF token in the header for security
+                // Cross-Site Request Forgery
+                var token = $('meta[name="csrf-token"]').attr('content');
+                if (token) {
+                    xhr.setRequestHeader('x-csrf-token', token);
+                }
+            },
+            data: JSON.stringify(_.omit(opts, 'method')),
+            success: function (res) {
+                if (!res.error) {
+                    if (_.indexOf(['login', 'signup'], opts.method) !== -1) {
+                        self.updateSessionUser(res.user || {});
+                        self.set({userid: res.id, loggedIn: true});
+                    } else {
+                        self.set({loggedIn: false});
+                    }
+
+                    if (callback && 'success' in callback) {
+                        callback.success(res);
+                    }
+
+                } else {
+                    if (callback && 'error' in callback) callback.error(res);
+                }
+
+            },
+            error: function (mod, res) {
+                if (callback && 'error' in callback) {
+                    callback.error(res);
+                }
+            }
+        })
+            .complete(function () {
+                if (callback && 'complete' in callback) {
+                    callback.complete(res);
+                }
+            });
+    },
+
+    login: function (opts, callback, args) {
+        this.postAuth(_.extend(opts, {method: 'login'}), callback);
+    },
+
+    logout: function (opts, callback, args) {
+        this.postAuth(_.extend(opts, {method: 'logout'}), callback);
+    },
+
+    signup: function (opts, callback, args) {
+        this.postAuth(_.extend(opts, {method: 'signup'}), callback);
+    },
+
+    removeAccount: function (opts, callback, args) {
+        this.postAuth(_.extend(opts, {method: 'removeAccount'}), callback);
+    }
+});
+
+    }, {}],
+    28: [function (require, module, exports) {
+        /**
  * Created by jfagan on 3/19/15.
  */
 
@@ -29397,18 +29539,30 @@ module.exports = Backbone.Model.extend({
  */
 module.exports = Backbone.Router.extend({
     routes: {
-        '' : 'loadLanding',
-        'pool/' : 'loadLanding',
-        'pool/:poolid' : 'loadPool',
-        'pool/:poolid/:puid' : 'loadPoolPuid',
+        '': 'loadLanding',
+        'landing': 'loadLanding',
+        'landing/listings': 'loadLanding',
+        'admin': 'loadAdmin',
+        'admin/login': 'loadLogin',
+        'pool': 'loadLanding',
+        'pool/:poolid': 'loadPool',
+        'pool/:poolid/:puid': 'loadPoolPuid',
         'pool/:poolid/:puid/sheet/:sheetid' : 'loadPoolPuidSheet'
     },
 
     initialize: function() {
     },
 
+    loadAdmin: function () {
+        app.channels.navigation.command('load-admin');
+    },
+
+    loadLogin: function () {
+        app.channels.navigation.command('load-landing-login');
+    },
+
     loadLanding: function() {
-        this.navigate('');
+        this.navigate('landing');
         app.channels.navigation.command('load-landing');
     },
 
@@ -29431,7 +29585,7 @@ module.exports = Backbone.Router.extend({
 });
 
     }, {}],
-    28: [function (require, module, exports) {
+    29: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -29446,7 +29600,7 @@ return __p;
 };
 
     }, {"lodash": 7}],
-    29: [function (require, module, exports) {
+    30: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -29455,7 +29609,7 @@ return __p;
 };
 
     }, {"lodash": 7}],
-    30: [function (require, module, exports) {
+    31: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -29466,7 +29620,7 @@ var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments
 };
 
     }, {"lodash": 7}],
-    31: [function (require, module, exports) {
+    32: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29477,7 +29631,7 @@ return __p;
 };
 
     }, {"lodash": 7}],
-    32: [function (require, module, exports) {
+    33: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -29486,7 +29640,7 @@ return __p;
 };
 
     }, {"lodash": 7}],
-    33: [function (require, module, exports) {
+    34: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -29499,7 +29653,7 @@ return __p;
 };
 
     }, {"lodash": 7}],
-    34: [function (require, module, exports) {
+    35: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -29508,7 +29662,7 @@ var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments
 };
 
     }, {"lodash": 7}],
-    35: [function (require, module, exports) {
+    36: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29519,10 +29673,10 @@ return __p;
 };
 
     }, {"lodash": 7}],
-    36: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
     37: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    38: [function (require, module, exports) {
 //Copyright (c) 2014, Jeremy Fairbank <elpapapollo@gmail.com>
 //
 //Permission to use, copy, modify, and/or distribute this software for any
@@ -29600,7 +29754,7 @@ module.exports = Marionette.ItemView.extend({
 });
 
     }, {}],
-    38: [function (require, module, exports) {
+    39: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/views/view-eddi-promptbar.js
@@ -29616,8 +29770,8 @@ module.exports = Mn.ItemView.extend({
     initialize: function() {
     }
 });
-    }, {"../models/model-eddi-promptbar": 22, "../templates/template-eddi-promptbar.ejs": 28}],
-    39: [function (require, module, exports) {
+    }, {"../models/model-eddi-promptbar": 22, "../templates/template-eddi-promptbar.ejs": 29}],
+    40: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * view-eddis.js
@@ -29635,7 +29789,7 @@ module.exports = Marionette.CollectionView.extend({
     }
 });
     }, {"../layouts/layout-eddi": 17}],
-    40: [function (require, module, exports) {
+    41: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/30/15.
  * oe/oe_client/views/view-landing-login.js:3
@@ -29649,8 +29803,8 @@ var template = require('../templates/template-landing-login.ejs');
             _publishedKeys: []
         });
 
-    }, {"../templates/template-landing-login.ejs": 29}],
-    41: [function (require, module, exports) {
+    }, {"../templates/template-landing-login.ejs": 30}],
+    42: [function (require, module, exports) {
         /**
  * Created by jfagan on 3/9/15.
  */
@@ -29673,8 +29827,8 @@ var PoolListingModel = require('../models/model-pool-listing');
     }
 
 });
-    }, {"../models/model-pool-listing": 24, "../templates/template-landing-pool-listing.ejs": 30}],
-    42: [function (require, module, exports) {
+    }, {"../models/model-pool-listing": 24, "../templates/template-landing-pool-listing.ejs": 31}],
+    43: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -29692,8 +29846,8 @@ module.exports = Marionette.CollectionView.extend({
     },
     childView: PoolListingView
 });
-    }, {"./view-landing-pool-listing": 41}],
-    43: [function (require, module, exports) {
+    }, {"./view-landing-pool-listing": 42}],
+    44: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/26/15.
  * oe/oe_client/views/view-pool-footer.js:3
@@ -29750,8 +29904,8 @@ var template = require('../templates/template-layout-pool-footer.ejs');
             }
         });
 
-    }, {"../templates/template-layout-pool-footer.ejs": 33}],
-    44: [function (require, module, exports) {
+    }, {"../templates/template-layout-pool-footer.ejs": 34}],
+    45: [function (require, module, exports) {
         /**
  * Created by jfagan on 4/9/15.
  * oe/oe_client/views/view-pool-header.js
@@ -29765,8 +29919,8 @@ var PolymerView = require('./marionette.polymerview');
             template: template
         });
 
-    }, {"../templates/template-pool-header.ejs": 36, "./marionette.polymerview": 37}],
-    45: [function (require, module, exports) {
+    }, {"../templates/template-pool-header.ejs": 37, "./marionette.polymerview": 38}],
+    46: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/17/15.
          * oe/oe_modules/control-alter-ties/client-index.js:3
@@ -29780,7 +29934,7 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.templates = templates;
 
     }, {}],
-    46: [function (require, module, exports) {
+    47: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/12/15.
          * oe/oe_modules/control-basic-nameinterpret/NICollectionView.js:3
@@ -29797,8 +29951,8 @@ var PolymerView = require('./marionette.polymerview');
                 };
             }
         });
-    }, {"./NINameLayoutView": 47}],
-    47: [function (require, module, exports) {
+    }, {"./NINameLayoutView": 48}],
+    48: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/12/15.
          * oe/oe_modules/control-basic-nameinterpret/NINameLayoutView.js
@@ -29860,11 +30014,11 @@ var PolymerView = require('./marionette.polymerview');
         });
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "../model-namelist/NameModel": 85,
-        "./NINameTag": 48,
-        "./templateNINameLayout.ejs": 51
+        "../model-namelist/NameModel": 86,
+        "./NINameTag": 49,
+        "./templateNINameLayout.ejs": 52
     }],
-    48: [function (require, module, exports) {
+    49: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/12/15.
          * oe/oe_modules/control-basic-nameinterpret/NINameTag.js:3
@@ -29878,8 +30032,8 @@ var PolymerView = require('./marionette.polymerview');
             template: template
         });
 
-    }, {"../model-namelist/NameModel": 85, "./templateNINameTag.ejs": 52}],
-    49: [function (require, module, exports) {
+    }, {"../model-namelist/NameModel": 86, "./templateNINameTag.ejs": 53}],
+    50: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/10/15.
          * oe/oe_modules/control-basic-nameinterpret/ViewBasicNameInterpret.js:3
@@ -29916,8 +30070,8 @@ var PolymerView = require('./marionette.polymerview');
         module.exports = NILayoutView;
 
 
-    }, {"../../oe_client/models/model-eddi": 23, "./NICollectionView": 46, "./templateNameInterpret.ejs": 53}],
-    50: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 23, "./NICollectionView": 47, "./templateNameInterpret.ejs": 54}],
+    51: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/10/15.
          *
@@ -29932,8 +30086,8 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./ViewBasicNameInterpret": 49, "./templateNameInterpret.ejs": 53, "./templateOEBasicNameInterpreter.ejs": 54}],
-    51: [function (require, module, exports) {
+    }, {"./ViewBasicNameInterpret": 50, "./templateNameInterpret.ejs": 54, "./templateOEBasicNameInterpreter.ejs": 55}],
+    52: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29944,7 +30098,7 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    52: [function (require, module, exports) {
+    53: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29957,7 +30111,7 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    53: [function (require, module, exports) {
+    54: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -29968,10 +30122,10 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    54: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
     55: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    56: [function (require, module, exports) {
         /**
  * Created by jfagan on 4/7/15.
          * The index file for the checklist module
@@ -29993,11 +30147,11 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.views = views;
         module.exports.templates = templates;
 
-    }, {"./templateChecklist.ejs": 56, "./viewChecklist": 57}],
-    56: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./templateChecklist.ejs": 57, "./viewChecklist": 58}],
     57: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    58: [function (require, module, exports) {
         /**
          * Created by jfagan on 3/24/15.
          * oe/oe_modules/control-checklist/viewChecklist.js
@@ -30030,10 +30184,10 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "../../oe_client/views/marionette.polymerview": 37,
-        "./templateChecklist.ejs": 56
+        "../../oe_client/views/marionette.polymerview": 38,
+        "./templateChecklist.ejs": 57
     }],
-    58: [function (require, module, exports) {
+    59: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/5/15.
          * oe/oe_modules/control-namegen/BasicNameCard.js
@@ -30060,8 +30214,8 @@ var PolymerView = require('./marionette.polymerview');
         });
 
 
-    }, {"../../oe_client/views/marionette.polymerview": 37, "./templateBasicNameCard.ejs": 63}],
-    59: [function (require, module, exports) {
+    }, {"../../oe_client/views/marionette.polymerview": 38, "./templateBasicNameCard.ejs": 64}],
+    60: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/29/15.
          * oe/oe_modules/control-namegen/BasicNameGen-NameInput.js
@@ -30080,10 +30234,10 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "../../oe_client/views/marionette.polymerview": 37,
-        "./templateBasicNameGen-NameInput.ejs": 64
+        "../../oe_client/views/marionette.polymerview": 38,
+        "./templateBasicNameGen-NameInput.ejs": 65
     }],
-    60: [function (require, module, exports) {
+    61: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/5/15.
          * oe/oe_modules/control-namegen/BasicNameGen-Names.js
@@ -30110,8 +30264,8 @@ var PolymerView = require('./marionette.polymerview');
             }
         });
 
-    }, {"./BasicNameCard": 58}],
-    61: [function (require, module, exports) {
+    }, {"./BasicNameCard": 59}],
+    62: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/27/15.
          * oe/oe_modules/control-namegen/BasicNameGenerator.js
@@ -30151,11 +30305,11 @@ var PolymerView = require('./marionette.polymerview');
         });
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "./BasicNameGen-NameInput": 59,
-        "./BasicNameGen-Names": 60,
-        "./templateBasicNamegen.ejs": 65
+        "./BasicNameGen-NameInput": 60,
+        "./BasicNameGen-Names": 61,
+        "./templateBasicNamegen.ejs": 66
     }],
-    62: [function (require, module, exports) {
+    63: [function (require, module, exports) {
         /**
          *
          * oe/oe_modules/control-namegen/client-index.js
@@ -30170,14 +30324,14 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./BasicNameGenerator": 61, "./templateBasicNamegen.ejs": 65}],
-    63: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./BasicNameGenerator": 62, "./templateBasicNamegen.ejs": 66}],
     64: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
     65: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    66: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -30188,7 +30342,7 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    66: [function (require, module, exports) {
+    67: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/8/15.
          * oe/oe_modules/control-namepick/NamePick-Name.js:3
@@ -30224,8 +30378,8 @@ var PolymerView = require('./marionette.polymerview');
             }
         });
 
-    }, {"./templateNamePickName.ejs": 70}],
-    67: [function (require, module, exports) {
+    }, {"./templateNamePickName.ejs": 71}],
+    68: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/8/15.
          * oe/oe_modules/control-namepick/NamePick.js:3
@@ -30271,8 +30425,8 @@ var PolymerView = require('./marionette.polymerview');
         });
 
 
-    }, {"../../oe_client/models/model-eddi": 23, "./NamePick-Name": 66, "./templateNamePick.ejs": 69}],
-    68: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 23, "./NamePick-Name": 67, "./templateNamePick.ejs": 70}],
+    69: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/8/15.
          * oe/oe_modules/control-namepick/client-index.js:3
@@ -30286,8 +30440,8 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./NamePick": 67, "./templateNamePick.ejs": 69}],
-    69: [function (require, module, exports) {
+    }, {"./NamePick": 68, "./templateNamePick.ejs": 70}],
+    70: [function (require, module, exports) {
         var _ = require('lodash');
         module.exports = function (rc) {
             var __t, __p = '', __j = Array.prototype.join, print = function () {
@@ -30298,10 +30452,10 @@ var PolymerView = require('./marionette.polymerview');
         };
 
     }, {"lodash": 7}],
-    70: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
     71: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    72: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/18/15.
          * oe/oe_modules/control-nodelink/NodeLink.js:3
@@ -30355,8 +30509,8 @@ var PolymerView = require('./marionette.polymerview');
             }
         });
 
-    }, {"../model-namelist/GraphModel": 83, "./templateNodeLink.ejs": 73}],
-    72: [function (require, module, exports) {
+    }, {"../model-namelist/GraphModel": 84, "./templateNodeLink.ejs": 74}],
+    73: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/18/15.
          * oe/oe_modules/control-nodelink/client-index.js:3
@@ -30370,11 +30524,11 @@ var PolymerView = require('./marionette.polymerview');
 
         module.exports.views = views;
         module.exports.templates = templates;
-    }, {"./NodeLink": 71}],
-    73: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./NodeLink": 72}],
     74: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    75: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/15/15.
          * oe/oe_modules/control-radiolist/client-index.js
@@ -30390,11 +30544,11 @@ var PolymerView = require('./marionette.polymerview');
         module.exports.views = views;
         module.exports.templates = templates;
 
-    }, {"./templateRadiolist.ejs": 75, "./viewRadiolist": 76}],
-    75: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./templateRadiolist.ejs": 76, "./viewRadiolist": 77}],
     76: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    77: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/15/15.
          * oe/oe_modules/control-radiolist/viewRadiolist.js
@@ -30431,10 +30585,10 @@ var PolymerView = require('./marionette.polymerview');
 
     }, {
         "../../oe_client/models/model-eddi": 23,
-        "../../oe_client/views/marionette.polymerview": 37,
-        "./templateRadiolist.ejs": 75
+        "../../oe_client/views/marionette.polymerview": 38,
+        "./templateRadiolist.ejs": 76
     }],
-    77: [function (require, module, exports) {
+    78: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/7/15.
  * The index file for the shorttext file
@@ -30456,11 +30610,11 @@ templates.eddicontrol = require('./templateShorttext.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateShorttext.ejs": 78, "./viewShorttext": 79}],
-    78: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./templateShorttext.ejs": 79, "./viewShorttext": 80}],
     79: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    80: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-shorttext/view-shorttext.js
@@ -30477,8 +30631,8 @@ var template = require('./templateShorttext.ejs');
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 23, "./templateShorttext.ejs": 78}],
-    80: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 23, "./templateShorttext.ejs": 79}],
+    81: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/17/15.
          * oe/oe_modules/control-slider/SliderControl.js:3
@@ -30516,8 +30670,8 @@ var template = require('./templateShorttext.ejs');
         });
 
 
-    }, {"./templateSlider.ejs": 82}],
-    81: [function (require, module, exports) {
+    }, {"./templateSlider.ejs": 83}],
+    82: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/17/15.
          * oe/oe_modules/control-slider/client-index.js
@@ -30533,11 +30687,11 @@ var template = require('./templateShorttext.ejs');
         module.exports.templates = templates;
 
 
-    }, {"./SliderControl": 80, "./templateSlider.ejs": 82}],
-    82: [function (require, module, exports) {
-        arguments[4][29][0].apply(exports, arguments)
-    }, {"dup": 29, "lodash": 7}],
+    }, {"./SliderControl": 81, "./templateSlider.ejs": 83}],
     83: [function (require, module, exports) {
+        arguments[4][30][0].apply(exports, arguments)
+    }, {"dup": 30, "lodash": 7}],
+    84: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/18/15.
          * oe/oe_modules/model-namelist/GraphModel.js:3
@@ -30552,7 +30706,7 @@ var template = require('./templateShorttext.ejs');
             }
         });
     }, {}],
-    84: [function (require, module, exports) {
+    85: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/27/15.
          * oe/oe_modules/control-shorttext/NameCollection.js
@@ -30600,8 +30754,8 @@ var template = require('./templateShorttext.ejs');
             }
 
         });
-    }, {"./NameModel": 85}],
-    85: [function (require, module, exports) {
+    }, {"./NameModel": 86}],
+    86: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/23/15.
          * oe/oe_modules/model-namelist/NameModel.js
@@ -30862,7 +31016,7 @@ var template = require('./templateShorttext.ejs');
 
         });
     }, {"../../oe_client/helpers/guid": 16}],
-    86: [function (require, module, exports) {
+    87: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/4/15.
          * oe/oe_modules/model-namelist/NamelistPrep.js:3
@@ -30899,8 +31053,8 @@ var template = require('./templateShorttext.ejs');
             this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
         };
 
-    }, {"../../oe_client/application": 10, "./NameCollection": 84}],
-    87: [function (require, module, exports) {
+    }, {"../../oe_client/application": 10, "./NameCollection": 85}],
+    88: [function (require, module, exports) {
         /**
          * Created by jfagan on 5/1/15.
          * oe/oe_modules/model-namelist/NamelistRadio.js
@@ -30944,7 +31098,7 @@ var template = require('./templateShorttext.ejs');
 
 
     }, {"../../oe_client/application": 10}],
-    88: [function (require, module, exports) {
+    89: [function (require, module, exports) {
         /**
          * Created by jfagan on 4/22/15.
          *
@@ -30967,5 +31121,5 @@ var template = require('./templateShorttext.ejs');
 
         module.exports.models = models;
         module.exports.views = views;
-    }, {"./NameCollection": 84, "./NameModel": 85, "./NamelistPrep": 86, "./NamelistRadio": 87}]
+    }, {"./NameCollection": 85, "./NameModel": 86, "./NamelistPrep": 87, "./NamelistRadio": 88}]
 }, {}, [1]);

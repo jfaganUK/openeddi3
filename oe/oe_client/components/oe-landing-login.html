@@ -1,20 +1,26 @@
+<!--suppress HtmlFormInputWithoutLabel -->
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
 <link rel="import" href="/bower_components/core-label/core-label.html">
+<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
 
 <polymer-element name="oe-landing-login" attributes="oe">
     <template>
         <div id="login-container" vertical layout>
-            <paper-input label="Username"></paper-input>
-            <paper-input label="Password"></paper-input>
-            <paper-button id="login-button">Login</paper-button>
+            <paper-input id="oeLoginUsername" label="Username" floatinglabel value="{{loginUsername}}"></paper-input>
+            <paper-input-decorator label="Password" floatinglabel>
+                <input id="oeLoginPassword" is="core-input" name="password" value="{{loginPassword}}" type="password">
+            </paper-input-decorator>
+            <paper-button id="login-button" on-tap="{{loginTap}}">Login</paper-button>
+            <core-a11y-keys keys="enter" on-keys-pressed="{{loginTap}}"></core-a11y-keys>
         </div>
         <style>
             #login-container {
                 background: white;
                 box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
-                width: 540px;
+                max-width: 540px;
                 margin: 16px auto;
                 padding: 10px;
             }
@@ -26,7 +32,24 @@
         </style>
     </template>
     <script>
-        Polymer('oe-landing-login', {});
+        Polymer('oe-landing-login', {
+            ready: function () {
+                app.channels.user.on('login-fail', this.loginFailed, this);
+            },
+
+            loginTap: function () {
+                var credentials = {
+                    username: this.loginUsername,
+                    password: this.loginPassword
+                };
+
+                app.channels.user.command('login', credentials);
+            },
+
+            loginFailed: function () {
+
+            }
+        });
     </script>
 
 </polymer-element>
