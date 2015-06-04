@@ -12,7 +12,7 @@ module.exports = Backbone.Router.extend({
         'landing': 'loadLanding',
         'landing/listings': 'loadLanding',
         'admin': 'loadAdmin',
-        'admin/login': 'loadLogin',
+        'landing/login': 'loadLogin',
         'pool': 'loadLanding',
         'pool/:poolid': 'loadPool',
         'pool/:poolid/:puid': 'loadPoolPuid',
@@ -23,7 +23,7 @@ module.exports = Backbone.Router.extend({
     },
 
     loadAdmin: function () {
-        app.channels.navigation.command('load-admin');
+        app.channels.navigation.command('load-admin-page');
     },
 
     loadLogin: function () {

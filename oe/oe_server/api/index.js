@@ -23,6 +23,8 @@ module.exports = function (app) {
         res.json({message: 'the OpenEddi API is working.'});
     });
 
+    // The appstate route
+    // TODO: do something with the appstate, it coudl be very useful
     router.route('/appstate/:id')
         .get(function(req, res) {
             res.json({});
@@ -55,6 +57,34 @@ module.exports = function (app) {
 
         }
     }
+
+    var adminRoute = express.Router();
+    app.use('/api/admin', adminRoute);
+
+    // Always check for admin authorization on this route
+    adminRoute.use(function (req, res, next) {
+        log('[adminRoute] Checking the authorization');
+        if (req.session.admin) {
+            next();
+        } else {
+            res.status(403).json({
+                message: "Not authorized or not logged in."
+            });
+        }
+    });
+
+    adminRoute.get('/', function (req, res) {
+        var loggedin = req.session.admin || 'not logged in';
+        res.json({
+            message: 'The OpenEddi Admin API',
+            admin: loggedin
+        });
+    });
+
+    var adminPools = require('./controllers/controller-admin-pool-listings');
+    adminRoute.route('/pool')
+        .get(adminPools.getAll);
+
 
     return app;
 };

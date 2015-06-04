@@ -13,10 +13,25 @@
             <paper-input-decorator label="Password" floatinglabel>
                 <input id="oeLoginPassword" is="core-input" name="password" value="{{loginPassword}}" type="password">
             </paper-input-decorator>
+            <span class="hidden error" id="noUserFound">Username not found.</span>
+            <span class="hidden error" id="badPassword">Username and password do not match.</span>
+            <span class="hidden success" id="loginSuccess">Login successful!</span>
             <paper-button id="login-button" on-tap="{{loginTap}}">Login</paper-button>
             <core-a11y-keys keys="enter" on-keys-pressed="{{loginTap}}"></core-a11y-keys>
         </div>
         <style>
+            .hidden {
+                display: none;
+            }
+
+            .error {
+                color: red;
+            }
+
+            .success {
+                color: green;
+            }
+
             #login-container {
                 background: white;
                 box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
@@ -34,7 +49,33 @@
     <script>
         Polymer('oe-landing-login', {
             ready: function () {
-                app.channels.user.on('login-fail', this.loginFailed, this);
+                app.channels.user.on('login-no-user', this.loginNoUser, this);
+                app.channels.user.on('login-bad-password', this.loginBadPassword, this);
+                app.channels.user.on('login-success', this.loadAdmin, this);
+            },
+
+            loadAdmin: function () {
+                app.channels.navigation.command('load-admin-page');
+            },
+
+            loginUsernameChange: function () {
+                this.hideMessages();
+            },
+
+            loginPasswordChange: function () {
+                this.hideMessages();
+            },
+
+            hideMessages: function () {
+                var el = $(this.$.noUserFound);
+                if (!el.hasClass('hidden')) {
+                    el.addClass('hidden');
+                }
+
+                el = $(this.$.badPassword);
+                if (!el.hasClass('hidden')) {
+                    el.addClass('hidden');
+                }
             },
 
             loginTap: function () {
@@ -46,8 +87,28 @@
                 app.channels.user.command('login', credentials);
             },
 
-            loginFailed: function () {
+            loginNoUser: function () {
+                var el = $(this.$.noUserFound);
+                if (el.hasClass('hidden')) {
+                    el.removeClass('hidden');
+                }
+                window.setTimeout(function () {
+                    if (!el.hasClass('hidden')) {
+                        el.addClass('hidden');
+                    }
+                }, 10000);
+            },
 
+            loginBadPassword: function () {
+                var el = $(this.$.badPassword);
+                if (el.hasClass('hidden')) {
+                    el.removeClass('hidden');
+                }
+                window.setTimeout(function () {
+                    if (!el.hasClass('hidden')) {
+                        el.addClass('hidden');
+                    }
+                }, 10000);
             }
         });
     </script>

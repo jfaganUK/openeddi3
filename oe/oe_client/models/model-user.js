@@ -18,14 +18,21 @@ module.exports = Backbone.Model.extend({
 
     urlRoot: '/api/auth',
 
-    authUser: function () {
+    authUser: function (callback) {
         var self = this;
         this.fetch({
             success: function (mod, res) {
-                console.log('auth success!');
+                if (res.auth) {
+                    console.log('[authUser] auth success!');
+                    callback(true);
+                } else {
+                    console.log('[authUser] not authorized');
+                    callback(false);
+                }
             },
-            error: function (mod, res) {
-                console.log('auth error!');
+            error: function () {
+                console.log('[authUser] auth error!');
+                callback(false);
             }
         });
     },

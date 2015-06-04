@@ -7,6 +7,7 @@
 var async = require('async');
 var LandingView = require('./layouts/layout-landing');
 var UserModel = require('./models/model-user');
+var AdminView = require('./layouts/layout-admin');
 var guid = require('./helpers/guid');
 
 var App = Marionette.Application.extend({
@@ -38,6 +39,7 @@ var App = Marionette.Application.extend({
         this.channels.navigation.comply('load-pool', this.loadPool, this);
         this.channels.navigation.comply('new-pool', this.newPool, this);
         this.channels.navigation.comply('load-landing-login', this.loadLogin, this);
+        this.channels.navigation.comply('load-admin-page', this.loadAdmin, this);
 
         this.channels.navigation.comply('pool-prev-sheet', this.prevSheet, this);
         this.channels.navigation.comply('pool-next-sheet', this.nextSheet, this);
@@ -176,12 +178,27 @@ var App = Marionette.Application.extend({
     },
 
     loadLogin: function () {
-        app.router.navigate('admin/login');
+        app.router.navigate('landing/login');
 
         this.showLanding();
         var LandingLogin = require('./views/view-landing-login');
         var landingLogin = new LandingLogin({model: app.appState});
         this.landingView.content.show(landingLogin);
+    },
+
+    loadAdmin: function () {
+        this.user.authUser(function (auth) {
+            if (auth) {
+                // user is authorized / logged in, load the admin page
+                app.router.navigate('/admin');
+                var adminView = new AdminView();
+                app.appSpace.show(adminView);
+            } else {
+                // user is not authorized, send them to the login page
+                app.channels.navigation.comply('load-landing-login', app.loadLogin, app);
+            }
+        })
+
     },
 
     poolLaunch: function () {
@@ -299,12 +316,20 @@ var App = Marionette.Application.extend({
             },
             error: function (err) {
                 console.log("ERROR", err);
-                app.channels.user.trigger('login-failed');
+                switch (err.errid) {
+                    case 0:
+                        app.channels.user.trigger('login-system-error');
+                        break;
+                    case 1:
+                        app.channels.user.trigger('login-no-user');
+                        break;
+                    case 2:
+                        app.channels.user.trigger('login-bad-password');
+                        break;
+                }
             }
         });
 
-
-        this.user.login(creds);
     },
 
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript

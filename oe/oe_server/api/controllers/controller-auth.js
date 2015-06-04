@@ -15,9 +15,11 @@ var csrfProtection = csrf();
 
 function getAuth(req, res, next) {
     log('[getAuth] Confirming authentication');
-    var session = req.session;
-
     log("Authenticating " + req.body.username);
+    var d = {auth: false};
+    if (req.session.admin && req.session.admin === true) {
+        d.auth = true;
+    }
 
     res.status(200).json(d);
 }
@@ -36,27 +38,28 @@ function userLogin(req, res, next) {
     } else {
         sess.logins = 1;
     }
+    req.session.admin = false;
 
     User.find({where: {username: username}})
         .complete(function (err, user) {
             if (!!err) {
                 returnMessage = 'A system error occurred: ' + err.message;
                 log(returnMessage);
-                res.status(500).json({error: returnMessage});
+                res.status(500).json({error: returnMessage, errid: 0});
             } else if (!user) {
                 returnMessage = 'Could not find user.';
                 log(returnMessage);
-                res.status(200).json({error: returnMessage});
+                res.status(200).json({error: returnMessage, errid: 1});
             } else {
                 // Found the user. Test the password.
                 if (bcrypt.compareSync(password, user.dataValues.pwd)) {
                     // Success. Log them in.
-                    req.session.loggedin = true;
+                    req.session.admin = true;
                     res.status(200).json(_.omit(user.dataValues, ['pwd']));
                 } else {
                     returnMessage = 'Invalid username or password';
                     log(returnMessage);
-                    res.status(200).json({error: returnMessage});
+                    res.status(200).json({error: returnMessage, errid: 2});
                 }
             }
         });

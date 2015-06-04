@@ -2,7 +2,6 @@
  * Created by jfagan on 3/9/15.
  */
 
-var Backbone = require('backbone');
 var guid = require('../helpers/guid');
 
 module.exports = Backbone.Model.extend({
