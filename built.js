@@ -31,7 +31,7 @@ Backbone.Radio.DEBUG = true;
     Backbone.Model.prototype.local = true;
     Backbone.Model.prototype.remote = true;
 
-    window.RESIZE_WIDTH = 900;
+    window.RESIZE_WIDTH = 600;
 
 // Create the application as a global object
 // There probably is a better modular way to do this, but
@@ -28092,10 +28092,8 @@ var App = Marionette.Application.extend({
     },
 
     showLanding: function () {
-        if (!this.landingView) {
-            this.landingView = new LandingView;
-            this.appSpace.show(this.landingView);
-        }
+        this.landingView = new LandingView;
+        this.appSpace.show(this.landingView);
     },
 
     loadLanding: function() {
@@ -28132,17 +28130,19 @@ var App = Marionette.Application.extend({
      *
      */
     fetchCurrentPool: function (callback) {
-        // Note this will load the logic of the pool, but not any prior existing responses
-        // Set the id of the pool model so that it fetches from localStorage if possible
-        // If the data is already in localstorage it will load that.
         var PoolModel = require('./models/model-pool');
         var poolid = app.appState.get('poolid');
         var puid = app.appState.get('puid');
+        var fq = []; // the function queue
 
+        // This will load the logic of the pool, but not any prior existing responses
+        // Set the id of the pool model so that it fetches from localStorage if possible
+        // If the data is already in localstorage it will load that.
         this.currentPool = new PoolModel();
         this.currentPool.set('poolid', poolid);
         if (puid) {
-            this.currentPool.set('puid', puid)
+            this.currentPool.set('puid', puid);
+            app.appState.set('puid', puid);
         }
         this.currentPool.fetch();
 
@@ -28150,7 +28150,10 @@ var App = Marionette.Application.extend({
         // So wait for the eddis-synced, then trigger the async callback
         // TODO: think about error handling here
         app.channels.pool.once('eddis-synced', function () {
-            callback(null);
+            app.currentPool.once('sync', function () {
+                callback(null);
+            });
+            app.currentPool.save(); // initial save
         });
     },
 
@@ -28215,7 +28218,7 @@ var App = Marionette.Application.extend({
         var sheetid = this.appState.get('sheetid');
         if (!sheetid) {
             //noinspection JSUnresolvedVariable
-            sheetid = this.currentPool.get('pool').sheetOrder[0];
+            sheetid = this.currentPool.get('poollogic').sheetOrder[0];
             this.appState.set('sheetid', sheetid);
         }
 
@@ -28245,13 +28248,21 @@ var App = Marionette.Application.extend({
             //noinspection JSUnresolvedVariable
             this.poolView.sheet.show(this.poolView.sheetView);
             this.channels.navigation.trigger('sheet-loaded');
+
+            // Update the pool model
+            var idx = this.getCurrentSheetIndex();
+            var poolstatus = _.clone(app.currentPool.get('poolstatus'));
+            poolstatus.status = "pool started";
+            app.currentPool.set('poolstatus', poolstatus);
+            app.currentPool.set('sheetindex', idx);
+            app.currentPool.save();
         }
     },
 
     getCurrentSheetIndex: function () {
         // Figure out what the previous sheet should be
         //noinspection JSUnresolvedVariable
-        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var sheetOrder = app.currentPool.get('poollogic').sheetOrder;
         var currentSheet = app.appState.get('sheetid');
 
         // TODO: make sure the types match up
@@ -28261,7 +28272,7 @@ var App = Marionette.Application.extend({
     prevSheet: function (e) {
         var idx = this.getCurrentSheetIndex();
         //noinspection JSUnresolvedVariable
-        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var sheetOrder = app.currentPool.get('poollogic').sheetOrder;
 
         // If we are at the first page already, then just quit
         if (idx === 0) {
@@ -28278,7 +28289,7 @@ var App = Marionette.Application.extend({
     nextSheet: function (e) {
         var idx = this.getCurrentSheetIndex();
         //noinspection JSUnresolvedVariable
-        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var sheetOrder = app.currentPool.get('poollogic').sheetOrder;
 
         // If we are at the last page, then quit
         if (idx >= app.currentPool.get('poolLength') - 1) {
@@ -29249,12 +29260,12 @@ module.exports = Backbone.Model.extend({
     },
 
     setPoolLength: function () {
-        this.set('poolLength', app.currentPool.get('sheets').length);
+        this.set('poolLength', app.currentPool.get('sheetlogic').length);
     },
 
     updateSheetIndex: function () {
         if (app.currentPool) {
-            var sheets = app.currentPool.get('sheets');
+            var sheets = app.currentPool.get('sheetlogic');
             var sids = _(sheets).pluck('sheetid').value();
             var sid = this.get('sheetid');
             var ix = _.indexOf(sids, sid);
@@ -29440,6 +29451,13 @@ var EddiCollection = require('../collections/collection-pool-eddis');
 var SheetColllection = require('../collections/collection-pool-sheets');
 
 module.exports = Backbone.Model.extend({
+    defaults: {
+        poolstatus: {},
+        sheetindex: -1,
+        poolid: "",
+        poologic: {},
+        sheetlogic: {}
+    },
     urlRoot: function() {
         return '/api/pool/' + this.attributes.poolid + '/';
     },
@@ -29447,12 +29465,16 @@ module.exports = Backbone.Model.extend({
     initialize: function() {
         var self = this;
         this.set('puid', guid());
+
+        // Make sure to keep the current pool and the app state in sync
         app.appState.set('puid', this.get('puid'));
 
         // First the model is initialized
         // Then when it's synced, it attempts to sync the eddis
         // When the eddis are synced it triggers an eddis-synced event (that's the event we are waiting for).
-        this.on('sync', function() { app.channels.pool.trigger('pool-synced', self); });
+        this.on('sync', function () {
+            app.channels.pool.trigger('pool-synced', self);
+        });
         this.once('sync', _.bind(this.buildPoolLogic, this));
 
         app.channels.pool.reply('current-pool', this);
@@ -29461,25 +29483,26 @@ module.exports = Backbone.Model.extend({
     buildPoolLogic: function() {
         var self = this;
         this.eddis = new EddiCollection();
-        this.sheets = new SheetColllection(this.toJSON().sheets);
+        this.sheets = new SheetColllection(this.toJSON().sheetlogic);
 
         // The sheetid is supposed to be a string. But if it receives a "1" from the server it will
         // coerce it to a Number automatically
-        var sheets = this.get('sheets');
+        var sheets = this.get('sheetlogic');
         _.each(sheets, function (sht) {
             if (_.isNumber(sht.sheetid)) {
                 sht.sheetid = sht.sheetid.toString();
             }
         });
 
-        this.set('poolLength', this.get('pool').sheetOrder.length);
+        // Mostly for the pool footer
+        this.set('poolLength', this.get('poollogic').sheetOrder.length);
 
         // If it's a new pool, then create the question logic for everything
         // It also saves it to the server.
         // Otherwise, fetch the question data and then announce when it's done
         if(app.appState.get('newpool')) {
             app.appState.set('newpool', false);
-            _.each(this.toJSON().eddis, function (e) {
+            _.each(this.toJSON().eddilogic, function (e) {
                 e.logic = JSON.stringify(e); // store the logic as a JSON string
                 e.puid = self.get('puid');
                 e.poolid = self.get('poolid');
@@ -29907,7 +29930,7 @@ module.exports = Marionette.ItemView.extend({
                     'flex': '',
                     'layout': '',
                     'vertical': ''
-                });
+        });
             },
             childView: AdminPoolListing
         });
@@ -29918,12 +29941,12 @@ module.exports = Marionette.ItemView.extend({
          * Created by jfagan on 6/4/15.
          * oe/oe_client/views/view-admin-pool-listing.js:3
          */
-        'use strict';
 
         var template = require('../templates/template-blank-template.ejs');
 
         module.exports = Mn.PolymerView.extend({
-            tagName: 'oe-admin-pool-listing'
+            tagName: 'oe-admin-pool-listing',
+            template: template
         });
 
     }, {"../templates/template-blank-template.ejs": 34}],

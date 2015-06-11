@@ -30,7 +30,7 @@ Backbone.Collection.prototype.remote = true;
 Backbone.Model.prototype.local = true;
 Backbone.Model.prototype.remote = true;
 
-window.RESIZE_WIDTH = 900;
+window.RESIZE_WIDTH = 600;
 
 // Create the application as a global object
 // There probably is a better modular way to do this, but

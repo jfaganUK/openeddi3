@@ -93,10 +93,8 @@ var App = Marionette.Application.extend({
     },
 
     showLanding: function () {
-        if (!this.landingView) {
-            this.landingView = new LandingView;
-            this.appSpace.show(this.landingView);
-        }
+        this.landingView = new LandingView;
+        this.appSpace.show(this.landingView);
     },
 
     loadLanding: function() {
@@ -133,17 +131,19 @@ var App = Marionette.Application.extend({
      *
      */
     fetchCurrentPool: function (callback) {
-        // Note this will load the logic of the pool, but not any prior existing responses
-        // Set the id of the pool model so that it fetches from localStorage if possible
-        // If the data is already in localstorage it will load that.
         var PoolModel = require('./models/model-pool');
         var poolid = app.appState.get('poolid');
         var puid = app.appState.get('puid');
+        var fq = []; // the function queue
 
+        // This will load the logic of the pool, but not any prior existing responses
+        // Set the id of the pool model so that it fetches from localStorage if possible
+        // If the data is already in localstorage it will load that.
         this.currentPool = new PoolModel();
         this.currentPool.set('poolid', poolid);
         if (puid) {
-            this.currentPool.set('puid', puid)
+            this.currentPool.set('puid', puid);
+            app.appState.set('puid', puid);
         }
         this.currentPool.fetch();
 
@@ -151,7 +151,10 @@ var App = Marionette.Application.extend({
         // So wait for the eddis-synced, then trigger the async callback
         // TODO: think about error handling here
         app.channels.pool.once('eddis-synced', function () {
-            callback(null);
+            app.currentPool.once('sync', function () {
+                callback(null);
+            });
+            app.currentPool.save(); // initial save
         });
     },
 
@@ -216,7 +219,7 @@ var App = Marionette.Application.extend({
         var sheetid = this.appState.get('sheetid');
         if (!sheetid) {
             //noinspection JSUnresolvedVariable
-            sheetid = this.currentPool.get('pool').sheetOrder[0];
+            sheetid = this.currentPool.get('poollogic').sheetOrder[0];
             this.appState.set('sheetid', sheetid);
         }
 
@@ -246,13 +249,21 @@ var App = Marionette.Application.extend({
             //noinspection JSUnresolvedVariable
             this.poolView.sheet.show(this.poolView.sheetView);
             this.channels.navigation.trigger('sheet-loaded');
+
+            // Update the pool model
+            var idx = this.getCurrentSheetIndex();
+            var poolstatus = _.clone(app.currentPool.get('poolstatus'));
+            poolstatus.status = "pool started";
+            app.currentPool.set('poolstatus', poolstatus);
+            app.currentPool.set('sheetindex', idx);
+            app.currentPool.save();
         }
     },
 
     getCurrentSheetIndex: function () {
         // Figure out what the previous sheet should be
         //noinspection JSUnresolvedVariable
-        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var sheetOrder = app.currentPool.get('poollogic').sheetOrder;
         var currentSheet = app.appState.get('sheetid');
 
         // TODO: make sure the types match up
@@ -262,7 +273,7 @@ var App = Marionette.Application.extend({
     prevSheet: function (e) {
         var idx = this.getCurrentSheetIndex();
         //noinspection JSUnresolvedVariable
-        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var sheetOrder = app.currentPool.get('poollogic').sheetOrder;
 
         // If we are at the first page already, then just quit
         if (idx === 0) {
@@ -279,7 +290,7 @@ var App = Marionette.Application.extend({
     nextSheet: function (e) {
         var idx = this.getCurrentSheetIndex();
         //noinspection JSUnresolvedVariable
-        var sheetOrder = app.currentPool.get('pool').sheetOrder;
+        var sheetOrder = app.currentPool.get('poollogic').sheetOrder;
 
         // If we are at the last page, then quit
         if (idx >= app.currentPool.get('poolLength') - 1) {

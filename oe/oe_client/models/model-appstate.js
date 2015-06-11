@@ -30,12 +30,12 @@ module.exports = Backbone.Model.extend({
     },
 
     setPoolLength: function () {
-        this.set('poolLength', app.currentPool.get('sheets').length);
+        this.set('poolLength', app.currentPool.get('sheetlogic').length);
     },
 
     updateSheetIndex: function () {
         if (app.currentPool) {
-            var sheets = app.currentPool.get('sheets');
+            var sheets = app.currentPool.get('sheetlogic');
             var sids = _(sheets).pluck('sheetid').value();
             var sid = this.get('sheetid');
             var ix = _.indexOf(sids, sid);

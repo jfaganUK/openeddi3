@@ -1,5 +1,5 @@
 {
-  "pool":
+  "poollogic":
   {
     "poolid": "test2",
     "title": "OpenEddi Test 02",
@@ -9,12 +9,12 @@
     "sheetOrder": [1,2],
     "dateCreated": "2015-03-09 12:05:15-04:00"
   },
-  "sheets" :
+  "sheetlogic":
   [
     {"sheetid": 1, "title" : "Sheet 1", "description" : "describe the sheet"},
     {"sheetid": 2, "title" : "Sheet 2", "description" : "describe the sheet"}
   ],
-  "eddis" :
+  "eddilogic":
   [
     {
       "eid": 101,

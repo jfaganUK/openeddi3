@@ -77,18 +77,21 @@ function putPool(req, res, next) {
                 postPool(req, res, next);
             } else {
                 // The pool exists, so update it
-                pool.poostatus = req.body.poolstatus;
-                pool.sheetid = req.body.sheetid;
+                // Only three fields should be changing.
+                pool.poolstatus = req.body.poolstatus;
+                pool.sheetindex = req.body.sheetindex;
                 pool.meta = req.body.meta;
 
                 pool.save()
-                    .complete(function (err, pool) {
-                        if (!!err) {
-                            res.status(400).send('Erro saving the pool.');
-                        } else {
-                            res.status(201).json(pool.dataValues);
-                        }
+                    .then(function (pool) {
+                        res.status(200).json(pool);
                     })
+                    .catch(function (err) {
+                        log('[putPool] [ERROR] ' + err);
+                        res.status(400).json({message: 'Error saving the pool data'});
+                    });
+
+
 
             }
         });

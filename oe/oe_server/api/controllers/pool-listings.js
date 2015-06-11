@@ -21,17 +21,17 @@ function getPoolListings(req, res, next) {
         // Has to by Sync otherwise I get empty returns some times.
         var jsonRead = fs.readFileSync(jsonFile, 'utf8');
         var jsonData = JSON.parse(jsonRead);
-        pools[jsonData.pool.poolid] = jsonData;
+        pools[jsonData.poollogic.poolid] = jsonData;
     });
 
     _.forEach(pools, function (pool) {
         var poolListing = {
-            title: pool.pool.title,
-            poolid: pool.pool.poolid,
-            description: pool.pool.description,
-            numberOfSheets: pool.sheets.length,
-            numberOfEddis: pool.eddis.length,
-            dateCreated: pool.pool.dateCreated
+            title: pool.poollogic.title,
+            poolid: pool.poollogic.poolid,
+            description: pool.poollogic.description,
+            numberOfSheets: pool.sheetlogic.length,
+            numberOfEddis: pool.eddilogic.length,
+            dateCreated: pool.poollogic.dateCreated
         };
         poolListings.push(poolListing);
     });

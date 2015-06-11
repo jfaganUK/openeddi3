@@ -9,6 +9,13 @@ var EddiCollection = require('../collections/collection-pool-eddis');
 var SheetColllection = require('../collections/collection-pool-sheets');
 
 module.exports = Backbone.Model.extend({
+    defaults: {
+        poolstatus: {},
+        sheetindex: -1,
+        poolid: "",
+        poologic: {},
+        sheetlogic: {}
+    },
     urlRoot: function() {
         return '/api/pool/' + this.attributes.poolid + '/';
     },
@@ -16,12 +23,16 @@ module.exports = Backbone.Model.extend({
     initialize: function() {
         var self = this;
         this.set('puid', guid());
+
+        // Make sure to keep the current pool and the app state in sync
         app.appState.set('puid', this.get('puid'));
 
         // First the model is initialized
         // Then when it's synced, it attempts to sync the eddis
         // When the eddis are synced it triggers an eddis-synced event (that's the event we are waiting for).
-        this.on('sync', function() { app.channels.pool.trigger('pool-synced', self); });
+        this.on('sync', function () {
+            app.channels.pool.trigger('pool-synced', self);
+        });
         this.once('sync', _.bind(this.buildPoolLogic, this));
 
         app.channels.pool.reply('current-pool', this);
@@ -30,25 +41,26 @@ module.exports = Backbone.Model.extend({
     buildPoolLogic: function() {
         var self = this;
         this.eddis = new EddiCollection();
-        this.sheets = new SheetColllection(this.toJSON().sheets);
+        this.sheets = new SheetColllection(this.toJSON().sheetlogic);
 
         // The sheetid is supposed to be a string. But if it receives a "1" from the server it will
         // coerce it to a Number automatically
-        var sheets = this.get('sheets');
+        var sheets = this.get('sheetlogic');
         _.each(sheets, function (sht) {
             if (_.isNumber(sht.sheetid)) {
                 sht.sheetid = sht.sheetid.toString();
             }
         });
 
-        this.set('poolLength', this.get('pool').sheetOrder.length);
+        // Mostly for the pool footer
+        this.set('poolLength', this.get('poollogic').sheetOrder.length);
 
         // If it's a new pool, then create the question logic for everything
         // It also saves it to the server.
         // Otherwise, fetch the question data and then announce when it's done
         if(app.appState.get('newpool')) {
             app.appState.set('newpool', false);
-            _.each(this.toJSON().eddis, function (e) {
+            _.each(this.toJSON().eddilogic, function (e) {
                 e.logic = JSON.stringify(e); // store the logic as a JSON string
                 e.puid = self.get('puid');
                 e.poolid = self.get('poolid');

@@ -10,15 +10,14 @@ var sequelize = require('../config');
 
 var Pool = sequelize.define('Pool', {
     puid: Sequelize.STRING,          // A guid
-    datecreated: Sequelize.DATE,   // The client creation date and the date inserted can be very different if the data is synced at a later date
-    ipaddress: Sequelize.STRING,   // The ipaddress they were tracked from
+    ipaddress: Sequelize.STRING,     // The ipaddress they were tracked from
     poolid: Sequelize.STRING,        // What pool they took (note, may change this to a JSON field in case of multiple surveys)
-    poolstatus: Sequelize.STRING,  // What is the current status of the survey they are taking?
-    poollogic: Sequelize.JSON,     // The logic of the survey they took
-    sheetlogic: Sequelize.JSON,    // The group logic of the survey they took
-    sheetid: Sequelize.INTEGER,    // The last page they were on of the survey (again, might roll this into a JSON version of the survey field)
-    username: Sequelize.STRING,    // Username, name of the user who administered the survey to them (again, probably roll into a survey JSON field)
-    meta: Sequelize.JSON           // Any other data about the respondent we might want to keep at a *respondent* level
+    poolstatus: Sequelize.JSON,      // What is the current status of the survey they are taking?
+    poollogic: Sequelize.JSON,       // The logic of the pool
+    sheetlogic: Sequelize.JSON,      // The logic of the sheets (the logic of the eddis is kept in the response table
+    sheetindex: Sequelize.INTEGER,   // The last page they were on of the survey (again, might roll this into a JSON version of the survey field)
+    username: Sequelize.STRING,      // Username, name of the user who administered the survey to them (again, probably roll into a survey JSON field)
+    meta: Sequelize.JSON             // Any other data about the respondent we might want to keep at a *respondent* level
 }, {
     tableName: 'pools',
     timestamps: true,
