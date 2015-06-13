@@ -5,6 +5,7 @@
 'use strict';
 
 var AdminPoolListing = require('./view-admin-pool-listing');
+
 module.exports = Mn.CollectionView.extend({
     attributes: function () {
         return ( {

@@ -32,7 +32,8 @@ module.exports = function (moduleCallback) {
         sequelize.sync({force: OEConfig.db.forceSync})
             .complete(function (err) {
                 if (!!err) {
-                    log('[db] An error occurred while creating the table: ', err);
+                    log('[db] An error occurred while creating the table: ', err.message);
+                    log(err.sql)
                 } else {
                     log('[db] Server is synced.');
                     callback(null);

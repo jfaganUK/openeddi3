@@ -67,6 +67,7 @@ module.exports = Marionette.ItemView.extend({
         // This won't work under a polyfill. We will have to take another approach
         //this.el.fire('attributes-updated', this.model);
         app.channels.pool.trigger('attributes-updated', this.model);
+        this.el['attrUpdate'] = new Date();
     },
 
     _setElAttr: function (attributeName) {

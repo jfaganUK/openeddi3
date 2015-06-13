@@ -1,9 +1,11 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/core-toolbar/core-toolbar.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html"/>
 
 <polymer-element name="oe-admin-header" attributes="oe">
     <template>
         <core-toolbar>
+            <core-icon-button icon="menu" on-tap="{{toggleMenu}}" id="menuButton"></core-icon-button>
             <div flex>OpenEddi Administration</div>
         </core-toolbar>
         <style>
@@ -15,7 +17,23 @@
         </style>
     </template>
     <script>
-        Polymer('oe-admin-header', {});
+        Polymer('oe-admin-header', {
+            ready: function () {
+                app.channels.media.on('admin-panel-responsive-change', _.bind(this.toggleButton, this));
+            },
+            toggleMenu: function () {
+                app.channels.navigation.command('admin-toggle-menu');
+            },
+
+            // If the panel is wide, then th menu will be showing, so we don't need the hamburger button
+            toggleButton: function (e) {
+                if (e.detail.narrow) {
+                    $(this.$.menuButton).show();
+                } else {
+                    $(this.$.menuButton).hide();
+                }
+            }
+        });
     </script>
 
 </polymer-element>

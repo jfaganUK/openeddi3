@@ -7,7 +7,7 @@ var fs = require('fs');
 var _ = require('lodash');
 
 // Get the list of the oe pools
-function getPoolListings(req, res, next) {
+function readPoolListings() {
     var path = appRoot + '/oe/oe_pools/';
     var poolListings = [];
     var pools = {};
@@ -36,7 +36,12 @@ function getPoolListings(req, res, next) {
         poolListings.push(poolListing);
     });
 
+    return (poolListings);
+}
+module.exports.readPoolListings = readPoolListings;
+
+function getPoolListings(req, res, next) {
+    var poolListings = readPoolListings();
     res.json(poolListings);
 }
-
-exports.get = getPoolListings;
+module.exports.get = getPoolListings;

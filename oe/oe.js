@@ -16,6 +16,7 @@ require('./oe_client/backbone.dualstorage.oe.helpers');
 var Marionette = require('marionette');
 var PolymerView = require('./oe_client/views/marionette.polymerview');
 Mn.PolymerView = Marionette.PolymerView = PolymerView;
+var DataTables = require('datatables');
 
 // Make sure any issues with the radio are broadcast to the log.
 Backbone.Radio.DEBUG = true;

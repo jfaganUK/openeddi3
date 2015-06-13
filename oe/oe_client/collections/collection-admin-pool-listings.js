@@ -4,7 +4,8 @@
  */
 
 var AdminPoolListing = require('../models/model-admin-pool-listing');
+
 module.exports = Backbone.Collection.extend({
-    url: '/api/admin/pool/',
+    url: '/api/admin/poollistings/',
     model: AdminPoolListing
 });

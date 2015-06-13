@@ -7,7 +7,7 @@
             <span>OpenEddi ya'll.</span>
         </div>
         <div id="sign-in-button">
-            <paper-icon-button icon="settings" on-tap="{{loadLandingLogin}}"></paper-icon-button>
+            <paper-icon-button icon="settings" on-tap="{{adminButtonClick}}"></paper-icon-button>
         </div>
         <style>
             #oe-landing-footer-internal {
@@ -30,8 +30,16 @@
 
     <script>
         Polymer('oe-landing-footer', {
-            loadLandingLogin: function () {
-                app.channels.navigation.command('load-landing-login');
+            adminButtonClick: function () {
+                // Check authorization, if the user is logged in then load the admin page
+                // otherwise load the login page
+                app.channels.user.command('check-auth', function (auth) {
+                    if (auth) {
+                        app.channels.navigation.command('load-admin-page');
+                    } else {
+                        app.channels.navigation.command('load-landing-login');
+                    }
+                })
             }
         });
     </script>

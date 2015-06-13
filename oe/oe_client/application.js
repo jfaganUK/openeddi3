@@ -10,6 +10,12 @@ var UserModel = require('./models/model-user');
 var AdminView = require('./layouts/layout-admin');
 var guid = require('./helpers/guid');
 
+// TODO: Many of these methods need to be a part of their respective views.
+// eg: The showLanding method should be part of the landing layout view, and the loadSheet, etc should
+// be part of the poolLayout view. The application should be handling only the Application-Level methods
+// for instance, loading an entirely new section (loadPool or loadAdmin)
+// or mediaQuery (which impacts the whole application.)
+
 var App = Marionette.Application.extend({
     initialize: function () {
         this.regions = {};
@@ -46,6 +52,7 @@ var App = Marionette.Application.extend({
         this.channels.navigation.comply('pool-exit', this.exitPool, this);
 
         this.channels.user.comply('login', this.attemptLogin, this);
+        this.channels.user.comply('check-auth', this.checkUserAuth, this);
 
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
@@ -189,19 +196,22 @@ var App = Marionette.Application.extend({
         this.landingView.content.show(landingLogin);
     },
 
-    loadAdmin: function () {
+    loadAdmin: function (opts) {
         this.user.authUser(function (auth) {
             if (auth) {
                 // user is authorized / logged in, load the admin page
-                app.router.navigate('/admin');
-                var adminView = new AdminView();
+                var adminViewOpts = opts || {};
+                var adminView = new AdminView({
+                    page: adminViewOpts.page,
+                    poolid: adminViewOpts.poolid
+                });
                 app.appSpace.show(adminView);
+                app.router.navigate('/admin/' + adminViewOpts.page);
             } else {
                 // user is not authorized, send them to the login page
                 app.channels.navigation.comply('load-landing-login', app.loadLogin, app);
             }
         })
-
     },
 
     poolLaunch: function () {
@@ -341,6 +351,12 @@ var App = Marionette.Application.extend({
             }
         });
 
+    },
+
+    // will run the authorized user check and call the callback with a value of true or false
+    // complies to user / check-auth
+    checkUserAuth: function(callback) {
+        this.user.authUser(callback);
     },
 
     // From http://stackoverflow.com/questions/2384167/check-if-internet-connection-exists-with-javascript

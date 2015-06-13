@@ -12,6 +12,8 @@ module.exports = Backbone.Router.extend({
         'landing': 'loadLanding',
         'landing/listings': 'loadLanding',
         'admin': 'loadAdmin',
+        'admin/:page': 'loadAdmin',
+        'admin/:page/:poolid': 'loadAdmin',
         'landing/login': 'loadLogin',
         'pool': 'loadLanding',
         'pool/:poolid': 'loadPool',
@@ -22,8 +24,13 @@ module.exports = Backbone.Router.extend({
     initialize: function() {
     },
 
-    loadAdmin: function () {
-        app.channels.navigation.command('load-admin-page');
+    loadAdmin: function (page, poolid) {
+        var opts = {page: page || 'listing', poolid: poolid};
+        app.channels.navigation.command('load-admin-page', opts);
+    },
+
+    loadAdminResponses: function (poolid) {
+        app.channels.navigation.command('load-admin-responses', {poolid: poolid});
     },
 
     loadLogin: function () {

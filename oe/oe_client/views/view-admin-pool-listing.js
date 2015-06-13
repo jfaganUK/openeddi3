@@ -7,5 +7,6 @@ var template = require('../templates/template-blank-template.ejs');
 
 module.exports = Mn.PolymerView.extend({
     tagName: 'oe-admin-pool-listing',
-    template: template
+    template: template,
+    _publishedKeys: ['poolTitle', 'dateCreated', 'description', 'oe', 'numResponses', 'poolid']
 });

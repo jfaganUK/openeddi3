@@ -81,10 +81,7 @@ module.exports = function (app) {
         });
     });
 
-    var adminPools = require('./controllers/controller-admin-pool-listings');
-    adminRoute.route('/pool')
-        .get(adminPools.getAll);
-
+    require('./api-admin-pool-listings')(adminRoute);
 
     return app;
 };

@@ -1,0 +1,90 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+
+<polymer-element name="oe-admin-pool-listing"
+                 attributes="poolTitle dateCreated numResponses description oe attrUpdate poolid">
+    <template>
+        <div class="pool-listing" layout vertical>
+            <h2>{{poolTitle}}</h2>
+
+            <div id="poolListingStatsTable" layout vertical>
+                <div class="poolListingStatsRow" layout horizontal>
+                    <div>ID:</div>
+                    <div flex>{{poolid}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout horizontal>
+                    <div>Description:</div>
+                    <div flex>{{description}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout horizontal>
+                    <div>Date created:</div>
+                    <div flex>{{dateShown}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout horizontal="">
+                    <div>Number of responses:</div>
+                    <div flex>{{numResponses}}</div>
+                </div>
+            </div>
+            <paper-button raised on-tap="{{viewResponses}}">
+                View Responses
+            </paper-button>
+            <paper-button raised>
+                Edit Pool
+            </paper-button>
+        </div>
+        <style>
+            :host {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            #poolListingStatsTable {
+                width: 90%;
+            }
+
+            .poolListingStatsRow {
+                margin-top: 12px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+            }
+
+            .poolListingStatsRow > div:nth-child(1) {
+                width: 30%;
+                max-width: 240px;
+                min-width: 120px;
+                word-wrap: normal;
+            }
+
+            .poolListingStatsRow > div:nth-child(2) {
+                text-align: left;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-pool-listing', {
+            dateShown: 'October 10th, 1982',
+
+            attrUpdateChanged: function () {
+                this.prepAttributes();
+            },
+
+            prepAttributes: function () {
+                var d = new Date(this.dateCreated);
+                this.dateShown = d.toDateString();
+            },
+
+            viewResponses: function () {
+                app.channels.navigation.command('load-admin-view-responses', this.poolid);
+            }
+        });
+    </script>
+</polymer-element>
