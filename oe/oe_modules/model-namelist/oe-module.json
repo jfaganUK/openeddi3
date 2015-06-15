@@ -17,6 +17,10 @@
     "dbmodel": {
       "file": "ApiModelNamelist",
       "name": "Namelist"
+    },
+    "summaryresponse": {
+      "file": "ResponseTable",
+      "name": "NamelistResponseSummary"
     }
   }
 }

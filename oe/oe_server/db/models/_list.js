@@ -7,10 +7,8 @@ exports.User = require('./user').User;
 exports.Pool = require('./pool').Pool;
 exports.Response = require('./response').Response;
 exports.AppState = require('./appstate').AppState;
-//exports.Session = require('./session').Session;
 
 // Add any oeModules with a model
-
 var m = {},
     fileLoc = "";
 for (var k in oeModules) {

@@ -82,6 +82,7 @@ module.exports = function (app) {
     });
 
     require('./api-admin-pool-listings')(adminRoute);
+    require('./api-admin-responsetables')(adminRoute);
 
     return app;
 };
