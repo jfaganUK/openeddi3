@@ -8,5 +8,9 @@ var template = require('../templates/template-blank-template.ejs');
 module.exports = Mn.PolymerView.extend({
     tagName: 'oe-admin-pool-listing',
     template: template,
-    _publishedKeys: ['poolTitle', 'dateCreated', 'description', 'oe', 'numResponses', 'poolid']
+    _publishedKeys: ['oe', 'poolTitle', 'dateCreated', 'numResponses', 'description', 'oe', 'poolid'],
+    initialize: function(opts) {
+        this.opts = opts || {};
+    }
+
 });

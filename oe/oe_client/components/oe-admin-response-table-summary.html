@@ -1,0 +1,99 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+
+<polymer-element name="oe-admin-response-table-summary" attributes="oe attrUpdate">
+    <template>
+        <h3>{{oe.tableTitle}}</h3>
+
+        <div id="poolListingStatsTable" layout vertical>
+            <div class="poolListingStatsRow" layout horizontal>
+                <div>Description:</div>
+                <div flex>{{oe.description}}</div>
+            </div>
+            <div class="poolListingStatsRow" layout horizontal>
+                <div>Table name:</div>
+                <div flex>{{oe.tableName}}</div>
+            </div>
+            <div class="poolListingStatsRow" layout horizontal>
+                <div>Number of rows</div>
+                <div flex>{{oe.numberOfRows}}</div>
+            </div>
+            <div class="poolListingStatsRow" layout horizontal="">
+                <div>First response date:</div>
+                <div flex>{{firstDateShown}}</div>
+            </div>
+            <div class="poolListingStatsRow" layout horizontal="">
+                <div>Last response date:</div>
+                <div flex>{{lastDateShown}}</div>
+            </div>
+        </div>
+
+        <paper-button id="viewDataButton" class="light-primary-color" raised>
+            View data
+        </paper-button>
+        <style>
+            :host {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            #viewDataButton {
+                margin-top: 10px;
+                /*background: rgba(27, 85, 170, 0.5);*/
+                width: 100%;
+            }
+
+            #poolListingStatsTable {
+                width: 90%;
+            }
+
+            .poolListingStatsRow {
+                margin-top: 12px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+            }
+
+            .poolListingStatsRow > div:nth-child(1) {
+                width: 30%;
+                max-width: 240px;
+                min-width: 120px;
+                word-wrap: normal;
+            }
+
+            .poolListingStatsRow > div:nth-child(2) {
+                text-align: left;
+                padding-left: 10px;
+            }
+
+            .light-primary-color {
+                background: #D8EBFA;
+            }
+
+        </style>
+    </template>
+    <script>
+        Polymer('oe-admin-response-table-summary', {
+            lastDateShown: 'October 10th, 1982',
+            firstDateShown: 'October 10th, 1982',
+
+            attrUpdateChanged: function () {
+                this.prepAttributes();
+            },
+
+            prepAttributes: function () {
+                var d = new Date(this.oe.firstResponse);
+                this.firstDateShown = d.toDateString();
+
+                d = new Date(this.oe.lastResponse);
+                this.lastDateShown = d.toDateString();
+            }
+        });
+    </script>
+</polymer-element>

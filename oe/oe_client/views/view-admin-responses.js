@@ -4,34 +4,30 @@
  */
 
 var template = require('../templates/template-admin-responses.ejs');
-
-var ResponseTablesCollection = Backbone.Collection.extend({
-    url: function () {
-        return '/api/admin/responsetables/' + this.poolid;
-    },
-    initialize: function (opts) {
-        this.opts = opts;
-        this.poolid = opts.poolid;
-    }
-});
+var ResponseTablesCollection = require('../collections/collection-admin-response-table-summary');
+var ViewResponseTableSummaries = require('../views/view-admin-response-table-summaries');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
+    regions: {
+      "summaryList" : "#oe-admin-list-response-table-summaries"
+    },
     initialize: function (opts) {
         this.opts = opts || {};
         this.poolid = this.opts.model.get('poolid');
-        this.getResponseTables();
+
     },
 
     onBeforeRender: function () {
         console.log('%cAbout to render Response view', 'font-weight: bold');
     },
 
-    getResponseTables: function () {
-        var responseTables = new ResponseTablesCollection({poolid: this.poolid});
-        responseTables.fetch({
+    getResponseTables: function (cb) {
+        this.responseTables = new ResponseTablesCollection({poolid: this.poolid});
+        this.responseTables.fetch({
             success: function () {
                 console.log('Got the response tables');
+                cb();
             },
             error: function () {
                 console.log('Unable to fetch the tables');
@@ -39,9 +35,11 @@ module.exports = Mn.LayoutView.extend({
         });
     },
 
-    /** Add regions for the response controls. The number of regions aren't necessarily known ahead of time
-     * since they can be modified by modules. */
-    addResponseBoxRegions: function () {
-
+    onShow: function() {
+        var self = this;
+        this.getResponseTables(function() {
+            var v = new ViewResponseTableSummaries({collection: self.responseTables});
+            self.summaryList.show(v);
+        });
     }
 });
