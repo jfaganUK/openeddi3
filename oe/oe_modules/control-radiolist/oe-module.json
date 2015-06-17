@@ -11,5 +11,8 @@
   },
   "views": {
     "eddicontrol": "ViewRadiolist"
+  },
+  "output": {
+    "responses": "ResponseTable"
   }
 }
