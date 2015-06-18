@@ -3,6 +3,7 @@
  * oe/oe_modules/control-slider/SliderControl.js:3
  */
 
+// TODO: the ArrayPrompts use 'id' instead of 'arrayid' and they don't have a 'value' attribute, this makes it inconsistent with other array questions. Need to fix that.
 var template = require('./templateSlider.ejs');
 
 module.exports = Mn.PolymerView.extend({

@@ -28,18 +28,18 @@ var Response = require('../../db/models/_list').Response;
 var async = require('async');
 var log = require('util').log;
 
+// GET /api/admin/responses/:poolid/:table
 function getAdminResponses(req, res, next) {
     var table = req.params.table;
     var poolid = req.params.poolid;
 
     if (table == 'responses') {
         getResponseTable(poolid, function (results) {
-            console.log(JSON.stringify(results, null, 2));
-            //res.status(200).json(results);
+            res.status(200).json(results);
         });
     }
 }
-module.exports = getAdminResponses;
+module.exports.getAdminResponses = getAdminResponses;
 
 function getResponseTable(poolid, callback) {
     var pool = getPool(poolid); // Snag the pool logic (this is a sync function!)

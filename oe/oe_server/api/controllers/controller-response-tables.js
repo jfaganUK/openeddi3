@@ -30,7 +30,7 @@ var _ = require('lodash');
 function baseResponseInfo(poolid, callback) {
     var baseResInfo = {
         poolid: poolid,
-        tableName: "poolResponses",
+        tableName: "responses",
         tableTitle: "Pool Responses",
         description: "Base responses data for the pool."
     };

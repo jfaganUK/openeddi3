@@ -8,4 +8,5 @@ var responseTables = require('./controllers/controller-response-tables');
 module.exports = function (router) {
     router.route('/responsetables/:poolid')
         .get(responseTables.getTables);
+
 };

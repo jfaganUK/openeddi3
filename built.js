@@ -53910,6 +53910,7 @@ module.exports = Backbone.Router.extend({
         'admin': 'loadAdmin',
         'admin/:page': 'loadAdmin',
         'admin/:page/:poolid': 'loadAdmin',
+        'admin/:page/:poolid/:subpage': 'loadAdmin',
         'landing/login': 'loadLogin',
         'pool': 'loadLanding',
         'pool/:poolid': 'loadPool',
@@ -53920,8 +53921,12 @@ module.exports = Backbone.Router.extend({
     initialize: function() {
     },
 
-    loadAdmin: function (page, poolid) {
-        var opts = {page: page || 'listing', poolid: poolid};
+    loadAdmin: function (page, poolid, subpage) {
+        var opts = {
+            page: page || 'listing',
+            poolid: poolid,
+            subpage: subpage
+        };
         app.channels.navigation.command('load-admin-page', opts);
     },
 
@@ -54240,22 +54245,17 @@ module.exports = Mn.LayoutView.extend({
     initialize: function (opts) {
         this.opts = opts || {};
         this.poolid = this.opts.model.get('poolid');
-
-    },
-
-    onBeforeRender: function () {
-        console.log('%cAbout to render Response view', 'font-weight: bold');
+        app.channels.navigation.comply('admin-load-responses', _.bind(this.loadResponses, this));
     },
 
     getResponseTables: function (cb) {
         this.responseTables = new ResponseTablesCollection({poolid: this.poolid});
         this.responseTables.fetch({
             success: function () {
-                console.log('Got the response tables');
                 cb();
             },
             error: function () {
-                console.log('Unable to fetch the tables');
+                console.error('[getResponseTables] Unable to fetch the tables');
             }
         });
     },
@@ -54266,6 +54266,11 @@ module.exports = Mn.LayoutView.extend({
             var v = new ViewResponseTableSummaries({collection: self.responseTables});
             self.summaryList.show(v);
         });
+    },
+
+    loadResponses: function (o) {
+        app.router.navigate('admin/responses/' + o.poolid + '/' + o.tableName);
+
     }
 });
 
@@ -55082,6 +55087,7 @@ module.exports = Mn.PolymerView.extend({
  * oe/oe_modules/control-slider/SliderControl.js:3
  */
 
+// TODO: the ArrayPrompts use 'id' instead of 'arrayid' and they don't have a 'value' attribute, this makes it inconsistent with other array questions. Need to fix that.
 var template = require('./templateSlider.ejs');
 
 module.exports = Mn.PolymerView.extend({

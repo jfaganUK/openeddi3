@@ -83,6 +83,7 @@ module.exports = function (app) {
 
     require('./api-admin-pool-listings')(adminRoute);
     require('./api-admin-responsetables')(adminRoute);
+    require('./api-admin-responses')(adminRoute);
 
     return app;
 };

@@ -11,5 +11,8 @@
   },
   "views": {
     "eddicontrol": "ViewChecklist"
+  },
+  "output": {
+    "responses": "ResponseTable"
   }
 }
