@@ -68,6 +68,7 @@
     "bower": "~1.4.1",
     "lodash": "~3.9.3",
     "sequelize": "~2.0.4",
-    "datatables": "~1.10.7"
+    "datatables": "~1.10.7",
+    "express-csv": "~0.6.0"
   }
 }

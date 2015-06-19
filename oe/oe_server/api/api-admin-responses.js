@@ -8,4 +8,7 @@ var responses = require('./controllers/controller-admin-get-responses');
 module.exports = function (router) {
     router.route('/responses/:poolid/:table')
         .get(responses.getAdminResponses);
+
+    router.route('/responses-csv/:poolid/:table')
+        .get(responses.getAdminResponsesCSV);
 };

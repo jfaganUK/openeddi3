@@ -30,7 +30,7 @@
             </div>
         </div>
 
-        <paper-button id="viewDataButton" class="light-primary-color" raised>
+        <paper-button id="viewDataButton" class="light-primary-color" on-tap="{{loadResponses}}" raised>
             View data
         </paper-button>
         <style>
@@ -93,6 +93,11 @@
 
                 d = new Date(this.oe.lastResponse);
                 this.lastDateShown = d.toDateString();
+            },
+
+            loadResponses: function() {
+                app.channels.navigation.command('admin-load-responses',
+                        {poolid: this.oe.poolid, tableName: this.oe.tableName});
             }
         });
     </script>

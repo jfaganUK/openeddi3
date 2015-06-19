@@ -7,30 +7,28 @@ var template = require('../templates/template-admin-responses.ejs');
 var ResponseTablesCollection = require('../collections/collection-admin-response-table-summary');
 var ViewResponseTableSummaries = require('../views/view-admin-response-table-summaries');
 
+var ResponseTableModel = require('../models/model-admin-responsetable');
+var ViewResponseTable = require('../views/view-admin-responsetable');
+
 module.exports = Mn.LayoutView.extend({
     template: template,
     regions: {
-      "summaryList" : "#oe-admin-list-response-table-summaries"
+        "main": "#oe-admin-responses-main"
     },
     initialize: function (opts) {
         this.opts = opts || {};
         this.poolid = this.opts.model.get('poolid');
-
-    },
-
-    onBeforeRender: function () {
-        console.log('%cAbout to render Response view', 'font-weight: bold');
+        app.channels.navigation.comply('admin-load-responses', _.bind(this.loadResponses, this));
     },
 
     getResponseTables: function (cb) {
         this.responseTables = new ResponseTablesCollection({poolid: this.poolid});
         this.responseTables.fetch({
             success: function () {
-                console.log('Got the response tables');
                 cb();
             },
             error: function () {
-                console.log('Unable to fetch the tables');
+                console.error('[getResponseTables] Unable to fetch the tables');
             }
         });
     },
@@ -39,7 +37,19 @@ module.exports = Mn.LayoutView.extend({
         var self = this;
         this.getResponseTables(function() {
             var v = new ViewResponseTableSummaries({collection: self.responseTables});
-            self.summaryList.show(v);
+            self.main.show(v);
+        });
+    },
+
+    loadResponses: function (o) {
+        app.router.navigate('admin/responses/' + o.poolid + '/' + o.tableName);
+        var self = this;
+        var responseTableModel = new ResponseTableModel({poolid: this.poolid});
+        responseTableModel.fetch({
+            success: function () {
+                var v = new ViewResponseTable({model: responseTableModel});
+                self.main.show(v);
+            }
         });
     }
 });

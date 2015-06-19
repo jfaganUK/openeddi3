@@ -27,6 +27,7 @@ var Pool = require('../../db/models/_list').Pool;
 var Response = require('../../db/models/_list').Response;
 var async = require('async');
 var log = require('util').log;
+var csv = require('express-csv');
 
 // GET /api/admin/responses/:poolid/:table
 function getAdminResponses(req, res, next) {
@@ -35,7 +36,8 @@ function getAdminResponses(req, res, next) {
 
     if (table == 'responses') {
         getResponseTable(poolid, function (results) {
-            res.status(200).json(results);
+            var d = {responses: results};
+            res.status(200).json(d);
         });
     }
 }
@@ -49,6 +51,22 @@ function getResponseTable(poolid, callback) {
     _.forEach(pool.eddilogic, function (eddi) {
         var eddiModule = eddi.controlmodule;
         var fileLoc, responseVectorFunc;
+
+        // get the pool-level information (like the id of the respondent, date they started, etc)
+        fq.push(function getResponseHeaderInfo(callback) {
+            Pool.findAll({where: {poolid: poolid}})
+                .then(function (pools) {
+                    results.puid = _.pluck(pools, 'puid');
+                    results.username = _.pluck(pools, 'username');
+                    results.dateinserted = _.pluck(pools, 'dateinserted');
+                    results.dateupdated = _.pluck(pools, 'dateupdated');
+                    callback();
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
+        });
+
 
         if (oeModules.hasOwnProperty(eddiModule)) {
             if (oeModules[eddiModule].hasOwnProperty('output')) {
@@ -71,10 +89,52 @@ function getResponseTable(poolid, callback) {
 
     });
 
-    console.log('Length of fq ' + fq.length);
-
     async.series(fq, function () {
         callback(results);
     })
+}
 
+function getAdminResponsesCSV(req, res, next) {
+    var table = req.params.table;
+    var poolid = req.params.poolid;
+
+    if (table == 'responses') {
+        getResponseTableCSV(poolid, function (results) {
+            var d = {responses: results};
+            console.log(JSON.stringify(d, null, 2));
+            res.csv(d);
+        });
+    }
+}
+module.exports.getAdminResponsesCSV = getAdminResponsesCSV;
+
+function adminResponsesRestructure(d) {
+    var responseData = [];
+
+    // the first row are the object keys = column names
+    _.each(_.keys(d), function (k) {
+        responseData.push(k);
+    });
+
+    function getRow(r) {
+        var row = [];
+        _.forIn(d, function (value) {
+            row.push(value[r]);
+        });
+        return (row);
+    }
+
+    for (var r = 0; r < d[_.keys(d)[0]].length; r++) {
+        responseData.push(getRow(r));
+    }
+
+    return (responseData);
+}
+
+function getResponseTableCSV(poolid, callback) {
+    var responseData;
+    getResponseTable(poolid, function (d) {
+        responseData = adminResponsesRestructure(d);
+        callback(responseData);
+    });
 }

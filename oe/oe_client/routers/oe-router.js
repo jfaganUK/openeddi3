@@ -5,6 +5,8 @@
 /*
     The OpenEddi Router
     The routes should have (nearly) all the information necessary to tell the application what part it should load.
+
+ It's kind of silly that this has it's own directory right? I don't think I will have another router file.
  */
 module.exports = Backbone.Router.extend({
     routes: {
@@ -14,6 +16,7 @@ module.exports = Backbone.Router.extend({
         'admin': 'loadAdmin',
         'admin/:page': 'loadAdmin',
         'admin/:page/:poolid': 'loadAdmin',
+        'admin/:page/:poolid/:subpage': 'loadAdmin',
         'landing/login': 'loadLogin',
         'pool': 'loadLanding',
         'pool/:poolid': 'loadPool',
@@ -24,8 +27,12 @@ module.exports = Backbone.Router.extend({
     initialize: function() {
     },
 
-    loadAdmin: function (page, poolid) {
-        var opts = {page: page || 'listing', poolid: poolid};
+    loadAdmin: function (page, poolid, subpage) {
+        var opts = {
+            page: page || 'listing',
+            poolid: poolid,
+            subpage: subpage
+        };
         app.channels.navigation.command('load-admin-page', opts);
     },
 

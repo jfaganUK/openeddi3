@@ -1,0 +1,129 @@
+<!-- view: oe/oe_client/views/view-admin-responsetable.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+
+<polymer-element name="oe-admin-responsetable" attributes="oe attrUpdate">
+    <template>
+        <link rel="stylesheet" href="/bower_components/datatables/media/css/jquery.dataTables.css">
+        <div id="responseTableWrapper" vertical layout flex>
+            <paper-button class="light-primary-color" raised id="getCSV" on-tap="{{downloadCSV}}">
+                CSV
+            </paper-button>
+            <div id="reponseTableInner">
+                <table id="response-table"></table>
+            </div>
+        </div>
+        <style>
+            #responseTableWrapper {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            .light-primary-color {
+                background: #D8EBFA;
+            }
+
+            /*th, td { white-space: nowrap; }*/
+            /*div.dataTables_wrapper {*/
+            /*width: 100%;*/
+            /*margin: 0 auto;*/
+            /*}*/
+
+        </style>
+    </template>
+    <script>
+        Polymer('oe-admin-responsetable', {
+
+            attrUpdateChanged: function () {
+                this.buildTable();
+            },
+
+            buildTable: function () {
+                this.buildDataset();
+                var tableRegion = $(this.$['response-table']);
+                var dataset = this.responseData, columns = this.tableColumns;
+
+                tableRegion.DataTable({
+                    "data": dataset,
+                    "columns": columns,
+                    "scrollX": true
+                });
+
+            },
+
+            buildDataset: function () {
+                var self = this;
+
+                // now to shape the data in way that datatables wants it
+                var d = this.oe.responses;
+                this.responseData = [];
+                function getRow(r) {
+                    var row = [];
+                    _.forIn(d, function (value) {
+                        row.push(value[r]);
+                    });
+                    return (row);
+                }
+
+                for (var r = 0; r < d[_.keys(d)[0]].length; r++) {
+                    this.responseData.push(getRow(r));
+                }
+
+                // columns in the way that datatables likes it
+                this.tableColumns = [];
+                _.each(_.keys(d), function (k) {
+                    self.tableColumns.push({title: k});
+                });
+            },
+
+            downloadCSV: function () {
+                var csv = this.convertCSV();
+                var b64 = window.btoa(csv);
+                var link = document.createElement('a');
+                var tempDate = new Date();
+                var dateString = tempDate.toISOString().substring(0, 10);
+                link.href = 'data:text/csv;base64,' + b64;
+                link.download = this.oe.poolid + '_' + dateString + '_download.csv';
+                link.click();
+            },
+
+            convertCSV: function () {
+                var str = '';
+
+                // Create the header
+                _.forEach(this.tableColumns, function (c) {
+                    str += '"' + c.title + '",';
+                });
+
+                // remove the last comma
+                str = str.substring(0, str.length - 1);
+                str += '\r\n';
+
+                _.forEach(this.responseData, function (a) {
+                    _.forEach(a, function (c) {
+                        // if it's a number then we don't want the quotes
+                        // maybe need to use isFinite, but I want NaN to output as a number
+                        // that way it will read out as missing
+                        if (_.isNumber(c)) {
+                            str += c + ',';
+                        } else {
+                            str += '"' + c + '",';
+                        }
+                    });
+                    str = str.substring(0, str.length - 1);
+                    str += '\r\n';
+                });
+
+                return (str)
+            }
+
+        });
+    </script>
+</polymer-element>
