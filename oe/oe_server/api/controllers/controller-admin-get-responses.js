@@ -27,21 +27,40 @@ var Pool = require('../../db/models/_list').Pool;
 var Response = require('../../db/models/_list').Response;
 var async = require('async');
 var log = require('util').log;
-var csv = require('express-csv');
 
 // GET /api/admin/responses/:poolid/:table
 function getAdminResponses(req, res, next) {
     var table = req.params.table;
     var poolid = req.params.poolid;
 
-    if (table == 'responses') {
-        getResponseTable(poolid, function (results) {
-            var d = {responses: results};
-            res.status(200).json(d);
-        });
-    }
+    // Get all the module response functions
+    // each function takes a poolid and a callback
+    var responseFuncs = getResponseFunctions();
+
+    // The default response function
+    responseFuncs.responses = getResponseTable;
+
+    // Run the relevant requested response
+    responseFuncs[table](poolid, function (results) {
+        var d = {responses: results};
+        res.status(200).json(d);
+        //console.log(JSON.stringify(d, null, 2));
+    });
 }
 module.exports.getAdminResponses = getAdminResponses;
+
+function getResponseFunctions() {
+    var responseFuncs = {}, fileLoc;
+    _.forIn(oeModules, function (em, ek) {
+        if (em.hasOwnProperty('responses')) {
+            _.forIn(em.responses, function (rt, rk) { // response table, response key
+                fileLoc = appRoot + '/oe' + em.urlPath + '/' + rt.file;
+                responseFuncs[rk] = require(fileLoc);
+            });
+        }
+    });
+    return (responseFuncs);
+}
 
 function getResponseTable(poolid, callback) {
     var pool = getPool(poolid); // Snag the pool logic (this is a sync function!)
@@ -91,7 +110,7 @@ function getResponseTable(poolid, callback) {
 
     async.series(fq, function () {
         callback(results);
-    })
+    });
 }
 
 function getAdminResponsesCSV(req, res, next) {

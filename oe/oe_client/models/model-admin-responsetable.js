@@ -5,7 +5,7 @@
 
 var ResponseTable = Backbone.Model.extend({
     urlRoot: function () {
-        return '/api/admin/responses/' + this.opts.poolid + '/responses';
+        return '/api/admin/responses/' + this.opts.poolid + '/' + this.opts.table;
     },
     initialize: function (opts) {
         this.opts = opts || {};

@@ -42,9 +42,9 @@ module.exports = Mn.LayoutView.extend({
     },
 
     loadResponses: function (o) {
-        app.router.navigate('admin/responses/' + o.poolid + '/' + o.tableName);
+        app.router.navigate('admin/responses/' + o.poolid + '/' + o.table);
         var self = this;
-        var responseTableModel = new ResponseTableModel({poolid: this.poolid});
+        var responseTableModel = new ResponseTableModel({poolid: this.poolid, table: o.table});
         responseTableModel.fetch({
             success: function () {
                 var v = new ViewResponseTable({model: responseTableModel});

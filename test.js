@@ -95,6 +95,9 @@ async.series(startServerQueue, function (err, results) {
 /**********************************************************************/
 
 function testing() {
-    var getAdminResponsesCSV = require('./oe/oe_server/api/controllers/controller-admin-get-responses').getAdminResponsesCSV;
-    getAdminResponsesCSV({params: {poolid: 'test1', table: 'responses'}});
+    var getResponses = require('./oe/oe_modules/model-namelist/responsesNameTies');
+    //getResponses({params: {poolid: 'test1', table: 'namedetails'}});
+    getResponses('test1', function (r) {
+        console.log(JSON.stringify(r, null, 2));
+    })
 }

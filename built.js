@@ -52402,13 +52402,18 @@ var App = Marionette.Application.extend({
                 var adminViewOpts = opts || {};
                 var adminView = new AdminView({
                     page: adminViewOpts.page,
-                    poolid: adminViewOpts.poolid
+                    poolid: adminViewOpts.poolid,
+                    subpage: adminViewOpts.subpage
                 });
                 app.appSpace.show(adminView);
-                app.router.navigate('/admin/' + adminViewOpts.page);
+                if (adminViewOpts.subpage) {
+                    app.router.navigate('/admin/' + adminViewOpts.page + '/' + adminViewOpts.subpage);
+                } else {
+                    app.router.navigate('/admin/' + adminViewOpts.page);
+                }
             } else {
                 // user is not authorized, send them to the login page
-                app.channels.navigation.comply('load-landing-login', app.loadLogin, app);
+                app.channels.navigation.command('load-landing-login', app.loadLogin, app);
             }
         })
     },
@@ -53534,7 +53539,7 @@ module.exports = Backbone.Model.extend({
 
 var ResponseTable = Backbone.Model.extend({
     urlRoot: function () {
-        return '/api/admin/responses/' + this.opts.poolid + '/responses';
+        return '/api/admin/responses/' + this.opts.poolid + '/' + this.opts.table;
     },
     initialize: function (opts) {
         this.opts = opts || {};
@@ -54375,9 +54380,9 @@ module.exports = Mn.LayoutView.extend({
     },
 
     loadResponses: function (o) {
-        app.router.navigate('admin/responses/' + o.poolid + '/' + o.tableName);
+        app.router.navigate('admin/responses/' + o.poolid + '/' + o.table);
         var self = this;
-        var responseTableModel = new ResponseTableModel({poolid: this.poolid});
+        var responseTableModel = new ResponseTableModel({poolid: this.poolid, table: o.table});
         responseTableModel.fetch({
             success: function () {
                 var v = new ViewResponseTable({model: responseTableModel});
@@ -55347,8 +55352,9 @@ module.exports.templates = templates;
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/model-namelist/GraphModel.js:3
  */
-'use strict';
 
+// I don't use this right now...
+// but I think I will soon.
 module.exports = Backbone.Model.extend({
     defaults: function () {
         return {

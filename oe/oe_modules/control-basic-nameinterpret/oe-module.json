@@ -13,5 +13,11 @@
   },
   "views": {
     "eddicontrol": "ViewBasicNameInterpret"
+  },
+  "output": {
+    "namedetail": {
+      "file": "NameDetailResponseTable",
+      "name": "NameDetailResponseTable"
+    }
   }
 }

@@ -16,7 +16,7 @@ var getNameTies = require('./getNamelistTies');
 function getNameDetailResponseTable(poolid, callback) {
     var responseTableEntry = {
         poolid: poolid,
-        tableName: "nameDetails",
+        tableName: "namedetails",
         tableTitle: "Name Details",
         description: "Attributes of the names / nodes."
     };
@@ -38,7 +38,7 @@ function getNameDetailResponseTable(poolid, callback) {
 function getNameTiesResponseTable(poolid, callback) {
     var entry = {
         poolid: poolid,
-        tableName: "nameTies",
+        tableName: "nameties",
         tableTitle: "Name Ties",
         description: "Ties between the names / nodes."
     };

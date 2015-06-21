@@ -22,5 +22,15 @@
       "file": "ResponseTable",
       "name": "NamelistResponseSummary"
     }
+  },
+  "responses": {
+    "namedetails": {
+      "file": "responsesNameDetails",
+      "name": "responsesNameDetails"
+    },
+    "nameties": {
+      "file": "responsesNameTies",
+      "name": "responsesNameTies"
+    }
   }
 }

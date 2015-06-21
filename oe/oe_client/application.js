@@ -203,13 +203,18 @@ var App = Marionette.Application.extend({
                 var adminViewOpts = opts || {};
                 var adminView = new AdminView({
                     page: adminViewOpts.page,
-                    poolid: adminViewOpts.poolid
+                    poolid: adminViewOpts.poolid,
+                    subpage: adminViewOpts.subpage
                 });
                 app.appSpace.show(adminView);
-                app.router.navigate('/admin/' + adminViewOpts.page);
+                if (adminViewOpts.subpage) {
+                    app.router.navigate('/admin/' + adminViewOpts.page + '/' + adminViewOpts.subpage);
+                } else {
+                    app.router.navigate('/admin/' + adminViewOpts.page);
+                }
             } else {
                 // user is not authorized, send them to the login page
-                app.channels.navigation.comply('load-landing-login', app.loadLogin, app);
+                app.channels.navigation.command('load-landing-login', app.loadLogin, app);
             }
         })
     },
