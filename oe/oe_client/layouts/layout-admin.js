@@ -5,9 +5,11 @@
 
 var template = require('../templates/template-admin-layout.ejs');
 var AdminHeader = require('../views/view-admin-header');
-var PoolListingView = require('../views/view-admin-list-pools');
+var PoolListingsLayout = require('../views/view-admin-pool-listing-layout');
 var PoolListingCollection = require('../collections/collection-admin-pool-listings');
 var ViewResponses = require('../views/view-admin-responses');
+var LayoutDesign = require('../layouts/layout-admin-design');
+var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
@@ -30,9 +32,13 @@ module.exports = Mn.LayoutView.extend({
     },
 
     radioListen: function () {
-        app.channels.navigation.comply('load-admin-view-responses', this.loadViewResponses, this);
         app.channels.navigation.comply('admin-toggle-menu', this.toggleMenu, this);
+
+        // load different pages
         app.channels.navigation.comply('load-admin-responses', this.loadViewResponses, this);
+        app.channels.navigation.comply('load-admin-listings', this.loadAdminListings, this);
+        app.channels.navigation.comply('load-admin-design', this.loadPoolDesign, this);
+        app.channels.pool.comply('create-new-pool', this.createNewPool, this);
     },
 
     onShow: function () {
@@ -60,6 +66,9 @@ module.exports = Mn.LayoutView.extend({
             case 'responses' :
                 this.loadViewResponses(opts.poolid);
                 break;
+            case 'pooldesign' :
+                this.loadPoolDesign(opts.poolid);
+                break;
             default:
                 this.loadAdminListings();
                 break;
@@ -72,10 +81,38 @@ module.exports = Mn.LayoutView.extend({
     },
 
     loadAdminListings: function () {
-        var self = this;
         app.router.navigate('admin/listing');
-        var poolList = new PoolListingView({collection: this.poolListingCollection});
+        var poolList = new PoolListingsLayout();
         this.main.show(poolList);
+    },
+
+    createNewPool: function (opts) {
+        var self = this;
+        var username = app.channels.user.request('current-user');
+        var poollogic = {
+            poolid: opts.poolid,
+            title: opts.poolTitle,
+            description: opts.poolDescription,
+            meta: opts.meta
+        };
+        // create a poolid
+        var poolDesign = new ModelPoolDesign({
+            poolid: opts.poolid,
+            poollogic: poollogic,
+            username: username
+        });
+        poolDesign.save({
+            success: function () {
+                var layoutDesign = new LayoutDesign({model: poolDesign});
+                self.main.show(layoutDesign);
+            }
+        });
+    },
+
+    loadPoolDesign: function (poolid) {
+        app.router.navigate('admin/design');
+        var pd = new LayoutDesign({poolid: poolid});
+        this.main.show(pd);
     },
 
     loadViewResponses: function (poolid) {

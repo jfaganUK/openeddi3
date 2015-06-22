@@ -85,9 +85,9 @@ $(document).ready(function () {
     "./oe_client/application": 12,
     "./oe_client/backbone.dualstorage.browserify": 13,
     "./oe_client/backbone.dualstorage.oe.helpers": 14,
-    "./oe_client/models/model-appstate": 28,
-    "./oe_client/routers/oe-router": 35,
-    "./oe_client/views/marionette.polymerview": 49,
+    "./oe_client/models/model-appstate": 30,
+    "./oe_client/routers/oe-router": 37,
+    "./oe_client/views/marionette.polymerview": 53,
     "backbone": 7,
     "backbone.radio": 6,
     "datatables": 4,
@@ -52185,16 +52185,16 @@ OEModules.namelist = require('./oe_modules/model-namelist/client-index');
 module.exports = OEModules;
 
     }, {
-        "./oe_modules/control-alter-ties/client-index": 64,
-        "./oe_modules/control-basic-nameinterpret/client-index": 69,
-        "./oe_modules/control-checklist/client-index": 74,
-        "./oe_modules/control-namegen/client-index": 81,
-        "./oe_modules/control-namepick/client-index": 87,
-        "./oe_modules/control-nodelink/client-index": 91,
-        "./oe_modules/control-radiolist/client-index": 93,
-        "./oe_modules/control-shorttext/client-index": 96,
-        "./oe_modules/control-slider/client-index": 100,
-        "./oe_modules/model-namelist/client-index": 107
+        "./oe_modules/control-alter-ties/client-index": 70,
+        "./oe_modules/control-basic-nameinterpret/client-index": 75,
+        "./oe_modules/control-checklist/client-index": 80,
+        "./oe_modules/control-namegen/client-index": 87,
+        "./oe_modules/control-namepick/client-index": 93,
+        "./oe_modules/control-nodelink/client-index": 97,
+        "./oe_modules/control-radiolist/client-index": 99,
+        "./oe_modules/control-shorttext/client-index": 102,
+        "./oe_modules/control-slider/client-index": 106,
+        "./oe_modules/model-namelist/client-index": 113
     }],
     12: [function (require, module, exports) {
 /**
@@ -52252,6 +52252,8 @@ var App = Marionette.Application.extend({
 
         this.channels.user.comply('login', this.attemptLogin, this);
         this.channels.user.comply('check-auth', this.checkUserAuth, this);
+
+        this.channels.user.reply('current-user', this.sendCurrentUser, this);
 
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
@@ -52557,6 +52559,10 @@ var App = Marionette.Application.extend({
 
     },
 
+    sendCurrentUser: function () {
+        return this.user.get('username');
+    },
+
     // will run the authorized user check and call the callback with a value of true or false
     // complies to user / check-auth
     checkUserAuth: function(callback) {
@@ -52590,14 +52596,14 @@ module.exports = App;
     }, {
         "./collections/collection-pool-listings": 18,
         "./helpers/guid": 20,
-        "./layouts/layout-admin": 21,
-        "./layouts/layout-landing": 23,
-        "./layouts/layout-pool": 24,
-        "./layouts/layout-sheet": 25,
-        "./models/model-pool": 32,
-        "./models/model-user": 34,
-        "./views/view-landing-login": 59,
-        "./views/view-landing-pool-listings": 61,
+        "./layouts/layout-admin": 22,
+        "./layouts/layout-landing": 24,
+        "./layouts/layout-pool": 25,
+        "./layouts/layout-sheet": 26,
+        "./models/model-pool": 34,
+        "./models/model-user": 36,
+        "./views/view-landing-login": 65,
+        "./views/view-landing-pool-listings": 67,
         "async": 2
     }],
     13: [function (require, module, exports) {
@@ -53137,13 +53143,13 @@ Store.prototype.totalClear = function () {
  */
 
 var AdminPoolListing = require('../models/model-admin-pool-listing');
-
 module.exports = Backbone.Collection.extend({
     url: '/api/admin/poollistings/',
     model: AdminPoolListing
 });
 
-},{"../models/model-admin-pool-listing":26}],16:[function(require,module,exports){
+    }, {"../models/model-admin-pool-listing": 27}],
+    16: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/15/15.
  * oe/oe_client/collections/collection-admin-response-table-summary.js
@@ -53184,7 +53190,7 @@ module.exports = Backbone.Collection.extend({
 
 });
 
-    }, {"../models/model-eddi": 30}],
+    }, {"../models/model-eddi": 32}],
     18: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
@@ -53198,7 +53204,7 @@ module.exports = Backbone.Collection.extend({
 });
 
 
-    }, {"../models/model-pool-listing": 31}],
+    }, {"../models/model-pool-listing": 33}],
     19: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
@@ -53215,7 +53221,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-    }, {"../models/model-sheet": 33}],
+    }, {"../models/model-sheet": 35}],
     20: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/13/15.
@@ -53237,15 +53243,36 @@ function guid() {
 module.exports = guid;
 },{}],21:[function(require,module,exports){
 /**
+ * Created by jfagan on 6/21/15.
+ * oe/oe_client/layouts/layout-admin-design.js
+ */
+
+var template = require('../templates/template-layout-admin-design.ejs');
+
+        var LayoutAdminDesign = Mn.LayoutView.extend({
+            template: template,
+            regions: {
+                "main": "#admin-layout-design-main"
+            },
+            initialize: function (opts) {
+                this.opts = opts || {};
+            }
+        });
+        module.exports = LayoutAdminDesign;
+    }, {"../templates/template-layout-admin-design.ejs": 46}],
+    22: [function (require, module, exports) {
+        /**
  * Created by jfagan on 6/3/15.
  * oe/oe_client/layouts/layout-admin.js:3
  */
 
 var template = require('../templates/template-admin-layout.ejs');
 var AdminHeader = require('../views/view-admin-header');
-var PoolListingView = require('../views/view-admin-list-pools');
+        var PoolListingsLayout = require('../views/view-admin-pool-listing-layout');
 var PoolListingCollection = require('../collections/collection-admin-pool-listings');
 var ViewResponses = require('../views/view-admin-responses');
+        var LayoutDesign = require('../layouts/layout-admin-design');
+        var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
@@ -53268,9 +53295,13 @@ module.exports = Mn.LayoutView.extend({
     },
 
     radioListen: function () {
-        app.channels.navigation.comply('load-admin-view-responses', this.loadViewResponses, this);
         app.channels.navigation.comply('admin-toggle-menu', this.toggleMenu, this);
+
+        // load different pages
         app.channels.navigation.comply('load-admin-responses', this.loadViewResponses, this);
+        app.channels.navigation.comply('load-admin-listings', this.loadAdminListings, this);
+        app.channels.navigation.comply('load-admin-design', this.loadPoolDesign, this);
+        app.channels.pool.comply('create-new-pool', this.createNewPool, this);
     },
 
     onShow: function () {
@@ -53298,6 +53329,9 @@ module.exports = Mn.LayoutView.extend({
             case 'responses' :
                 this.loadViewResponses(opts.poolid);
                 break;
+            case 'pooldesign' :
+                this.loadPoolDesign(opts.poolid);
+                break;
             default:
                 this.loadAdminListings();
                 break;
@@ -53310,10 +53344,38 @@ module.exports = Mn.LayoutView.extend({
     },
 
     loadAdminListings: function () {
-        var self = this;
         app.router.navigate('admin/listing');
-        var poolList = new PoolListingView({collection: this.poolListingCollection});
+        var poolList = new PoolListingsLayout();
         this.main.show(poolList);
+    },
+
+    createNewPool: function (opts) {
+        var self = this;
+        var username = app.channels.user.request('current-user');
+        var poollogic = {
+            poolid: opts.poolid,
+            title: opts.poolTitle,
+            description: opts.poolDescription,
+            meta: opts.meta
+        };
+        // create a poolid
+        var poolDesign = new ModelPoolDesign({
+            poolid: opts.poolid,
+            poollogic: poollogic,
+            username: username
+        });
+        poolDesign.save({
+            success: function () {
+                var layoutDesign = new LayoutDesign({model: poolDesign});
+                self.main.show(layoutDesign);
+            }
+        });
+    },
+
+    loadPoolDesign: function (poolid) {
+        app.router.navigate('admin/design');
+        var pd = new LayoutDesign({poolid: poolid});
+        this.main.show(pd);
     },
 
     loadViewResponses: function (poolid) {
@@ -53344,12 +53406,14 @@ module.exports = Mn.LayoutView.extend({
 
     }, {
         "../collections/collection-admin-pool-listings": 15,
-        "../templates/template-admin-layout.ejs": 37,
-        "../views/view-admin-header": 50,
-        "../views/view-admin-list-pools": 51,
-        "../views/view-admin-responses": 55
+        "../layouts/layout-admin-design": 21,
+        "../models/model-admin-pooldesign": 28,
+        "../templates/template-admin-layout.ejs": 39,
+        "../views/view-admin-header": 55,
+        "../views/view-admin-pool-listing-layout": 57,
+        "../views/view-admin-responses": 61
     }],
-    22: [function (require, module, exports) {
+    23: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/layouts/layout-eddi.js
@@ -53381,8 +53445,8 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-    }, {"../templates/template-layout-eddi.ejs": 43, "../views/view-eddi-promptbar": 57}],
-    23: [function (require, module, exports) {
+    }, {"../templates/template-layout-eddi.ejs": 47, "../views/view-eddi-promptbar": 63}],
+    24: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/7/15.
  * layout-landing.js
@@ -53412,8 +53476,8 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-    }, {"../templates/template-layout-landing.ejs": 44}],
-    24: [function (require, module, exports) {
+    }, {"../templates/template-layout-landing.ejs": 48}],
+    25: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/22/15.
  * oe/oe_client/layouts/layout-pool.js
@@ -53467,8 +53531,8 @@ module.exports = Marionette.LayoutView.extend({
 });
 
 
-    }, {"../templates/template-layout-pool.ejs": 46, "../views/view-pool-footer": 62, "../views/view-pool-header": 63}],
-    25: [function (require, module, exports) {
+    }, {"../templates/template-layout-pool.ejs": 50, "../views/view-pool-footer": 68, "../views/view-pool-header": 69}],
+    26: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/23/15.
  * layout-sheet.js
@@ -53511,8 +53575,8 @@ module.exports = Marionette.LayoutView.extend({
 
 
 });
-    }, {"../templates/template-layout-sheet.ejs": 47, "../views/view-eddis": 58}],
-    26: [function (require, module, exports) {
+    }, {"../templates/template-layout-sheet.ejs": 51, "../views/view-eddis": 64}],
+    27: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/models/model-admin-pool-listing.js
@@ -53531,8 +53595,24 @@ module.exports = Backbone.Model.extend({
         }
     }
 });
-},{}],27:[function(require,module,exports){
+    }, {}],
+    28: [function (require, module, exports) {
 /**
+ * Created by jfagan on 6/22/15.
+ * oe/oe_client/models/model-admin-pooldesign.js
+ */
+
+var ModelPoolDesign = Backbone.Model.extend({
+    urlRoot: '/api/admin/pooldesign/',
+    idAttribute: 'poolid',
+    initialize: function (opts) {
+        this.opts = opts || {};
+    }
+});
+        module.exports = ModelPoolDesign;
+    }, {}],
+    29: [function (require, module, exports) {
+        /**
  * Created by jfagan on 6/18/15.
  *
  */
@@ -53547,7 +53627,7 @@ var ResponseTable = Backbone.Model.extend({
 });
         module.exports = ResponseTable;
     }, {}],
-    28: [function (require, module, exports) {
+    30: [function (require, module, exports) {
         /**
  * Created by jfagan on 3/12/15.
  * oe/oe_client/models/model-appstate.js:3
@@ -53613,7 +53693,7 @@ module.exports = Backbone.Model.extend({
 
 
     }, {"../helpers/guid": 20}],
-    29: [function (require, module, exports) {
+    31: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/4/15.
  * oe/oe_client/models/model-eddi-promptbar.js
@@ -53623,7 +53703,7 @@ module.exports = Backbone.Model.extend({
 
 });
     }, {}],
-    30: [function (require, module, exports) {
+    32: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/23/15.
  * oe/oe_client/models/model-eddi.js
@@ -53735,7 +53815,7 @@ module.exports = Backbone.Model.extend({
 
 
     }, {"../helpers/guid": 20}],
-    31: [function (require, module, exports) {
+    33: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -53759,7 +53839,7 @@ module.exports = Backbone.Model.extend({
 
 
     }, {"../helpers/guid": 20}],
-    32: [function (require, module, exports) {
+    34: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/17/15.
  * oe/oe_client/models/model-pool.js
@@ -53847,7 +53927,7 @@ module.exports = Backbone.Model.extend({
         "../collections/collection-pool-sheets": 19,
         "../helpers/guid": 20
     }],
-    33: [function (require, module, exports) {
+    35: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/19/15.
  * model-sheet.js
@@ -53866,7 +53946,7 @@ module.exports = Backbone.Model.extend({
 });
 
     }, {}],
-    34: [function (require, module, exports) {
+    36: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/31/15.
  * oe/oe_client/models/model-user.js:3
@@ -53979,7 +54059,7 @@ module.exports = Backbone.Model.extend({
 });
 
     }, {}],
-    35: [function (require, module, exports) {
+    37: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/19/15.
  */
@@ -54019,7 +54099,7 @@ module.exports = Backbone.Router.extend({
     },
 
     loadAdminResponses: function (poolid) {
-        app.channels.navigation.command('load-admin-responses', {poolid: poolid});
+        app.channels.navigation.command('load-admin-responses', poolid);
     },
 
     loadLogin: function () {
@@ -54050,7 +54130,7 @@ module.exports = Backbone.Router.extend({
 });
 
     }, {}],
-    36: [function (require, module, exports) {
+    38: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54059,7 +54139,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    37: [function (require, module, exports) {
+    39: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54068,10 +54148,21 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    38: [function (require, module, exports) {
+    40: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
+    __p += '<div id="adminPoolListing-newPool"></div><div id="adminPoolListing-poolListings"></div>';
+    return __p;
+};
+
+    }, {"lodash": 9}],
+    41: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
 __p+='Admin-responses.<h2>'+
 ((__t=( rc.poolTitle ))==null?'':__t)+
     '</h2><div id="oe-admin-responses-main"></div>';
@@ -54079,10 +54170,10 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    39: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    40: [function (require, module, exports) {
+    42: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    43: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54097,10 +54188,10 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    41: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    42: [function (require, module, exports) {
+    44: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    45: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54111,16 +54202,27 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    43: [function (require, module, exports) {
+    46: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
+    __p += ' Layout Admin Design<div id="admin-layout-design-main"></div>';
+    return __p;
+};
+
+    }, {"lodash": 9}],
+    47: [function (require, module, exports) {
+        var _ = require('lodash');
+        module.exports = function (rc) {
+            var __t, __p = '', __j = Array.prototype.join, print = function () {
+                __p += __j.call(arguments, '');
+            };
 __p+='<div id="oe-layout-eddi-promptbar">Eddi Promptbar</div><div id="oe-layout-eddi-controlspace">Eddi Controlspace</div>';
 return __p;
 };
 
     }, {"lodash": 9}],
-    44: [function (require, module, exports) {
+    48: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54129,7 +54231,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    45: [function (require, module, exports) {
+    49: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54142,7 +54244,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    46: [function (require, module, exports) {
+    50: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54151,7 +54253,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    47: [function (require, module, exports) {
+    51: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54160,10 +54262,10 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    48: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    49: [function (require, module, exports) {
+    52: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    53: [function (require, module, exports) {
 //Copyright (c) 2014, Jeremy Fairbank <elpapapollo@gmail.com>
 //
 //Permission to use, copy, modify, and/or distribute this software for any
@@ -54182,10 +54284,13 @@ module.exports = Marionette.ItemView.extend({
     constructor: function (options) {
         console.log('[marionette.polymer] Constructing view');
         Marionette.View.prototype.constructor.apply(this, arguments);
-        this._setPublishedKeys();
-        this._initAttrsFromModel();
-        this._initModelEvents();
-        this._initPolymerEvents();
+        // these methods presume a model exists
+        if (this.model) {
+            this._setPublishedKeys();
+            this._initAttrsFromModel();
+            this._initModelEvents();
+            this._initPolymerEvents();
+        }
     },
 
     _setPublishedKeys: function () {
@@ -54242,8 +54347,23 @@ module.exports = Marionette.ItemView.extend({
 });
 
     }, {}],
-    50: [function (require, module, exports) {
+    54: [function (require, module, exports) {
 /**
+ * Created by jfagan on 6/22/15.
+ * oe/oe_client/views/view-admin-create-new-pool.js:3
+ */
+
+var template = require('../templates/template-blank-template.ejs');
+
+        var ViewAdminCreateNewPool = Mn.PolymerView.extend({
+            template: template,
+            tagName: 'oe-admin-new-pool'
+        });
+        module.exports = ViewAdminCreateNewPool;
+
+    }, {"../templates/template-blank-template.ejs": 42}],
+    55: [function (require, module, exports) {
+        /**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/views/view-admin-header.js:3
  */
@@ -54255,8 +54375,8 @@ module.exports = Mn.PolymerView.extend({
     template: template
 });
 
-    }, {"../templates/template-admin-header.ejs": 36}],
-    51: [function (require, module, exports) {
+    }, {"../templates/template-admin-header.ejs": 38}],
+    56: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/views/view-admin-list-pools.js:3
@@ -54276,9 +54396,56 @@ module.exports = Mn.CollectionView.extend({
     childView: AdminPoolListing
 });
 
-    }, {"./view-admin-pool-listing": 52}],
-    52: [function (require, module, exports) {
+    }, {"./view-admin-pool-listing": 58}],
+    57: [function (require, module, exports) {
 /**
+ * Created by jfagan on 6/22/15.
+ * oe/oe_client/views/view-admin-pool-listing-layout.js
+ */
+
+var template = require('../templates/template-admin-pool-listing-layout.ejs');
+        var PoolListingCollection = require('../collections/collection-admin-pool-listings');
+        var PoolListingView = require('../views/view-admin-list-pools');
+        var NewPoolView = require('../views/view-admin-create-new-pool');
+        var ModelPoolDesign = require('../models/model-admin-pooldesign');
+
+        var LayoutAdminPoolListings = Mn.LayoutView.extend({
+            template: template,
+            regions: {
+                "newpool": "#adminPoolListing-newPool",
+                "poollistings": "#adminPoolListing-poolListings"
+            },
+            onShow: function () {
+                var self = this;
+                this.poolListingCollection = new PoolListingCollection();
+                this.poolListingCollection.fetch({
+                    success: function () {
+                        self.showPoolListings();
+                    }
+                });
+            },
+            showPoolListings: function () {
+
+                // list the current pools
+                var poolListingView = new PoolListingView({collection: this.poolListingCollection});
+                this.poollistings.show(poolListingView);
+
+                // polymer view expects a model, there's probably a better way around this
+                // but I'm just going to create a blank useless model
+                var newPoolView = new NewPoolView();
+                this.newpool.show(newPoolView);
+            }
+        });
+        module.exports = LayoutAdminPoolListings;
+    }, {
+        "../collections/collection-admin-pool-listings": 15,
+        "../models/model-admin-pooldesign": 28,
+        "../templates/template-admin-pool-listing-layout.ejs": 40,
+        "../views/view-admin-create-new-pool": 54,
+        "../views/view-admin-list-pools": 56
+    }],
+    58: [function (require, module, exports) {
+        /**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/views/view-admin-pool-listing.js:3
  */
@@ -54295,8 +54462,8 @@ module.exports = Mn.PolymerView.extend({
 
 });
 
-    }, {"../templates/template-blank-template.ejs": 39}],
-    53: [function (require, module, exports) {
+    }, {"../templates/template-blank-template.ejs": 42}],
+    59: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/15/15.
  * /home/jfagan/Dropbox/projects/openeddi/openeddi3/oe/oe_client/views/view-admin-response-table-summaries.js
@@ -54317,8 +54484,8 @@ module.exports = Mn.CollectionView.extend({
         console.log('[ViewResponseTableSummaries] Showing...');
     }
 });
-    }, {"./view-admin-response-table-summary": 54}],
-    54: [function (require, module, exports) {
+    }, {"./view-admin-response-table-summary": 60}],
+    60: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/15/15.
  * /home/jfagan/Dropbox/projects/openeddi/openeddi3/oe/oe_client/views/view-admin-response-table-summary.js
@@ -54334,8 +54501,8 @@ module.exports = Mn.PolymerView.extend({
         this.model.set('oe', _.clone(this.model.attributes));
     }
 });
-    }, {"../templates/template-blank-template.ejs": 39}],
-    55: [function (require, module, exports) {
+    }, {"../templates/template-blank-template.ejs": 42}],
+    61: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/12/15.
  * oe/oe_client/views/view-admin-responses.js
@@ -54394,12 +54561,12 @@ module.exports = Mn.LayoutView.extend({
 
     }, {
         "../collections/collection-admin-response-table-summary": 16,
-        "../models/model-admin-responsetable": 27,
-        "../templates/template-admin-responses.ejs": 38,
-        "../views/view-admin-response-table-summaries": 53,
-        "../views/view-admin-responsetable": 56
+        "../models/model-admin-responsetable": 29,
+        "../templates/template-admin-responses.ejs": 41,
+        "../views/view-admin-response-table-summaries": 59,
+        "../views/view-admin-responsetable": 62
     }],
-    56: [function (require, module, exports) {
+    62: [function (require, module, exports) {
         /**
          * Created by jfagan on 6/18/15.
          * oe/oe_client/views/view-admin-responsetable.js
@@ -54418,8 +54585,8 @@ module.exports = Mn.LayoutView.extend({
         module.exports = ViewResponseTable;
 
 
-    }, {"../templates/template-blank-template.ejs": 39}],
-    57: [function (require, module, exports) {
+    }, {"../templates/template-blank-template.ejs": 42}],
+    63: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/views/view-eddi-promptbar.js
@@ -54435,8 +54602,8 @@ module.exports = Mn.ItemView.extend({
     initialize: function() {
     }
 });
-    }, {"../models/model-eddi-promptbar": 29, "../templates/template-eddi-promptbar.ejs": 40}],
-    58: [function (require, module, exports) {
+    }, {"../models/model-eddi-promptbar": 31, "../templates/template-eddi-promptbar.ejs": 43}],
+    64: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * view-eddis.js
@@ -54453,8 +54620,8 @@ module.exports = Marionette.CollectionView.extend({
         return child.get('sheetid') == this.sheetid;
     }
 });
-    }, {"../layouts/layout-eddi": 22}],
-    59: [function (require, module, exports) {
+    }, {"../layouts/layout-eddi": 23}],
+    65: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/30/15.
  * oe/oe_client/views/view-landing-login.js:3
@@ -54468,8 +54635,8 @@ module.exports = Mn.PolymerView.extend({
     _publishedKeys: []
 });
 
-    }, {"../templates/template-landing-login.ejs": 41}],
-    60: [function (require, module, exports) {
+    }, {"../templates/template-landing-login.ejs": 44}],
+    66: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -54492,8 +54659,8 @@ module.exports = Mn.PolymerView.extend({
     }
 
 });
-    }, {"../models/model-pool-listing": 31, "../templates/template-landing-pool-listing.ejs": 42}],
-    61: [function (require, module, exports) {
+    }, {"../models/model-pool-listing": 33, "../templates/template-landing-pool-listing.ejs": 45}],
+    67: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -54511,8 +54678,8 @@ module.exports = Marionette.CollectionView.extend({
     },
     childView: PoolListingView
 });
-    }, {"./view-landing-pool-listing": 60}],
-    62: [function (require, module, exports) {
+    }, {"./view-landing-pool-listing": 66}],
+    68: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/26/15.
  * oe/oe_client/views/view-pool-footer.js:3
@@ -54569,8 +54736,8 @@ module.exports = Mn.ItemView.extend({
     }
 });
 
-    }, {"../templates/template-layout-pool-footer.ejs": 45}],
-    63: [function (require, module, exports) {
+    }, {"../templates/template-layout-pool-footer.ejs": 49}],
+    69: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/9/15.
  * oe/oe_client/views/view-pool-header.js
@@ -54584,8 +54751,8 @@ module.exports = PolymerView.extend({
     template: template
 });
 
-    }, {"../templates/template-pool-header.ejs": 48, "./marionette.polymerview": 49}],
-    64: [function (require, module, exports) {
+    }, {"../templates/template-pool-header.ejs": 52, "./marionette.polymerview": 53}],
+    70: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-alter-ties/client-index.js:3
@@ -54599,7 +54766,7 @@ module.exports.views = views;
 module.exports.templates = templates;
 
     }, {}],
-    65: [function (require, module, exports) {
+    71: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/12/15.
  * oe/oe_modules/control-basic-nameinterpret/NICollectionView.js:3
@@ -54616,8 +54783,8 @@ module.exports = Mn.CollectionView.extend({
         };
     }
 });
-    }, {"./NINameLayoutView": 66}],
-    66: [function (require, module, exports) {
+    }, {"./NINameLayoutView": 72}],
+    72: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/12/15.
  * oe/oe_modules/control-basic-nameinterpret/NINameLayoutView.js
@@ -54678,12 +54845,12 @@ module.exports = Mn.LayoutView.extend({
     }
 });
     }, {
-        "../../oe_client/models/model-eddi": 30,
-        "../model-namelist/NameModel": 104,
-        "./NINameTag": 67,
-        "./templateNINameLayout.ejs": 70
+        "../../oe_client/models/model-eddi": 32,
+        "../model-namelist/NameModel": 110,
+        "./NINameTag": 73,
+        "./templateNINameLayout.ejs": 76
     }],
-    67: [function (require, module, exports) {
+    73: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/12/15.
  * oe/oe_modules/control-basic-nameinterpret/NINameTag.js:3
@@ -54697,8 +54864,8 @@ module.exports = Mn.ItemView.extend({
     template: template
 });
 
-    }, {"../model-namelist/NameModel": 104, "./templateNINameTag.ejs": 71}],
-    68: [function (require, module, exports) {
+    }, {"../model-namelist/NameModel": 110, "./templateNINameTag.ejs": 77}],
+    74: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/10/15.
  * oe/oe_modules/control-basic-nameinterpret/ViewBasicNameInterpret.js:3
@@ -54735,8 +54902,8 @@ var NILayoutView = Mn.LayoutView.extend({
 module.exports = NILayoutView;
 
 
-    }, {"../../oe_client/models/model-eddi": 30, "./NICollectionView": 65, "./templateNameInterpret.ejs": 72}],
-    69: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 32, "./NICollectionView": 71, "./templateNameInterpret.ejs": 78}],
+    75: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/10/15.
  *
@@ -54751,8 +54918,8 @@ templates.nameinterpret = require('./templateOEBasicNameInterpreter.ejs');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./ViewBasicNameInterpret": 68, "./templateNameInterpret.ejs": 72, "./templateOEBasicNameInterpreter.ejs": 73}],
-    70: [function (require, module, exports) {
+    }, {"./ViewBasicNameInterpret": 74, "./templateNameInterpret.ejs": 78, "./templateOEBasicNameInterpreter.ejs": 79}],
+    76: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54761,7 +54928,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    71: [function (require, module, exports) {
+    77: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54772,7 +54939,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    72: [function (require, module, exports) {
+    78: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54781,10 +54948,10 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    73: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    74: [function (require, module, exports) {
+    79: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    80: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/7/15.
  * The index file for the checklist module
@@ -54806,11 +54973,11 @@ templates.eddicontrol = require('./templateChecklist.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateChecklist.ejs": 75, "./viewChecklist": 76}],
-    75: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    76: [function (require, module, exports) {
+    }, {"./templateChecklist.ejs": 81, "./viewChecklist": 82}],
+    81: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    82: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-checklist/viewChecklist.js
@@ -54842,11 +55009,11 @@ module.exports = PolymerView.extend({
 
 
     }, {
-        "../../oe_client/models/model-eddi": 30,
-        "../../oe_client/views/marionette.polymerview": 49,
-        "./templateChecklist.ejs": 75
+        "../../oe_client/models/model-eddi": 32,
+        "../../oe_client/views/marionette.polymerview": 53,
+        "./templateChecklist.ejs": 81
     }],
-    77: [function (require, module, exports) {
+    83: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/5/15.
  * oe/oe_modules/control-namegen/BasicNameCard.js
@@ -54873,8 +55040,8 @@ module.exports = PolymerView.extend({
 });
 
 
-    }, {"../../oe_client/views/marionette.polymerview": 49, "./templateBasicNameCard.ejs": 82}],
-    78: [function (require, module, exports) {
+    }, {"../../oe_client/views/marionette.polymerview": 53, "./templateBasicNameCard.ejs": 88}],
+    84: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/29/15.
  * oe/oe_modules/control-namegen/BasicNameGen-NameInput.js
@@ -54892,11 +55059,11 @@ module.exports = PolymerView.extend({
 });
 
     }, {
-        "../../oe_client/models/model-eddi": 30,
-        "../../oe_client/views/marionette.polymerview": 49,
-        "./templateBasicNameGen-NameInput.ejs": 83
+        "../../oe_client/models/model-eddi": 32,
+        "../../oe_client/views/marionette.polymerview": 53,
+        "./templateBasicNameGen-NameInput.ejs": 89
     }],
-    79: [function (require, module, exports) {
+    85: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/5/15.
  * oe/oe_modules/control-namegen/BasicNameGen-Names.js
@@ -54923,8 +55090,8 @@ module.exports = Mn.CollectionView.extend({
     }
 });
 
-    }, {"./BasicNameCard": 77}],
-    80: [function (require, module, exports) {
+    }, {"./BasicNameCard": 83}],
+    86: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/27/15.
  * oe/oe_modules/control-namegen/BasicNameGenerator.js
@@ -54963,12 +55130,12 @@ module.exports = Mn.LayoutView.extend({
     }
 });
     }, {
-        "../../oe_client/models/model-eddi": 30,
-        "./BasicNameGen-NameInput": 78,
-        "./BasicNameGen-Names": 79,
-        "./templateBasicNamegen.ejs": 84
+        "../../oe_client/models/model-eddi": 32,
+        "./BasicNameGen-NameInput": 84,
+        "./BasicNameGen-Names": 85,
+        "./templateBasicNamegen.ejs": 90
     }],
-    81: [function (require, module, exports) {
+    87: [function (require, module, exports) {
 /**
  *
  * oe/oe_modules/control-namegen/client-index.js
@@ -54983,14 +55150,14 @@ templates.eddicontrol = require('./templateBasicNamegen.ejs');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./BasicNameGenerator": 80, "./templateBasicNamegen.ejs": 84}],
-    82: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    83: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    84: [function (require, module, exports) {
+    }, {"./BasicNameGenerator": 86, "./templateBasicNamegen.ejs": 90}],
+    88: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    89: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    90: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54999,7 +55166,7 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    85: [function (require, module, exports) {
+    91: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/NamePick-Name.js:3
@@ -55035,8 +55202,8 @@ module.exports = Mn.PolymerView.extend({
     }
 });
 
-    }, {"./templateNamePickName.ejs": 89}],
-    86: [function (require, module, exports) {
+    }, {"./templateNamePickName.ejs": 95}],
+    92: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/NamePick.js:3
@@ -55082,8 +55249,8 @@ module.exports = Mn.LayoutView.extend({
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 30, "./NamePick-Name": 85, "./templateNamePick.ejs": 88}],
-    87: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 32, "./NamePick-Name": 91, "./templateNamePick.ejs": 94}],
+    93: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/client-index.js:3
@@ -55097,8 +55264,8 @@ templates.eddicontrol = require('./templateNamePick.ejs');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./NamePick": 86, "./templateNamePick.ejs": 88}],
-    88: [function (require, module, exports) {
+    }, {"./NamePick": 92, "./templateNamePick.ejs": 94}],
+    94: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -55107,10 +55274,10 @@ return __p;
 };
 
     }, {"lodash": 9}],
-    89: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    90: [function (require, module, exports) {
+    95: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    96: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/control-nodelink/NodeLink.js:3
@@ -55164,8 +55331,8 @@ module.exports = Mn.PolymerView.extend({
     }
 });
 
-    }, {"../model-namelist/GraphModel": 102, "./templateNodeLink.ejs": 92}],
-    91: [function (require, module, exports) {
+    }, {"../model-namelist/GraphModel": 108, "./templateNodeLink.ejs": 98}],
+    97: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/control-nodelink/client-index.js:3
@@ -55179,11 +55346,11 @@ views.eddicontrol = require('./NodeLink');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./NodeLink": 90}],
-    92: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    93: [function (require, module, exports) {
+    }, {"./NodeLink": 96}],
+    98: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    99: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/client-index.js
@@ -55199,11 +55366,11 @@ templates.eddicontrol = require('./templateRadiolist.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateRadiolist.ejs": 94, "./viewRadiolist": 95}],
-    94: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    95: [function (require, module, exports) {
+    }, {"./templateRadiolist.ejs": 100, "./viewRadiolist": 101}],
+    100: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    101: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/viewRadiolist.js
@@ -55239,11 +55406,11 @@ module.exports = PolymerView.extend({
 
 
     }, {
-        "../../oe_client/models/model-eddi": 30,
-        "../../oe_client/views/marionette.polymerview": 49,
-        "./templateRadiolist.ejs": 94
+        "../../oe_client/models/model-eddi": 32,
+        "../../oe_client/views/marionette.polymerview": 53,
+        "./templateRadiolist.ejs": 100
     }],
-    96: [function (require, module, exports) {
+    102: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/7/15.
  * The index file for the shorttext file
@@ -55265,11 +55432,11 @@ templates.eddicontrol = require('./templateShorttext.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateShorttext.ejs": 97, "./viewShorttext": 98}],
-    97: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    98: [function (require, module, exports) {
+    }, {"./templateShorttext.ejs": 103, "./viewShorttext": 104}],
+    103: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    104: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-shorttext/view-shorttext.js
@@ -55286,8 +55453,8 @@ module.exports = Mn.PolymerView.extend({
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 30, "./templateShorttext.ejs": 97}],
-    99: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 32, "./templateShorttext.ejs": 103}],
+    105: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-slider/SliderControl.js:3
@@ -55326,8 +55493,8 @@ module.exports = Mn.PolymerView.extend({
 });
 
 
-    }, {"./templateSlider.ejs": 101}],
-    100: [function (require, module, exports) {
+    }, {"./templateSlider.ejs": 107}],
+    106: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-slider/client-index.js
@@ -55343,11 +55510,11 @@ module.exports.views = views;
 module.exports.templates = templates;
 
 
-    }, {"./SliderControl": 99, "./templateSlider.ejs": 101}],
-    101: [function (require, module, exports) {
-        arguments[4][36][0].apply(exports, arguments)
-    }, {"dup": 36, "lodash": 9}],
-    102: [function (require, module, exports) {
+    }, {"./SliderControl": 105, "./templateSlider.ejs": 107}],
+    107: [function (require, module, exports) {
+        arguments[4][38][0].apply(exports, arguments)
+    }, {"dup": 38, "lodash": 9}],
+    108: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/model-namelist/GraphModel.js:3
@@ -55363,7 +55530,7 @@ module.exports = Backbone.Model.extend({
     }
 });
     }, {}],
-    103: [function (require, module, exports) {
+    109: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/27/15.
  * oe/oe_modules/control-shorttext/NameCollection.js
@@ -55411,8 +55578,8 @@ module.exports = Backbone.Collection.extend({
     }
 
 });
-    }, {"./NameModel": 104}],
-    104: [function (require, module, exports) {
+    }, {"./NameModel": 110}],
+    110: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/23/15.
  * oe/oe_modules/model-namelist/NameModel.js
@@ -55673,7 +55840,7 @@ module.exports = Backbone.Model.extend({
 
 });
     }, {"../../oe_client/helpers/guid": 20}],
-    105: [function (require, module, exports) {
+    111: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/4/15.
  * oe/oe_modules/model-namelist/NamelistPrep.js:3
@@ -55710,8 +55877,8 @@ App.prototype.initialize = function () {
     this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
 };
 
-    }, {"../../oe_client/application": 12, "./NameCollection": 103}],
-    106: [function (require, module, exports) {
+    }, {"../../oe_client/application": 12, "./NameCollection": 109}],
+    112: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/1/15.
  * oe/oe_modules/model-namelist/NamelistRadio.js
@@ -55755,7 +55922,7 @@ App.prototype.namelistAddNewName = function (e) {
 
 
     }, {"../../oe_client/application": 12}],
-    107: [function (require, module, exports) {
+    113: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/22/15.
  *
@@ -55778,5 +55945,5 @@ require('./NamelistPrep');
 
 module.exports.models = models;
 module.exports.views = views;
-    }, {"./NameCollection": 103, "./NameModel": 104, "./NamelistPrep": 105, "./NamelistRadio": 106}]
+    }, {"./NameCollection": 109, "./NameModel": 110, "./NamelistPrep": 111, "./NamelistRadio": 112}]
 }, {}, [1]);

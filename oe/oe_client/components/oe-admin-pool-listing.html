@@ -27,10 +27,10 @@
                     <div flex>{{numResponses}}</div>
                 </div>
             </div>
-            <paper-button raised on-tap="{{viewResponses}}">
+            <paper-button class="poolButton" raised on-tap="{{viewResponses}}">
                 View Responses
             </paper-button>
-            <paper-button raised>
+            <paper-button class="poolButton" raised on-tap="{{viewDesign}}">
                 Edit Pool
             </paper-button>
         </div>
@@ -48,6 +48,10 @@
 
             #poolListingStatsTable {
                 width: 90%;
+            }
+
+            .poolButton {
+                margin-top: 15px;
             }
 
             .poolListingStatsRow {
@@ -83,7 +87,11 @@
             },
 
             viewResponses: function () {
-                app.channels.navigation.command('load-admin-view-responses', this.poolid);
+                app.channels.navigation.command('load-admin-responses', this.poolid);
+            },
+
+            viewDesign: function () {
+                app.channels.navigation.command('load-admin-design', this.poolid);
             }
         });
     </script>

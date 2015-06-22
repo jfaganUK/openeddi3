@@ -16,10 +16,13 @@ module.exports = Marionette.ItemView.extend({
     constructor: function (options) {
         console.log('[marionette.polymer] Constructing view');
         Marionette.View.prototype.constructor.apply(this, arguments);
-        this._setPublishedKeys();
-        this._initAttrsFromModel();
-        this._initModelEvents();
-        this._initPolymerEvents();
+        // these methods presume a model exists
+        if (this.model) {
+            this._setPublishedKeys();
+            this._initAttrsFromModel();
+            this._initModelEvents();
+            this._initPolymerEvents();
+        }
     },
 
     _setPublishedKeys: function () {

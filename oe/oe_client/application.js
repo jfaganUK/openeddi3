@@ -54,6 +54,8 @@ var App = Marionette.Application.extend({
         this.channels.user.comply('login', this.attemptLogin, this);
         this.channels.user.comply('check-auth', this.checkUserAuth, this);
 
+        this.channels.user.reply('current-user', this.sendCurrentUser, this);
+
         // Save the models when the response is updated
         this.channels.response.on('response-updated', function(e) {
             console.log('-- Response Updated: ' + e.attributes.eid);
@@ -356,6 +358,10 @@ var App = Marionette.Application.extend({
             }
         });
 
+    },
+
+    sendCurrentUser: function () {
+        return this.user.get('username');
     },
 
     // will run the authorized user check and call the callback with a value of true or false

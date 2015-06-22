@@ -94,7 +94,7 @@
                 var tempDate = new Date();
                 var dateString = tempDate.toISOString().substring(0, 10);
                 link.href = 'data:text/csv;base64,' + b64;
-                link.download = this.oe.poolid + '_' + dateString + '_download.csv';
+                link.download = this.oe.poolid + '_' + dateString + '_' + this.oe.table + '.csv';
                 link.click();
             },
 

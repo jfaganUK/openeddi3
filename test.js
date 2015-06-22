@@ -95,9 +95,9 @@ async.series(startServerQueue, function (err, results) {
 /**********************************************************************/
 
 function testing() {
-    var getResponses = require('./oe/oe_modules/model-namelist/responsesNameTies');
-    //getResponses({params: {poolid: 'test1', table: 'namedetails'}});
-    getResponses('test1', function (r) {
-        console.log(JSON.stringify(r, null, 2));
-    })
+    var poolDir = require('./oe/oe_server/api/controllers/controller-admin-pool-design').poolDirectoryPrep;
+
+    poolDir('waffles', {hello: {there: 'mice'}}, function () {
+        log('test done');
+    });
 }

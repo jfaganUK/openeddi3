@@ -6,7 +6,6 @@
 var path = require('path');
 global.appRoot = path.resolve(__dirname);
 
-var appPort = 4444;                       // The port the server runs on.
 var _ = require('lodash');                // For some functional programming
 var fs = require('fs');                   // For using the file system.
 var log = require('util').log;            // For better logging (with timestamps)
@@ -80,8 +79,8 @@ var createAdminUser = function (callback) {
 // Start the oe_server
 var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, getExpressApp, createAdminUser];
 async.series(startServerQueue, function (err, results) {
-    app.listen(appPort, '0.0.0.0');
-    log('[startup] Listening on port ' + appPort);
+    app.listen(OEConfig.appPort, '0.0.0.0');
+    log('[startup] Listening on port ' + OEConfig.appPort);
 });
 
 

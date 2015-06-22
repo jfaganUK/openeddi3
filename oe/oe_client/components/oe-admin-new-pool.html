@@ -1,0 +1,122 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+
+<polymer-element name="oe-admin-new-pool" attributes="oe attrUpdate">
+    <template>
+        <div vertical layout flex id="adminNewPoolWrapper">
+            <div id="adminNewPoolContainer">
+                <div id="newPoolButton">
+                    <core-icon-button icon="add" on-tap="{{toggleNewPoolEntry}}">
+                        Create New Pool
+                    </core-icon-button>
+                </div>
+                <div id="newPoolEntry">
+                    <h3>{{poolTitle}}</h3>
+
+                    <p>Pool title is how the pool is presented to users and respondents.</p>
+                    <paper-input-decorator label="Pool Title" floatingLabel>
+                        <input is="core-input" value="{{poolTitle}}">
+                    </paper-input-decorator>
+                    <p>Describe the pool.</p>
+                    <paper-input-decorator label="Pool Description" floatingLabel>
+                        <input is="core-input" value="{{poolDescription}}">
+                    </paper-input-decorator>
+                    <p>The poolid is what is used in the database and the files on the server to identify the pool. It
+                        neds to be unique from other pools you currently have. <em>This part should not be changed after
+                            it is established.</em></p>
+                    <paper-input-decorator label="Pool ID" floatingLabel>
+                        <input is="core-input" value="{{poolid}}">
+                    </paper-input-decorator>
+
+                    <core-icon-button icon="create" on-tap="{{createNewPool}}">Create!</core-icon-button>
+                </div>
+
+            </div>
+        </div>
+        <style>
+            #adminNewPoolContainer {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            #newPoolEntry {
+                display: none;
+            }
+
+            #newPoolButton {
+                display: block;
+            }
+
+            .poolButton {
+                margin-top: 15px;
+            }
+
+            .poolListingStatsRow {
+                margin-top: 12px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+            }
+
+            .poolListingStatsRow > div:nth-child(1) {
+                width: 30%;
+                max-width: 240px;
+                min-width: 120px;
+                word-wrap: normal;
+            }
+
+            .poolListingStatsRow > div:nth-child(2) {
+                text-align: left;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-new-pool', {
+            attrUpdateChanged: function () {
+//                this.prepAttributes();
+            },
+
+            // TODO: I want the poolid to automatically update and be created from the pool title
+            poolTitleChanged: function () {
+                var pt = this.poolTitle;
+            },
+
+            poolidChanged: function () {
+                // I want the poolid's to be only alphanumeric, no spaces or anything else
+                this.poolid = this.poolid.replace(/\W+/g, "");
+            },
+
+            createNewPool: function () {
+                // need to validate the title and ID
+                // TODO: add validation that make sure every field is filled
+
+                app.channels.pool.command('create-new-pool', {
+                    poolid: this.poolid,
+                    poolTitle: this.poolTitle,
+                    poolDescription: this.poolDescription,
+                    gotoDesign: true
+                });
+            },
+
+            toggleNewPoolEntry: function () {
+                $(this.$.newPoolButton).hide();
+                $(this.$.newPoolEntry).show();
+            },
+
+            validatePoolid: function () {
+                // TODO: need to do this. thinking an ajax call to a simple API that returns good or bad?
+            }
+
+        });
+    </script>
+</polymer-element>

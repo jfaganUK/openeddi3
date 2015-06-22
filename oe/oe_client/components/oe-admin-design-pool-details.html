@@ -1,0 +1,52 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+
+<polymer-element name="oe-admin-design-pool-details" attributes="oe attrUpdate">
+    <template>
+        OE Admin Design Pool Details
+        <style>
+            :host {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            .poolButton {
+                margin-top: 15px;
+            }
+
+            .poolListingStatsRow {
+                margin-top: 12px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+            }
+
+            .poolListingStatsRow > div:nth-child(1) {
+                width: 30%;
+                max-width: 240px;
+                min-width: 120px;
+                word-wrap: normal;
+            }
+
+            .poolListingStatsRow > div:nth-child(2) {
+                text-align: left;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-design-pool-details', {
+            attrUpdateChanged: function () {
+//                this.prepAttributes();
+            }
+
+        });
+    </script>
+</polymer-element>

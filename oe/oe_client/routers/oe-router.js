@@ -37,7 +37,7 @@ module.exports = Backbone.Router.extend({
     },
 
     loadAdminResponses: function (poolid) {
-        app.channels.navigation.command('load-admin-responses', {poolid: poolid});
+        app.channels.navigation.command('load-admin-responses', poolid);
     },
 
     loadLogin: function () {

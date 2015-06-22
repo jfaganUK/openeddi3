@@ -7,6 +7,7 @@ exports.User = require('./user').User;
 exports.Pool = require('./pool').Pool;
 exports.Response = require('./response').Response;
 exports.AppState = require('./appstate').AppState;
+exports.PoolDesign = require('./pooldesign').PoolDesign;
 
 // Add any oeModules with a model
 var m = {},
