@@ -19,7 +19,13 @@ function checklistResponseTable(poolid, eddi, callback) {
                 vecKey = eddi.title + '__' + arrayPrompts[i].value;
                 valueVec = [];
                 for (var j = 0; j < values.length; j++) {
-                    valueVec.push(values[j][i]);
+                    // if there was no response, fill it all with false
+                    if (_.isNull(values[j])) {
+                        valueVec.push(false);
+                    } else {
+                        valueVec.push(values[j][i]);
+
+                    }
                 }
                 vec[vecKey] = valueVec;
             }
