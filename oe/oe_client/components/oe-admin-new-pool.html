@@ -8,8 +8,8 @@
 <polymer-element name="oe-admin-new-pool" attributes="oe attrUpdate">
     <template>
         <div vertical layout flex id="adminNewPoolWrapper">
-            <div id="adminNewPoolContainer">
-                <div id="newPoolButton">
+            <div id="container">
+                <div id="newSheetButton">
                     <core-icon-button icon="add" on-tap="{{toggleNewPoolEntry}}">
                         Create New Pool
                     </core-icon-button>
@@ -38,7 +38,7 @@
             </div>
         </div>
         <style>
-            #adminNewPoolContainer {
+            #container {
                 margin: 0.5em auto;
                 background: white;
                 border: 1px solid rgba(0, 0, 0, 0.15);
@@ -53,7 +53,7 @@
                 display: none;
             }
 
-            #newPoolButton {
+            #newSheetButton {
                 display: block;
             }
 

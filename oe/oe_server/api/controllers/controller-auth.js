@@ -18,6 +18,7 @@ function getAuth(req, res, next) {
     log("Authenticating " + req.body.username);
     var d = {auth: false};
     if (req.session.admin && req.session.admin === true) {
+        // TODO: fetch and return user data here. that will fix the username issue.
         d.auth = true;
     }
 
@@ -55,6 +56,7 @@ function userLogin(req, res, next) {
                 if (bcrypt.compareSync(password, user.dataValues.pwd)) {
                     // Success. Log them in.
                     req.session.admin = true;
+                    req.session.username = username;
                     res.status(200).json(_.omit(user.dataValues, ['pwd']));
                 } else {
                     returnMessage = 'Invalid username or password';

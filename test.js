@@ -95,9 +95,7 @@ async.series(startServerQueue, function (err, results) {
 /**********************************************************************/
 
 function testing() {
-    var poolDir = require('./oe/oe_server/api/controllers/controller-admin-pool-design').poolDirectoryPrep;
+    var f = require('./oe/oe_server/api/controllers/controller-admin-pool-design').getTopPoolDesign;
 
-    poolDir('waffles', {hello: {there: 'mice'}}, function () {
-        log('test done');
-    });
+    f({params: {poolid: 'bromide'}});
 }

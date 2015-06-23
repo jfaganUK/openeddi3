@@ -90,10 +90,15 @@ module.exports = Mn.LayoutView.extend({
         var self = this;
         var username = app.channels.user.request('current-user');
         var poollogic = {
-            poolid: opts.poolid,
-            title: opts.poolTitle,
-            description: opts.poolDescription,
-            meta: opts.meta
+            poollogic: {
+                poolid: opts.poolid,
+                title: opts.poolTitle,
+                description: opts.poolDescription,
+                meta: opts.meta,
+                sheetOrder: []
+            },
+            sheetlogic: [],
+            eddilogic: []
         };
         // create a poolid
         var poolDesign = new ModelPoolDesign({
@@ -110,7 +115,7 @@ module.exports = Mn.LayoutView.extend({
     },
 
     loadPoolDesign: function (poolid) {
-        app.router.navigate('admin/design');
+        app.router.navigate('admin/design/' + poolid);
         var pd = new LayoutDesign({poolid: poolid});
         this.main.show(pd);
     },

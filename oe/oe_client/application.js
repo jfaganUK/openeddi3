@@ -83,6 +83,10 @@ var App = Marionette.Application.extend({
         Backbone.Radio.tuneIn('media');
     },
 
+    guid: function () {
+        return (guid());
+    },
+
     mediaQuery: function () {
         // On window resize, trigger the media change event
         this.wideLayout = $(window).width() >= window.RESIZE_WIDTH;

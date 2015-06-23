@@ -1,11 +1,11 @@
 {
   "poollogic":
   {
-    "poolid": "test1",
-    "title": "OpenEddi Test 01",
+    "poolid": "examplepool",
+    "title": "OpenEddi Example",
     "description": "A new generation of flexible, interactive, and engaging data collection.",
-    "intro": "Introduction goes here.",
-    "outtro": "The exit message goes here.",
+    "introduction": "Introduction goes here.",
+    "afterward": "The afterword (exit message) goes here.",
     "sheetOrder": [
       "1",
       "2",

@@ -1,0 +1,83 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+
+<polymer-element name="oe-admin-design-new-sheet" attributes="oe poollogic attrUpdate">
+    <template>
+        <div vertical layout flex id="wrapper">
+            <div id="container">
+                <div id="newSheetEntry">
+                    <h3>{{sheetTitle}}</h3>
+
+                    <p>Create a new sheet</p>
+                    <paper-input-decorator label="Sheet Title" floatingLabel>
+                        <input is="core-input" value="{{sheetTitle}}">
+                    </paper-input-decorator>
+                    <p>Describe the sheet.</p>
+                    <paper-input-decorator label="Sheet Description" floatingLabel>
+                        <input is="core-input" value="{{sheetDescription}}">
+                    </paper-input-decorator>
+                    <paper-input-decorator label="Sheet ID" floatingLabel>
+                        <input is="core-input" value="{{sheetid}}">
+                    </paper-input-decorator>
+
+                    <paper-button on-tap="{{createNewSheet}}">Create!</paper-button>
+                </div>
+
+            </div>
+        </div>
+        <style>
+            #container {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-design-new-sheet', {
+            ready: function () {
+                this.resetForm();
+            },
+
+            attrUpdateChanged: function () {
+            },
+
+            newSheetID: function () {
+                var sheetid = app.guid();
+                this.sheetid = sheetid.substr(3, 8);
+            },
+
+            createNewSheet: function () {
+                // need to validate the title and ID
+                // TODO: add validation that make sure every field is filled
+
+                app.channels.pool.command('create-new-sheet', {
+                    sheetid: this.sheetid,
+                    title: this.sheetTitle,
+                    description: this.sheetDescription
+                });
+
+                this.resetForm();
+            },
+
+            resetForm: function () {
+                // reset the form
+                this.newSheetID();
+                this.sheetTitle = '';
+                this.sheetDescription = '';
+            }
+
+        });
+    </script>
+</polymer-element>

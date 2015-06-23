@@ -1,0 +1,56 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+
+<polymer-element name="oe-admin-design-single-sheet" attributes="oe poollogic attrUpdate">
+    <template>
+        <div vertical layout flex id="wrapper">
+            <div id="container">
+                <div id="newSheetEntry">
+                    <h3>{{sheetTitle}}</h3>
+
+                    <p class="secondary-text-color">{{sheetid}}</p>
+                    <paper-input-decorator label="Sheet Title" floatingLabel>
+                        <input is="core-input" value="{{sheetTitle}}">
+                    </paper-input-decorator>
+                    <p>Describe the sheet.</p>
+                    <paper-input-decorator label="Sheet Description" floatingLabel>
+                        <input is="core-input" value="{{sheetDescription}}">
+                    </paper-input-decorator>
+                </div>
+
+            </div>
+        </div>
+        <style>
+            #container {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            .secondary-text-color {
+                color: #727272;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-design-single-sheet', {
+            ready: function () {
+            },
+
+            attrUpdateChanged: function () {
+            }
+
+        });
+    </script>
+</polymer-element>

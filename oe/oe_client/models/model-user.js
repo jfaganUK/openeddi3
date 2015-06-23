@@ -18,6 +18,8 @@ module.exports = Backbone.Model.extend({
 
     urlRoot: '/api/auth',
 
+    // TODO: make sure the username updates and stuff
+    // Maybe if the user is authorized, but details are blank here
     authUser: function (callback) {
         var self = this;
         this.fetch({
@@ -37,7 +39,7 @@ module.exports = Backbone.Model.extend({
         });
     },
 
-    // Fxn to update user attributes after recieving API response
+    // Function to update user attributes after receiving API response
     updateSessionUser: function (userData) {
         this.set(_.pick(userData, _.keys(this.defaults)));
     },

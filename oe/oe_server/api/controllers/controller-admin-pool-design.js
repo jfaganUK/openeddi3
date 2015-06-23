@@ -7,6 +7,7 @@ var PoolDesign = require('../../db/models/_list').PoolDesign;
 var log = require('util').log;
 var fs = require('fs');
 var async = require('async');
+var sequelize = require('../../db/config');
 
 /*
  * GET /api/admin/pooldesign/:poolid
@@ -18,7 +19,7 @@ function getTopPoolDesign(req, res, next) {
 
     PoolDesign.find({
         where: {poolid: req.params.poolid},
-        order: [sequelize.fn('max', sequelize.col('dateinserted')), 'DESC']
+        order: [[sequelize.col('dateinserted'), 'DESC']]
     })
         .then(function (pd) {
             res.status(200).json(pd);
@@ -39,18 +40,30 @@ module.exports.getTopPoolDesign = getTopPoolDesign;
  */
 
 function putPoolDesign(req, res, next) {
-    log('[putPoolDesign] ' + req.params.poolid);
+    var poollogic = req.body.poollogic;
+    var poolid = req.params.poolid;
+    var push = req.query.push;
+    log('[putPoolDesign] ' + poolid);
 
     PoolDesign.create({
-        poolid: req.params.poolid,
-        poollogic: req.body.poollogic,
+        poolid: poolid,
+        poollogic: poollogic,
         username: req.body.username,
         meta: req.body.meta
     })
         .then(function (pd) {
-            poolDirectoryPrep(req.params.poolid, req.body.poollogic, function () {
-                res.status(201).json(pd);
+            poolDirectoryPrep(pd, function () {
+                // if the survey directory already exists it won't push
+                // unles push is truthy
+                if (push) {
+                    pushJSON(pd, function () {
+                        res.status(201).json(pd);
+                    })
+                } else {
+                    res.status(201).json(pd);
+                }
             });
+
         })
         .catch(function (err) {
             console.error('[putPoolDesign] Error');
@@ -61,11 +74,12 @@ module.exports.putPoolDesign = putPoolDesign;
 
 /**
  * Tests if a directory exists for this pool. If not it creates one and pushes out the first file.
- * @param poolid the id of the pool
- * @param poollogic the structure of the pool in a single object
+ * @param pd a row from the pooldesign table
  * @param callback callback when the operation is complete
  */
-function poolDirectoryPrep(poolid, poollogic, callback) {
+function poolDirectoryPrep(pd, callback) {
+    var poolid = pd.poolid;
+    var poollogic = pd.poollogic;
     var dir = appRoot + '/oe/oe_pools/' + poolid;
 
     makeDir(dir, function (d) {
@@ -73,7 +87,7 @@ function poolDirectoryPrep(poolid, poollogic, callback) {
         // and it was created, so we need to push the JSON
         if (d === false) {
             // create the JSON file
-            pushJSON(dir, poollogic, function (err) {
+            pushJSON(pd, function (err) {
                 if (err) {
                     console.error(err);
                     callback(err);
@@ -89,8 +103,13 @@ function poolDirectoryPrep(poolid, poollogic, callback) {
 }
 module.exports.poolDirectoryPrep = poolDirectoryPrep;
 
-function pushJSON(dir, poollogic, callback) {
+function pushJSON(pd, callback) {
+    var dir = appRoot + '/oe/oe_pools/' + pd.poolid;
     var filename = dir + '/pool.json';
+    var poollogic = pd.poollogic;
+    poollogic.poollogic.dateCreated = pd.dateinserted;
+    poollogic.poollogic.username = pd.username;
+    poollogic.poollogic.meta = pd.meta;
     var poolStr = JSON.stringify(poollogic, null, 4);
 
     // Poollogic should already be a pretty printed string

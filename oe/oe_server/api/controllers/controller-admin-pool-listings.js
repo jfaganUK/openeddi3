@@ -32,7 +32,6 @@ function getPoolListings(req, res, next) {
     });
 
 }
-
 module.exports.getAll = getPoolListings;
 
 
