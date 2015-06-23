@@ -53301,7 +53301,7 @@ var template = require('../templates/template-layout-admin-design.ejs');
                     this.model.fetch({
                         success: function () {
                             self.showMain();
-                        }
+                }
                     })
                 } else {
                     this.showMain();
