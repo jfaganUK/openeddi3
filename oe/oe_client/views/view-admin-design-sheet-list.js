@@ -5,6 +5,11 @@
 
 var ViewAdminDesignSingleSheet = require('./view-admin-design-single-sheet');
 var ViewAdminDesignSheetList = Mn.CollectionView.extend({
+    attributes: {
+        "layout": "",
+        "vertical": "",
+        "flex": ""
+    },
     childView: ViewAdminDesignSingleSheet
 });
 module.exports = ViewAdminDesignSheetList;

@@ -95,7 +95,39 @@ async.series(startServerQueue, function (err, results) {
 /**********************************************************************/
 
 function testing() {
-    var f = require('./oe/oe_server/api/controllers/controller-admin-pool-design').getTopPoolDesign;
+    var f = require('./oe/oe_modules/control-checklist/ResponseTable.js');
 
-    f({params: {poolid: 'bromide'}});
+    f('examplepool', {
+        "eid": "102",
+        "sheetid": "1",
+        "poolid": "test1",
+        "sortIndex": 1,
+        "title": "someGoodFoods",
+        "controlmodule": "checklist",
+        "prompt": "Which foods have you eaten in the last month?",
+        "arrayPrompts": [
+            {
+                "arrayid": 0,
+                "prompt": "apple",
+                "value": "apple"
+            },
+            {
+                "arrayid": 1,
+                "prompt": "orange",
+                "value": "orange"
+            },
+            {
+                "arrayid": 2,
+                "prompt": "ice",
+                "value": "ice"
+            },
+            {
+                "arrayid": 3,
+                "prompt": "delicious air",
+                "value": "air"
+            }
+        ]
+    }, function (x) {
+        console.log(JSON.stringify(x, null, 2));
+    });
 }

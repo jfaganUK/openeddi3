@@ -1,0 +1,111 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+<link rel="import" href="/bower_components/core-collapse/core-collapse.html">
+<link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/core-menu/core-menu.html">
+
+
+<polymer-element name="oe-admin-design-new-eddi" attributes="oe poollogic attrUpdate">
+    <template>
+        <div vertical layout flex id="wrapper">
+            <div id="container">
+                <div id="newEddiEntry">
+                    <h3>{{eddiTitle}}</h3>
+
+                    <p class="secondary-text-color">{{eid}}</p>
+
+                    <p>Create a new eddi</p>
+                    <paper-input-decorator label="Eddi Title" floatingLabel>
+                        <input is="core-input" value="{{eddiTitle}}">
+                    </paper-input-decorator>
+                    <p>Provide a prompt</p>
+                    <paper-input-decorator label="Eddi Prompt" floatingLabel>
+                        <input is="core-input" value="{{eddiPrompt}}">
+                    </paper-input-decorator>
+
+                    <div>
+                        <p>Choose an eddi control module</p>
+                        <select name="select" id="controlModuleSelect">
+                            <template repeat="{{cm in controlmodules}}">
+                                <option value="{{cm.modulename}}">{{cm.modulename}}</option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <paper-button on-tap="{{createNewEddi}}" flex>Create</paper-button>
+                </div>
+
+            </div>
+        </div>
+        <style>
+            #container {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            .secondary-text-color {
+                color: #727272;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-design-new-eddi', {
+            ready: function () {
+                this.resetForm();
+            },
+
+            attrUpdateChanged: function () {
+            },
+
+            newEddiID: function () {
+                var eid = app.guid();
+                this.eid = eid.substr(3, 8);
+            },
+
+            createNewEddi: function () {
+                // need to validate the title and ID
+                // TODO: add validation that make sure every field is filled
+                var e = this.$.controlModuleSelect;
+                var controlmodule = e.options[e.selectedIndex].value;
+                var sheetid = app.channels.pool.request('get-eddi-sheetid');
+
+                if (sheetid) {
+                    app.channels.pool.command('create-new-eddi', {
+                        eid: this.eid,
+                        sheetid: sheetid,
+                        title: this.eddiTitle,
+                        prompt: this.eddiPrompt,
+                        controlmodule: controlmodule
+                    });
+
+                    this.resetForm();
+                } else {
+                    console.error('No sheetid selected.');
+
+                }
+
+            },
+
+            resetForm: function () {
+                // reset the form
+                this.newEddiID();
+                this.eddiTitle = '';
+                this.eddiPrompt = '';
+            }
+
+        });
+    </script>
+</polymer-element>

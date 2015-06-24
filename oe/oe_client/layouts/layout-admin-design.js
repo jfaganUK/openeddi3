@@ -7,6 +7,7 @@ var template = require('../templates/template-layout-admin-design.ejs');
 var ModelPoolDesign = require('../models/model-admin-pooldesign');
 var ViewPoolDetails = require('../views/view-admin-design-pooldetails');
 var ViewSheetsLayout = require('../views/view-admin-design-sheets-layout');
+var ViewEddisLayout = require('../views/view-admin-design-eddis-layout');
 
 var LayoutAdminDesign = Mn.LayoutView.extend({
     template: template,
@@ -22,7 +23,9 @@ var LayoutAdminDesign = Mn.LayoutView.extend({
         app.channels.pool.comply('save-pool-design', this.savePoolDesign, this);
         app.channels.pool.comply('push-pool', this.pushPool, this);
         app.channels.pool.comply('create-new-sheet', this.createNewSheet, this);
+        app.channels.pool.comply('create-new-eddi', this.createNewEddi, this);
         app.channels.pool.reply('get-pool-design-model', this.giveDesignModel, this);
+
     },
     onShow: function () {
         var self = this;
@@ -51,6 +54,7 @@ var LayoutAdminDesign = Mn.LayoutView.extend({
         //}
         this.showPoolDetails();
         this.showSheets();
+        this.showEddis();
     },
     showPoolDetails: function () {
         var pd = new ViewPoolDetails({model: this.model});
@@ -63,9 +67,20 @@ var LayoutAdminDesign = Mn.LayoutView.extend({
         var v = new ViewSheetsLayout({model: this.model});
         this.sheets.show(v);
     },
+    showEddis: function () {
+        var v = new ViewEddisLayout({model: this.model});
+        this.eddis.show(v);
+    },
     createNewSheet: function (sheet) {
         var poollogic = _.clone(this.model.get('poollogic'));
         poollogic.sheetlogic.push(sheet);
+        poollogic.poollogic.sheetOrder.push(sheet.sheetid);
+        this.model.set('poollogic', poollogic);
+        this.model.save();
+    },
+    createNewEddi: function (eddi) {
+        var poollogic = _.clone(this.model.get('poollogic'));
+        poollogic.eddilogic.push(eddi);
         this.model.set('poollogic', poollogic);
         this.model.save();
     },

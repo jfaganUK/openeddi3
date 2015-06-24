@@ -4,7 +4,8 @@
   "author" : "Jesse Fagan (aftersox@gmail.com)",
   "description" : "It's a simple short text input field.",
   "components" : {
-    "eddicontrol" : "shorttext.html"
+    "eddicontrol": "shorttext.html",
+    "design": "oe-shorttext-design.html"
   },
   "templates" : {
     "eddicontrol" : "TemplateShorttext"

@@ -1,0 +1,94 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+<link rel="import" href="/bower_components/core-collapse/core-collapse.html">
+<link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/core-menu/core-menu.html">
+
+<polymer-element name="oe-admin-design-single-eddi-common" attributes="oe poollogic attrUpdate">
+    <template>
+        <div vertical layout flex id="wrapper">
+            <div id="container">
+                <div id="newEddiEntry">
+                    <h3>{{eddiTitle}} - {{controlmodule}}</h3>
+
+                    <p class="secondary-text-color">{{eid}}</p>
+                    <paper-input-decorator label="Eddi Title" floatingLabel>
+                        <input is="core-input" value="{{eddiTitle}}">
+                    </paper-input-decorator>
+                    <paper-input-decorator label="Eddi Prompt" floatingLabel>
+                        <input is="core-input" value="{{eddiPrompt}}">
+                    </paper-input-decorator>
+                    <paper-input-decorator label="Sheet ID" floatingLabel>
+                        <input is="core-input" value="{{sheetid}}">
+                    </paper-input-decorator>
+                </div>
+
+            </div>
+        </div>
+        <style>
+            #container {
+                margin: 0.5em auto;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            .secondary-text-color {
+                color: #727272;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-admin-design-single-eddi-common', {
+            ready: function () {
+                this.resetForm();
+            },
+
+            attrUpdateChanged: function () {
+                this.prepAttributes();
+            },
+
+            prepAttributes: function () {
+                this.eddiTitle = this.oe.title;
+                this.eddiPrompt = this.oe.prompt;
+                this.eid = this.oe.eid;
+                this.controlmodule = this.oe.controlmodule;
+                this.sheetid = this.oe.sheetid;
+            },
+
+            newEddiID: function () {
+                var eid = app.guid();
+                this.eid = eid.substr(3, 8);
+            },
+
+            updateModel: function () {
+                var eddi = {
+                    eid: this.eid,
+                    sheetid: this.sheetid,
+                    title: this.eddiTitle,
+                    prompt: this.eddiPrompt
+                };
+                app.channels.pool.command('update-eddi-model', eddi);
+            },
+
+            resetForm: function () {
+                // reset the form
+                this.newEddiID();
+                this.eddiTitle = '';
+                this.eddiPrompt = '';
+            }
+
+        });
+    </script>
+</polymer-element>
