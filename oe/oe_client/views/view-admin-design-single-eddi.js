@@ -33,7 +33,8 @@ var ViewAdminDesignSingleEddi = Mn.LayoutView.extend({
         this.specific.show(v);
     },
     updateEddi: function (eddi) {
-        var poollogic = _.clone(this.model.get('poollogic'));
+        var pooldesign = app.channels.pool.request('get-pool-design-model');
+        var poollogic = _.clone(pooldesign.get('poollogic'));
 
         // get the existing eddi model
         var existingEddi = _.find(poollogic.eddilogic, {eid: eddi.eid});
@@ -51,8 +52,8 @@ var ViewAdminDesignSingleEddi = Mn.LayoutView.extend({
         poollogic.eddilogic = eddis;
 
         // update the model and save
-        this.model.set('poollogic', poollogic);
-        this.model.save();
+        pooldesign.set('poollogic', poollogic);
+        pooldesign.save();
     }
 });
 module.exports = ViewAdminDesignSingleEddi;

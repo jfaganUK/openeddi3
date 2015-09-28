@@ -4,7 +4,8 @@
   "author": "Jesse Fagan (aftersox@gmail.com)",
   "description": "Node link diagram for visualization and network modification.",
   "components": {
-    "nameinput": "oe-nodelink.html"
+    "nameinput": "oe-nodelink.html",
+    "design": "oe-nodelink-design.html"
   },
   "templates": {
     "eddicontrol": "templateNodeLink.ejs"

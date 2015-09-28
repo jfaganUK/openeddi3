@@ -1,0 +1,60 @@
+<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+
+<polymer-element name="oe-nodelink-design" attributes="oe poollogic attrUpdate">
+    <template>
+        <div vertical layout flex id="wrapper">
+            <div id="container">
+                Provide a name for the relation type
+                <paper-input value="{{tieDetails.relation}}" on-blur="{{updateModel}}"></paper-input>
+            </div>
+        </div>
+        <style>
+            #container {
+                margin: 0em auto 0.5em;
+                background: white;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                padding: 0.5em 1em 1em;
+                position: relative;
+                width: 80%;
+                max-width: 560px;
+                min-width: 256px;
+            }
+
+            .secondary-text-color {
+                color: #727272;
+            }
+
+        </style>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer('oe-nodelink-design', {
+            ready: function () {
+            },
+
+            attrUpdateChanged: function () {
+                this.prepAttributes();
+            },
+
+            prepAttributes: function () {
+                this.eid = this.oe.eid;
+                this.tieDetails = this.oe.tieDetails || {relation: ''};
+            },
+
+            updateModel: function () {
+                var tieDetails = {
+                    type: 'undirected',
+                    weighted: false,
+                    relation: this.tieDetails.relation
+                };
+                var eddi = {
+                    eid: this.eid,
+                    tieDetails: tieDetails
+                };
+                app.channels.pool.command('update-eddi-model', eddi);
+            }
+        });
+    </script>
+</polymer-element>

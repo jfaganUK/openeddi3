@@ -5,7 +5,8 @@
   "description": "A name generator for ego-network data collection",
   "components": {
     "nameinput": "basicnamegen-nameinput.html",
-    "namecard": "basic-name-card.html"
+    "namecard": "basic-name-card.html",
+    "design": "oe-basicnamegen-design.html"
   },
   "templates": {
     "eddicontrol": "templateBasicNamegen.ejs",
