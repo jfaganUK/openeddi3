@@ -1,39 +1,28 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
+    <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 
-<polymer-element name="oe-admin-pool-listing"
-                 attributes="poolTitle dateCreated numResponses description oe attrUpdate poolid">
-    <template>
-        <div class="pool-listing" layout vertical>
-            <h2>{{poolTitle}}</h2>
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-admin-pool-listing">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
 
-            <div id="poolListingStatsTable" layout vertical>
-                <div class="poolListingStatsRow" layout horizontal>
-                    <div>ID:</div>
-                    <div flex>{{poolid}}</div>
-                </div>
-                <div class="poolListingStatsRow" layout horizontal>
-                    <div>Description:</div>
-                    <div flex>{{description}}</div>
-                </div>
-                <div class="poolListingStatsRow" layout horizontal>
-                    <div>Date created:</div>
-                    <div flex>{{dateShown}}</div>
-                </div>
-                <div class="poolListingStatsRow" layout horizontal="">
-                    <div>Number of responses:</div>
-                    <div flex>{{numResponses}}</div>
-                </div>
-            </div>
-            <paper-button class="poolButton" raised on-tap="{{viewResponses}}">
-                View Responses
-            </paper-button>
-            <paper-button class="poolButton" raised on-tap="{{viewDesign}}">
-                Edit Pool
-            </paper-button>
-        </div>
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
+
+            [layout][horizontal] {
+            @apply(- -layout-horizontal);
+            }
+        </style>
         <style>
             :host {
                 margin: 0.5em auto;
@@ -71,28 +60,69 @@
             }
 
         </style>
-    </template>
-    <script>
-        //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-admin-pool-listing', {
-            dateShown: 'October 10th, 1982',
+        <template>
+            <div class="pool-listing" layout="" vertical="">
+                <h2>{{poolTitle}}</h2>
 
-            attrUpdateChanged: function () {
-                this.prepAttributes();
-            },
-
-            prepAttributes: function () {
-                var d = new Date(this.dateCreated);
-                this.dateShown = d.toDateString();
-            },
-
-            viewResponses: function () {
-                app.channels.navigation.command('load-admin-responses', this.poolid);
-            },
-
-            viewDesign: function () {
-                app.channels.navigation.command('load-admin-design', this.poolid);
-            }
-        });
-    </script>
-</polymer-element>
+                <div id="poolListingStatsTable" layout="" vertical="">
+                    <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div>ID:</div>
+                        <div flex="">{{poolid}}</div>
+                    </div>
+                    <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div>Description:</div>
+                        <div flex="">{{description}}</div>
+                    </div>
+                    <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div>Date created:</div>
+                        <div flex="">{{dateShown}}</div>
+                    </div>
+                    <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div>Number of responses:</div>
+                        <div flex="">{{numResponses}}</div>
+                    </div>
+                </div>
+                <paper-button class="poolButton" raised="" on-tap="viewResponses">
+                    View Responses
+                </paper-button>
+                <paper-button class="poolButton" raised="" on-tap="viewDesign">
+                    Edit Pool
+                </paper-button>
+            </div>
+        </template>
+        <script>
+            //noinspection JSUnusedGlobalSymbols
+            Polymer({
+                is: 'oe-admin-pool-listing',
+                properties: {
+                    attrUpdate: {
+                        notify: true,
+                        observer: 'attrUpdateChanged'
+                    },
+                    dateCreated: {notify: true},
+                    dateShown: {
+                        type: String,
+                        value: 'October 10th, 1982'
+                    },
+                    description: {notify: true},
+                    numResponses: {notify: true},
+                    oe: {notify: true},
+                    poolTitle: {notify: true},
+                    poolid: {notify: true}
+                },
+                attrUpdateChanged: function () {
+                    this.prepAttributes();
+                },
+                prepAttributes: function () {
+                    var d = new Date(this.dateCreated);
+                    this.dateShown = d.toDateString();
+                },
+                viewResponses: function () {
+                    app.channels.navigation.command('load-admin-responses', this.poolid);
+                },
+                viewDesign: function () {
+                    app.channels.navigation.command('load-admin-design', this.poolid);
+                }
+            });
+        </script>
+    </dom-module>

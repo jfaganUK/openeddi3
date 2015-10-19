@@ -1,5 +1,5 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html"/>
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html"/>
 <link rel="import" href="/bower_components/paper-dialog/paper-dialog.html"/>
@@ -71,7 +71,8 @@
     </template>
     <script>
         //noinspection JSUnusedLocalSymbols,JSUnusedGlobalSymbols
-        Polymer('oe-nodelink', {
+        Polymer({
+            is: 'oe-nodelink',
             ready: function () {
                 // I used to to just have this listener, but with the polyfill, I can't fire events
                 // external to the element.

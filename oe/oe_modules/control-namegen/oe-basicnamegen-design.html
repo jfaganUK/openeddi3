@@ -1,15 +1,27 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 
-<polymer-element name="oe-basicnamegen-design" attributes="oe poollogic attrUpdate">
-    <template>
-        <div vertical layout flex id="wrapper">
-            <div id="container">
-                Provide a name for the namelist this generator will add to:
-                <paper-input value="{{namelist}}" on-blur="{{updateModel}}"></paper-input>
-            </div>
-        </div>
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-basicnamegen-design">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
+
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
+
+            [layout][flex] {
+            @apply(- -layout-flex);
+            }
+        </style>
         <style>
             #container {
                 margin: 0em auto 0.5em;
@@ -27,29 +39,42 @@
             }
 
         </style>
+        <template>
+            <div vertical="" layout="" flex="" id="wrapper">
+                <div id="container">
+                    Provide a name for the namelist this generator will add to:
+                    <paper-input value="{{namelist}}" on-blur="updateModel"></paper-input>
+                </div>
+            </div>
     </template>
-    <script>
-        //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-basicnamegen-design', {
-            ready: function () {
-            },
-
-            attrUpdateChanged: function () {
-                this.prepAttributes();
-            },
-
-            prepAttributes: function () {
-                this.eid = this.oe.eid;
-                this.namelist = this.oe.namelist;
-            },
-
-            updateModel: function () {
-                var eddi = {
-                    eid: this.eid,
-                    namelist: this.namelist
-                };
-                app.channels.pool.command('update-eddi-model', eddi);
-            }
-        });
-    </script>
-</polymer-element>
+        <script>
+            //noinspection JSUnusedGlobalSymbols
+            Polymer({
+                is: 'oe-basicnamegen-design',
+                properties: {
+                    attrUpdate: {
+                        notify: true,
+                        observer: 'attrUpdateChanged'
+                    },
+                    oe: {notify: true},
+                    poollogic: {notify: true}
+                },
+                ready: function () {
+                },
+                attrUpdateChanged: function () {
+                    this.prepAttributes();
+                },
+                prepAttributes: function () {
+                    this.eid = this.oe.eid;
+                    this.namelist = this.oe.namelist;
+                },
+                updateModel: function () {
+                    var eddi = {
+                        eid: this.eid,
+                        namelist: this.namelist
+                    };
+                    app.channels.pool.command('update-eddi-model', eddi);
+                }
+            });
+        </script>
+    </dom-module>

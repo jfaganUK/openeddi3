@@ -1,15 +1,8 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
-<polymer-element name="oe-landing-footer" attributes="oe">
-    <template>
-        <div id="oe-landing-footer-internal" flex>
-            <span>OpenEddi ya'll.</span>
-        </div>
-        <div id="sign-in-button">
-            <paper-icon-button icon="settings" on-tap="{{adminButtonClick}}"></paper-icon-button>
-        </div>
-        <style>
+<dom-module id="oe-landing-footer">
+    <style>
             #oe-landing-footer-internal {
                 position: relative;
             }
@@ -26,10 +19,18 @@
                 padding: 10px;
             }
         </style>
+    <template>
+        <div id="oe-landing-footer-internal" flex="">
+            <span>OpenEddi ya'll.</span>
+        </div>
+        <div id="sign-in-button">
+            <paper-icon-button icon="settings" on-tap="adminButtonClick"></paper-icon-button>
+        </div>
     </template>
-
     <script>
-        Polymer('oe-landing-footer', {
+        Polymer({
+            is: 'oe-landing-footer',
+            properties: {oe: {notify: true}},
             adminButtonClick: function () {
                 // Check authorization, if the user is logged in then load the admin page
                 // otherwise load the login page
@@ -39,9 +40,8 @@
                     } else {
                         app.channels.navigation.command('load-landing-login');
                     }
-                })
+        });
             }
         });
     </script>
-
-</polymer-element>
+</dom-module>

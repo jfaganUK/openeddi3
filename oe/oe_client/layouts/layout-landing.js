@@ -8,7 +8,7 @@ var template = require('../templates/template-layout-landing.ejs')();
 
 module.exports = Marionette.LayoutView.extend({
     template: _.template(template),
-    tagName: 'core-scroll-header-panel',
+    tagName: 'paper-scroll-header-panel',
     attributes: function () {
         return ( {
             'flex': '',

@@ -14,7 +14,7 @@
 
 module.exports = Marionette.ItemView.extend({
     constructor: function (options) {
-        console.log('[marionette.polymer] Constructing view');
+        console.log('[marionette.polymer] Constructing view: ' + this.tagName);
         Marionette.View.prototype.constructor.apply(this, arguments);
         // these methods presume a model exists
         if (this.model) {

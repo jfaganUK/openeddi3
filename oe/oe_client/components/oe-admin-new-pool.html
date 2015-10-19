@@ -1,42 +1,30 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
-<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+    <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
-<polymer-element name="oe-admin-new-pool" attributes="oe attrUpdate">
-    <template>
-        <div vertical layout flex id="adminNewPoolWrapper">
-            <div id="container">
-                <div id="newSheetButton">
-                    <core-icon-button icon="add" on-tap="{{toggleNewPoolEntry}}">
-                        Create New Pool
-                    </core-icon-button>
-                </div>
-                <div id="newPoolEntry">
-                    <h3>{{poolTitle}}</h3>
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-admin-new-pool">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
 
-                    <p>Pool title is how the pool is presented to users and respondents.</p>
-                    <paper-input-decorator label="Pool Title" floatingLabel>
-                        <input is="core-input" value="{{poolTitle}}">
-                    </paper-input-decorator>
-                    <p>Describe the pool.</p>
-                    <paper-input-decorator label="Pool Description" floatingLabel>
-                        <input is="core-input" value="{{poolDescription}}">
-                    </paper-input-decorator>
-                    <p>The poolid is what is used in the database and the files on the server to identify the pool. It
-                        neds to be unique from other pools you currently have. <em>This part should not be changed after
-                            it is established.</em></p>
-                    <paper-input-decorator label="Pool ID" floatingLabel>
-                        <input is="core-input" value="{{poolid}}">
-                    </paper-input-decorator>
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
 
-                    <core-icon-button icon="create" on-tap="{{createNewPool}}">Create!</core-icon-button>
-                </div>
-
-            </div>
-        </div>
+            [layout][flex] {
+            @apply(- -layout-flex);
+            }
+        </style>
         <style>
             #container {
                 margin: 0.5em auto;
@@ -78,45 +66,80 @@
             }
 
         </style>
-    </template>
-    <script>
-        //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-admin-new-pool', {
-            attrUpdateChanged: function () {
-//                this.prepAttributes();
-            },
+        <template>
+            <div vertical="" layout="" flex="" id="adminNewPoolWrapper">
+                <div id="container">
+                    <div id="newSheetButton">
+                        <paper-icon-button icon="add" on-tap="toggleNewPoolEntry">
+                            Create New Pool
+                        </paper-icon-button>
+                    </div>
+                    <div id="newPoolEntry">
+                        <h3>{{poolTitle}}</h3>
 
-            // TODO: I want the poolid to automatically update and be created from the pool title
-            poolTitleChanged: function () {
-                var pt = this.poolTitle;
-            },
+                        <p>Pool title is how the pool is presented to users and respondents.</p>
+                        <paper-input-decorator label="Pool Title" floatinglabel="">
+                            <input is="core-input" value="{{poolTitle::input}}">
+                        </paper-input-decorator>
+                        <p>Describe the pool.</p>
+                        <paper-input-decorator label="Pool Description" floatinglabel="">
+                            <input is="core-input" value="{{poolDescription::input}}">
+                        </paper-input-decorator>
+                        <p>The poolid is what is used in the database and the files on the server to identify the pool.
+                            It
+                            neds to be unique from other pools you currently have. <em>This part should not be changed
+                                after
+                                it is established.</em></p>
+                        <paper-input-decorator label="Pool ID" floatinglabel="">
+                            <input is="core-input" value="{{poolid::input}}">
+                        </paper-input-decorator>
 
-            poolidChanged: function () {
-                // I want the poolid's to be only alphanumeric, no spaces or anything else
-                this.poolid = this.poolid.replace(/\W+/g, "");
-            },
+                        <paper-icon-button icon="create" on-tap="createNewPool">Create!</paper-icon-button>
+                    </div>
 
-            createNewPool: function () {
-                // need to validate the title and ID
-                // TODO: add validation that make sure every field is filled
-
-                app.channels.pool.command('create-new-pool', {
-                    poolid: this.poolid,
-                    poolTitle: this.poolTitle,
-                    poolDescription: this.poolDescription,
-                    gotoDesign: true
-                });
-            },
-
-            toggleNewPoolEntry: function () {
-                $(this.$.newPoolButton).hide();
-                $(this.$.newPoolEntry).show();
-            },
-
-            validatePoolid: function () {
-                // TODO: need to do this. thinking an ajax call to a simple API that returns good or bad?
-            }
-
+                </div>
+            </div>
+        </template>
+        <script>
+            //noinspection JSUnusedGlobalSymbols
+            Polymer({
+                is: 'oe-admin-new-pool',
+                properties: {
+                    attrUpdate: {
+                        notify: true,
+                        observer: 'attrUpdateChanged'
+                    },
+                    oe: {notify: true},
+                    poolTitle: {observer: 'poolTitleChanged'},
+                    poolid: {observer: 'poolidChanged'}
+                },
+                attrUpdateChanged: function () {
+                },
+                //                this.prepAttributes();
+                // TODO: I want the poolid to automatically update and be created from the pool title
+                poolTitleChanged: function () {
+                    var pt = this.poolTitle;
+                },
+                poolidChanged: function () {
+                    // I want the poolid's to be only alphanumeric, no spaces or anything else
+                    this.poolid = this.poolid.replace(/\W+/g, '');
+                },
+                createNewPool: function () {
+                    // need to validate the title and ID
+                    // TODO: add validation that make sure every field is filled
+                    app.channels.pool.command('create-new-pool', {
+                        poolid: this.poolid,
+                        poolTitle: this.poolTitle,
+                        poolDescription: this.poolDescription,
+                        gotoDesign: true
         });
-    </script>
-</polymer-element>
+                },
+                toggleNewPoolEntry: function () {
+                    $(this.$.newPoolButton).hide();
+                    $(this.$.newPoolEntry).show();
+                },
+                validatePoolid: function () {
+                }  // TODO: need to do this. thinking an ajax call to a simple API that returns good or bad?
+            });
+        </script>
+    </dom-module>

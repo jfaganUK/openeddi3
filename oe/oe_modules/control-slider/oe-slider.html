@@ -1,40 +1,30 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-slider/paper-slider.html"/>
-<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
+<link rel="import" href="/bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
 
-<polymer-element name="oe-slider" attributes="oe response">
-    <template>
-        <div hidden?="{{oe.arrayPrompts === undefined}}">
-            <template repeat="{{arrayPrompt in oe.arrayPrompts}}">
-                <div class="slider-array-entry" layout vertical>
-                    <div>{{arrayPrompt.prompt}}</div>
-                    <div class="slider-container" layout horizontal>
-                        <span class="slider-value-label min" layout vertical center-justified>{{oe.ranges.minValue.label}}</span>
-                        <paper-slider flex min="{{oe.ranges.minValue.value}}"
-                                      max="{{oe.ranges.maxValue.value}}"
-                                      value="{{response.value[arrayPrompt.id]}}"
-                                      on-change="{{updateResponse}}"
-                                      data-arrayid="{{arrayPrompt.id}}"></paper-slider>
-                        <span class="slider-value-label max">{{oe.ranges.maxValue.label}}</span>
-                    </div>
-                </div>
-            </template>
-        </div>
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="oe-slider">
+    <style>
+        /* TODO(polyup): For speed, consider reworking these styles with .classes
+                         and #ids rather than [attributes].
+        */
+        [layout] {
+        @apply(- -layout);
+        }
 
-        <template bind="oe response">
-            <div hidden?="{{oe.arrayPrompts !== undefined}}" class="slider-container" layout horizontal>
-                <span class="slider-value-label min" layout vertical
-                      center-justified>{{oe.ranges.minValue.label}}</span>
-                <paper-slider flex min="{{oe.ranges.minValue.value}}"
-                              max="{{oe.ranges.maxValue.value}}"
-                              value="{{response.value}}"
-                              on-change="{{updateResponse}}"></paper-slider>
-                <span class="slider-value-label max">{{oe.ranges.maxValue.label}}</span>
-            </div>
+        [layout][vertical] {
+        @apply(- -layout-vertical);
+        }
 
-        </template>
+        [layout][horizontal] {
+        @apply(- -layout-horizontal);
+        }
 
-        <style>
+        [layout][center-justified] {
+        @apply(- -layout-center-justified);
+        }
+    </style>
+    <style>
             .slider-container {
                 margin: 10px;
             }
@@ -61,21 +51,60 @@
                 text-align: left;
             }
         </style>
+    <template>
+        <div hidden$="{{_computeHidden(oe, undefined)}}">
+            <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
+                <div class="slider-array-entry" layout="" vertical="">
+                    <div>{{arrayPrompt.prompt}}</div>
+                    <div class="slider-container" layout="" horizontal="">
+                        <span class="slider-value-label min" layout="" vertical="" center-justified="">{{oe.ranges.minValue.label}}</span>
+                        <paper-slider flex="" min="{{oe.ranges.minValue.value}}" max="{{oe.ranges.maxValue.value}}"
+                                      value="{{_computeValue(arrayPrompt, response)}}" on-change="updateResponse"
+                                      data-arrayid$="{{arrayPrompt.id}}"></paper-slider>
+                        <span class="slider-value-label max">{{oe.ranges.maxValue.label}}</span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <template bind="oe response">
+            <div class="slider-container" layout="" horizontal="{{_computeHidden2(oe, undefined)}}"
+                 hidden$="{{_computeHidden(oe, undefined)}}">
+                <span class="slider-value-label min" layout="" vertical="" center-justified="">{{oe.ranges.minValue.label}}</span>
+                <paper-slider flex="" min="{{oe.ranges.minValue.value}}" max="{{oe.ranges.maxValue.value}}"
+                              value="{{response.value}}" on-change="updateResponse"></paper-slider>
+                <span class="slider-value-label max">{{oe.ranges.maxValue.label}}</span>
+            </div>
+
+        </template>
     </template>
     <script>
-        Polymer('oe-slider', {
+        Polymer({
+            is: 'oe-slider',
+            properties: {
+                oe: {notify: true},
+                response: {notify: true}
+            },
             ready: function () {
             },
-
             updateResponse: function (event, detail, sender) {
                 if (this.oe.arrayPrompts === undefined) {
                     this.fire('change:response');
                 } else {
                     var arrayid = sender.attributes['data-arrayid'].value;
-                    this.response.value[arrayid] = sender.value;
+                    this.set('response.value' + ('.' + arrayid), sender.value);
                     this.fire('change:response');
                 }
+            },
+            _computeHidden: function (oe, undefined) {
+                return oe.arrayPrompts === undefined;
+            },
+            _computeValue: function (arrayPrompt, response) {
+                return response.value[arrayPrompt.id];
+            },
+            _computeHidden2: function (oe, undefined) {
+                return oe.arrayPrompts !== undefined;
             }
         });
     </script>
-</polymer-element>
+</dom-module>

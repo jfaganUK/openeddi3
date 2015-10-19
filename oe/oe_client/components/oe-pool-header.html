@@ -1,30 +1,34 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html"/>
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
-<polymer-element name="oe-pool-header" attributes="oe pool">
-    <template>
-        <core-toolbar id="oe-pool-header-toolbar" class="dark-primary-color" flex>
-            <core-icon-button icon="arrow-back" class="poolNavBack" on-tap="{{poolNavBackClick}}"></core-icon-button>
-            <span class="poolTitle" flex>{{ pool.title }}</span>
-            <core-icon-button icon="arrow-forward" class="poolNavForward"
-                              on-tap="{{poolNavForwardClick}}"></core-icon-button>
-        </core-toolbar>
-        <style>
+<dom-module id="oe-pool-header">
+    <style>
             #oe-pool-header-toolbar {
                 background-color: rgba(27, 85, 170, 0.8);
                 color: white;
             }
         </style>
+    <template>
+        <paper-toolbar id="oe-pool-header-toolbar" class="dark-primary-color" flex="">
+            <paper-icon-button icon="arrow-back" class="poolNavBack" on-tap="poolNavBackClick"></paper-icon-button>
+            <span class="poolTitle" flex="">{{ pool.title }}</span>
+            <paper-icon-button icon="arrow-forward" class="poolNavForward"
+                               on-tap="poolNavForwardClick"></paper-icon-button>
+        </paper-toolbar>
     </template>
     <script>
-        Polymer('oe-pool-header', {
+        Polymer({
+            is: 'oe-pool-header',
+            properties: {
+                oe: {notify: true},
+                pool: {notify: true}
+            },
             poolNavBackClick: function () {
                 app.channels.navigation.command('pool-prev-sheet');
             },
-
             poolNavForwardClick: function () {
                 app.channels.navigation.command('pool-next-sheet');
             }
         });
     </script>
-</polymer-element>
+</dom-module>

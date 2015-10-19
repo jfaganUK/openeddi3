@@ -1,14 +1,8 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/core-toolbar/core-toolbar.html">
+<link rel="import" href="/bower_components/paper-toolbar/paper-toolbar.html">
 
-<polymer-element name="oe-eddi-promptbar" attributes="oe">
-    <template>
-        <core-toolbar>
-            <div flex></div>
-            <div class="middle">{{oe.prompt}}</div>
-            <div class="bottom oe-eddi-details">{{oe.eid}} - {{oe.eddiTitle}}</div>
-        </core-toolbar>
-        <style>
+<dom-module id="oe-eddi-promptbar">
+    <style>
             core-toolbar {
                 height: 128px;
             }
@@ -16,15 +10,29 @@
                 font-size: 10px;
             }
         </style>
+    <template>
+        <paper-toolbar>
+            <div flex=""></div>
+            <div class="middle">{{oe.prompt}}</div>
+            <div class="bottom oe-eddi-details"><span>{{oe.eid}}</span> - <span>{{oe.eddiTitle}}</span></div>
+        </paper-toolbar>
     </template>
     <script>
-        Polymer('oe-eddi-promptbar', {
-            oe: {
-                prompt: 'This is the question prompt',
-                eid: "101",
-                eddiTitle: "theEddiTitle"
+        Polymer({
+            is: 'oe-eddi-promptbar',
+            properties: {
+                oe: {
+                    type: Object,
+                    value: function () {
+                        return {
+                            prompt: 'This is the question prompt',
+                            eid: '101',
+                            eddiTitle: 'theEddiTitle'
+                        };
+                    },
+                    notify: true
+                }
             }
         });
     </script>
-
-</polymer-element>
+</dom-module>

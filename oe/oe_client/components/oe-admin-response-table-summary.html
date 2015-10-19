@@ -1,38 +1,28 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
+    <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 
-<polymer-element name="oe-admin-response-table-summary" attributes="oe attrUpdate">
-    <template>
-        <h3>{{oe.tableTitle}}</h3>
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-admin-response-table-summary">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
 
-        <div id="poolListingStatsTable" layout vertical>
-            <div class="poolListingStatsRow" layout horizontal>
-                <div>Description:</div>
-                <div flex>{{oe.description}}</div>
-            </div>
-            <div class="poolListingStatsRow" layout horizontal>
-                <div>Table name:</div>
-                <div flex>{{oe.tableName}}</div>
-            </div>
-            <div class="poolListingStatsRow" layout horizontal>
-                <div>Number of rows</div>
-                <div flex>{{oe.numberOfRows}}</div>
-            </div>
-            <div class="poolListingStatsRow" layout horizontal="">
-                <div>First response date:</div>
-                <div flex>{{firstDateShown}}</div>
-            </div>
-            <div class="poolListingStatsRow" layout horizontal="">
-                <div>Last response date:</div>
-                <div flex>{{lastDateShown}}</div>
-            </div>
-        </div>
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
 
-        <paper-button id="viewDataButton" class="light-primary-color" on-tap="{{loadResponses}}" raised>
-            View data
-        </paper-button>
+            [layout][horizontal] {
+            @apply(- -layout-horizontal);
+            }
+        </style>
         <style>
             :host {
                 margin: 0.5em auto;
@@ -77,28 +67,69 @@
             }
 
         </style>
-    </template>
-    <script>
-        Polymer('oe-admin-response-table-summary', {
-            lastDateShown: 'October 10th, 1982',
-            firstDateShown: 'October 10th, 1982',
+        <template>
+            <h3>{{oe.tableTitle}}</h3>
 
-            attrUpdateChanged: function () {
-                this.prepAttributes();
-            },
+            <div id="poolListingStatsTable" layout="" vertical="">
+                <div class="poolListingStatsRow" layout="" horizontal="">
+                    <div>Description:</div>
+                    <div flex="">{{oe.description}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout="" horizontal="">
+                    <div>Table name:</div>
+                    <div flex="">{{oe.tableName}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout="" horizontal="">
+                    <div>Number of rows</div>
+                    <div flex="">{{oe.numberOfRows}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout="" horizontal="">
+                    <div>First response date:</div>
+                    <div flex="">{{firstDateShown}}</div>
+                </div>
+                <div class="poolListingStatsRow" layout="" horizontal="">
+                    <div>Last response date:</div>
+                    <div flex="">{{lastDateShown}}</div>
+                </div>
+            </div>
 
-            prepAttributes: function () {
-                var d = new Date(this.oe.firstResponse);
-                this.firstDateShown = d.toDateString();
-
-                d = new Date(this.oe.lastResponse);
-                this.lastDateShown = d.toDateString();
-            },
-
-            loadResponses: function() {
-                app.channels.navigation.command('admin-load-responses',
-                        {poolid: this.oe.poolid, table: this.oe.tableName});
-            }
+            <paper-button id="viewDataButton" class="light-primary-color" on-tap="loadResponses" raised="">
+                View data
+            </paper-button>
+        </template>
+        <script>
+            Polymer({
+                is: 'oe-admin-response-table-summary',
+                properties: {
+                    attrUpdate: {
+                        notify: true,
+                        observer: 'attrUpdateChanged'
+                    },
+                    firstDateShown: {
+                        type: String,
+                        value: 'October 10th, 1982'
+                    },
+                    lastDateShown: {
+                        type: String,
+                        value: 'October 10th, 1982'
+                    },
+                    oe: {notify: true}
+                },
+                attrUpdateChanged: function () {
+                    this.prepAttributes();
+                },
+                prepAttributes: function () {
+                    var d = new Date(this.oe.firstResponse);
+                    this.firstDateShown = d.toDateString();
+                    d = new Date(this.oe.lastResponse);
+                    this.lastDateShown = d.toDateString();
+                },
+                loadResponses: function () {
+                    app.channels.navigation.command('admin-load-responses', {
+                        poolid: this.oe.poolid,
+                        table: this.oe.tableName
         });
-    </script>
-</polymer-element>
+                }
+            });
+        </script>
+    </dom-module>
