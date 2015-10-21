@@ -61,16 +61,27 @@
     Polymer({
         is: 'pool-listing-landing',
         properties: {
-            dateCreated: {notify: true},
-            description: {notify: true},
-            oe: {notify: true},
-            pooltitle: {type: String, notify: true}
+//            dateCreated: {notify: true},
+//            description: {notify: true},
+//            oe: {notify: true},
+//            pooltitle: {type: String, notify: true}
         },
         createNewPool: function () {
             this.fire('start-new-pool');
         },
         ready: function () {
             console.log('==== Everything is awesome ====');
+        },
+        created: function () {
+            console.log(this.localName + '#' + this.id + ' was created');
+        },
+
+        attached: function () {
+            console.log(this.localName + '#' + this.id + ' was attached');
+        },
+
+        detached: function () {
+            console.log(this.localName + '#' + this.id + ' was detached');
         }
     });
 </script>

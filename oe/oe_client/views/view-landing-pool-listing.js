@@ -7,7 +7,7 @@
 var PoolListingModel = require('../models/model-pool-listing');
 
 module.exports = Mn.ItemView.extend({
-    tagName: 'pool-listing-landing',
+    tagName: 'oe-test-component',
     model: PoolListingModel,
     template: require('../templates/template-landing-pool-listing.ejs'),
     _publishedKeys: ['poolTitle', 'dateCreated', 'description', 'oe'],

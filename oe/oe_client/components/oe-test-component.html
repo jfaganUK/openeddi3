@@ -1,0 +1,28 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<dom-module id="oe-test-component">
+    <template>
+        <style>
+        </style>
+        <h1>OE-Test-Component</h1>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is: 'oe-test-component',
+        properties: {},
+        ready: function () {
+            console.log(this.localName + '#' + this.id + ' is ready');
+        },
+        created: function () {
+            console.log(this.localName + '#' + this.id + ' was created');
+        },
+
+        attached: function () {
+            console.log(this.localName + '#' + this.id + ' was attached');
+        },
+
+        detached: function () {
+            console.log(this.localName + '#' + this.id + ' was detached');
+        }
+    });
+</script>
