@@ -16,7 +16,7 @@ Backbone.$ = $;
 Backbone.Radio = require('backbone.radio');
 require('./oe_client/backbone.dualstorage.browserify');
 require('./oe_client/backbone.dualstorage.oe.helpers');
-var Marionette = require('marionette');
+var Marionette = require('backbone.marionette');
 var PolymerView = require('./oe_client/views/marionette.polymerview');
 Mn.PolymerView = Marionette.PolymerView = PolymerView;
 
