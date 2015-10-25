@@ -5,17 +5,6 @@
 <dom-module id="pool-listing-landing">
     <template>
         <style>
-            /* TODO(polyup): For speed, consider reworking these styles with .classes
-                             and #ids rather than [attributes].
-            */
-            [layout] {
-            @apply(- -layout);
-            }
-
-            [layout][vertical] {
-            @apply(- -layout-vertical);
-            }
-
             :host {
                 margin: 0.5em auto;
                 background: white;
@@ -43,10 +32,9 @@
                 color: white;
             }
         </style>
-        <div class="pool-listing" layout="" vertical="">
+        <div class="pool-listing layout vertical">
             <content select="h2"></content>
-            <h2>{{pooltitle}}</h2>
-
+            <h2>{{poolTitle}}</h2>
             <div class="pool-desc">{{description}}</div>
             <span class="date-created">{{dateCreated}}</span>
             <paper-button raised="" on-tap="createNewPool" class="start-button">
@@ -61,10 +49,10 @@
     Polymer({
         is: 'pool-listing-landing',
         properties: {
-//            dateCreated: {notify: true},
-//            description: {notify: true},
-//            oe: {notify: true},
-//            pooltitle: {type: String, notify: true}
+            dateCreated: {notify: true},
+            description: {notify: true},
+            oe: {notify: true},
+            poolTitle: {type: String, notify: true}
         },
         createNewPool: function () {
             this.fire('start-new-pool');

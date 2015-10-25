@@ -7,10 +7,7 @@ var template = require('../templates/template-layout-pool-footer.ejs');
 
 module.exports = Mn.ItemView.extend({
     template: template,
-    attributes: {
-        "layout": "",
-        "horizontal": ""
-    },
+    className: "layout horizontal",
     ui: {
         'nextButton': '#oe-footer-next-space > paper-button',
         'prevButton': '#oe-footer-prev-space > paper-button',

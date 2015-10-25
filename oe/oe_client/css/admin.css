@@ -2,6 +2,6 @@
     background: rgba(255, 255, 255, 0.95);
 }
 
-#adminMenuDrawer > core-toolbar {
+#adminMenuDrawer > paper-toolbar {
     background: rgb(255, 224, 173);
 }

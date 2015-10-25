@@ -2,10 +2,10 @@
 <html>
 <head>
     <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/paper-input/paper-input.html">
-<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
-<link rel="import" href="/bower_components/paper-button/paper-button.html">
+    <link rel="import" href="/bower_components/paper-button/paper-button.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-button/paper-button.html">
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 
     <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
@@ -64,38 +64,38 @@
 
         </style>
         <template>
-            <div layout="" vertical="" flex="" id="wrapper">
+            <div class="layout vertical flex" id="wrapper">
                 <div id="container">
                     <h2>{{poollogic.poollogic.title}}</h2>
 
-                    <div id="poolListingStatsTable" layout="" vertical="">
-                        <div class="poolListingStatsRow" layout="" horizontal="">
+                    <div id="poolListingStatsTable" class="layout vertical">
+                        <div class="poolListingStatsRow layout horizontal">
                             <div>Title:</div>
                             <div flex="">
                                 <paper-input value="{{poollogic.poollogic.title}}" on-blur="savePool"></paper-input>
                             </div>
                         </div>
-                        <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div class="poolListingStatsRow layout horizontal">
                             <div>Description:</div>
                             <div flex="">
                                 <paper-input value="{{poollogic.poollogic.description}}"
                                              on-blur="savePool"></paper-input>
                             </div>
                         </div>
-                        <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div class="poolListingStatsRow layout horizontal">
                             <div>Introduction:</div>
                             <div flex="">
                                 <paper-input value="{{poollogic.poollogic.introduction}}"
                                              on-blur="savePool"></paper-input>
                             </div>
                         </div>
-                        <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div class="poolListingStatsRow layout horizontal">
                             <div>Afterword:</div>
                             <div flex="">
                                 <paper-input value="{{poollogic.poollogic.afterward}}" on-blur="savePool"></paper-input>
                             </div>
                         </div>
-                        <div class="poolListingStatsRow" layout="" horizontal="">
+                        <div class="poolListingStatsRow layout horizontal">
                             <paper-button raised="" flex="" on-tap="pushPool">Push Pool</paper-button>
                         </div>
                     </div>

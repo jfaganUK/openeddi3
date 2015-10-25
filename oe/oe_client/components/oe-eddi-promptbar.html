@@ -3,7 +3,7 @@
 
 <dom-module id="oe-eddi-promptbar">
     <style>
-            core-toolbar {
+        paper-toolbar {
                 height: 128px;
             }
             .oe-eddi-details {
@@ -12,7 +12,7 @@
         </style>
     <template>
         <paper-toolbar>
-            <div flex=""></div>
+            <div class="flex"></div>
             <div class="middle">{{oe.prompt}}</div>
             <div class="bottom oe-eddi-details"><span>{{oe.eid}}</span> - <span>{{oe.eddiTitle}}</span></div>
         </paper-toolbar>

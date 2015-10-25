@@ -25,7 +25,8 @@
     "iron-elements": "PolymerElements/iron-elements#~1.0.4",
     "paper-elements": "PolymerElements/paper-elements#~1.0.5",
     "neon-elements": "PolymerElements/neon-elements#~1.0.0",
-    "iron-label": "PolymerElements/iron-label#~1.0.1"
+    "iron-label": "PolymerElements/iron-label#~1.0.1",
+    "font-roboto-local": "PolymerElements/font-roboto-local#~1.0.1"
   },
   "resolutions": {
     "webcomponentsjs": "0.7.15",

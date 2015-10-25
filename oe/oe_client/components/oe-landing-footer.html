@@ -3,24 +3,24 @@
 
 <dom-module id="oe-landing-footer">
     <style>
-            #oe-landing-footer-internal {
-                position: relative;
-            }
+        #oe-landing-footer-internal {
+            position: relative;
+        }
 
-            #oe-landing-footer-internal > span {
-                vertical-align: middle;
-            }
+        #oe-landing-footer-internal > span {
+            vertical-align: middle;
+        }
 
-            :host {
-                background: white;
-                box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
-                width: 540px;
-                margin: 16px auto;
-                padding: 10px;
-            }
-        </style>
+        :host {
+            background: white;
+            box-shadow: rgba(0, 0, 0, 0.258824) 0 2px 5px 0;
+            width: 540px;
+            margin: 16px auto;
+            padding: 10px;
+        }
+    </style>
     <template>
-        <div id="oe-landing-footer-internal" flex="">
+        <div id="oe-landing-footer-internal" class="flex">
             <span>OpenEddi ya'll.</span>
         </div>
         <div id="sign-in-button">
@@ -40,7 +40,7 @@
                     } else {
                         app.channels.navigation.command('load-landing-login');
                     }
-        });
+                });
             }
         });
     </script>
