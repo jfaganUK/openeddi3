@@ -7,35 +7,23 @@
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <dom-module id="oe-basicnamegen-nameinput">
   <style>
-    /* TODO(polyup): For speed, consider reworking these styles with .classes
-                     and #ids rather than [attributes].
-    */
-    [layout] {
-    @apply(- -layout);
-    }
-
-    [layout][horizontal] {
-    @apply(- -layout-horizontal);
-    }
-  </style>
-  <style>
   </style>
   <template>
-    <div horizontal="" layout="">
-      <paper-input class="oe-nameinput" label="{{oe.prompt}}" value="{{newName}}" flex="">
+    <div class="layout horizontal">
+      <paper-input class="oe-nameinput flex" label="{{oe.prompt}}" value="{{newName}}">
         <iron-a11y-keys keys="enter" on-keys-pressed="addNewName"></iron-a11y-keys>
-            </paper-input>
+      </paper-input>
       <paper-button on-tap="addNewName" raise="">Add Name</paper-button>
-        </div>
-    </template>
+    </div>
+  </template>
   <script>
     // TODO make the focus change to the input after each input
     //noinspection JSUnusedGlobalSymbols
     Polymer({
       is: 'oe-basicnamegen-nameinput',
       properties: {
-        oe: {notify: true},
-        response: {notify: true}
+        oe: {type: 'Object', notify: true},
+        name: {type: 'String', notify: true}
       },
       ready: function () {
       },

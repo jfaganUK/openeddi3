@@ -11,5 +11,6 @@ var template = require('./templateBasicNameGen-NameInput.ejs');
 module.exports = PolymerView.extend({
     tagName: "oe-basicnamegen-nameinput",
     model: EddiModel,
+    _publishedKeys: ['oe', 'name'],
     template: template
 });

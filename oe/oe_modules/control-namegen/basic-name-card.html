@@ -6,18 +6,6 @@
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <dom-module id="oe-basic-name-card">
     <style>
-        /* TODO(polyup): For speed, consider reworking these styles with .classes
-                         and #ids rather than [attributes].
-        */
-        [layout] {
-        @apply(- -layout);
-        }
-
-        [layout][horizontal] {
-        @apply(- -layout-horizontal);
-        }
-    </style>
-    <style>
             #nameCard {
                 margin-left: 10px;
                 margin-right: 10px;
@@ -43,15 +31,15 @@
     <template>
         <paper-material id="nameCard">
             <section id="nameCardShow">
-                <div horizontal="" layout="">
+                <div class="layout horizontal">
                     <paper-icon-button icon="create" id="editName" on-tap="editNameTapped"></paper-icon-button>
-                    <span id="nameCardName" on-tap="editNameTapped" flex="">{{name}}</span>
+                    <span id="nameCardName" on-tap="editNameTapped" class="flex">{{name}}</span>
                     <paper-icon-button icon="clear" id="removeName" on-tap="removeNameTapped"></paper-icon-button>
                 </div>
             </section>
             <section id="nameCardEdit">
-                <div horizontal="" layout="">
-                    <span class="nameCardNameEdit" flex="">
+                <div class="layout horizontal">
+                    <span class="nameCardNameEdit flex">
                         <paper-input value="{{name}}" on-blur="editDoneTapped">
                             <iron-a11y-keys keys="enter" on-keys-pressed="editDoneTapped"></iron-a11y-keys>
                             <iron-a11y-keys keys="esc" on-keys-pressed="cancelEdit"></iron-a11y-keys>
