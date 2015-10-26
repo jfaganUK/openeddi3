@@ -55,18 +55,18 @@
             }
 
             #pickName {
-                height: 24px;
+                /*height: 24px;*/
                 padding-top: 12px;
             }
         </style>
     <template>
         <paper-material id="nameCard" class$="{{_computeClass(oe)}}">
             <section id="namePickCard">
-                <div horizontal="" layout="">
+                <div class="layout horizontal">
                     <paper-icon-button icon="done" id="pickName" on-tap="pickName"
                                        class$="{{_computeClass2(oe)}}"></paper-icon-button>
-                    <span id="nameCardName" on-tap="pickName" flex="">{{name}}</span>
-                    <paper-ripple fit="" on-tap="pickName"></paper-ripple>
+                    <span id="nameCardName" on-tap="pickName" class="flex">{{name}}</span>
+                    <paper-ripple class="fit" on-tap="pickName"></paper-ripple>
                 </div>
             </section>
         </paper-material>
@@ -75,10 +75,10 @@
         Polymer({
             is: 'oe-name-pick',
             properties: {
-                lists: {notify: true},
-                name: {notify: true},
-                namelist: {notify: true},
-                oe: {notify: true}
+                lists: {type: 'Object', notify: true},
+                name: {type: 'String', notify: true},
+                namelist: {type: 'Object', notify: true},
+                oe: {type: 'Object', notify: true}
             },
             pickName: function () {
                 this.fire('toggle-name');

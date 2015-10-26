@@ -8,6 +8,7 @@ var template = require('./templateNamePickName.ejs');
 module.exports = Mn.PolymerView.extend({
     template: template,
     tagName: 'oe-name-pick',
+    _publishedKeys: ['oe', 'name', 'namelist', 'lists'],
     initialize: function (options) {
         // Make the namelist convient to access
         this.namelist = options.namelist;
