@@ -38,13 +38,13 @@
         <!--<paper-input class="oe-checklist-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>-->
         <div class="oe-checklist-container">
             <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
-                <iron-label horizontal="" layout="" id="{{_computeAria_labelledby(arrayPrompt, oe)}}">
+                <iron-label class="horizontal layout" id="{{_computeAria_labelledby(arrayPrompt, oe)}}">
                     <paper-checkbox for="" role="checkbox" class="oe-checklist-checkbox" on-change="oeCheckboxChanged"
                                     aria_labelledby$="{{_computeAria-labelledby(arrayPrompt, oe)}}"
                                     aria_checked$="{{_computeAria-checked(arrayPrompt, response)}}"
                                     data-arrayid$="{{arrayPrompt.arrayid}}"
                                     checked$="{{_computeChecked(arrayPrompt, response)}}"></paper-checkbox>
-                    <div vertical="" layout="">
+                    <div class = "vertical layout">
                         <span>{{ arrayPrompt.prompt }}</span>
                     </div>
                 </iron-label>
@@ -63,8 +63,9 @@
             ready: function () {
             },
             oeCheckboxChanged: function (detail, event, sender) {
-                var arrayid = sender.attributes['data-arrayid'].value;
-                this.set('response.value' + ('.' + arrayid), sender.checked);
+                var cb = detail.currentTarget;
+                var arrayid = cb.attributes['data-arrayid'].value;
+                this.set('response.value' + ('.' + arrayid), cb.checked);
                 this.fire('change:response');
             },
             _computeAria_labelledby: function (arrayPrompt, oe) {
