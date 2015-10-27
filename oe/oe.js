@@ -71,8 +71,8 @@ app.on('start', function() {
 
 });
 
-$(document).ready(function () {
+// Need to wait until webcomponents are ready before launching the application
+window.addEventListener('WebComponentsReady', function () {
     app.start();
-
     Backbone.history.start({pushState: false});
 });
