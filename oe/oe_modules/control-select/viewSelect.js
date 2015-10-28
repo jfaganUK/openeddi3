@@ -3,12 +3,11 @@
  * oe/oe_modules/control-radiolist/viewRadiolist.js
  */
 
-var PolymerView = require('../../oe_client/views/marionette.polymerview');
 var EddiModel = require('../../oe_client/models/model-eddi');
 var template = require('./templateSelect.ejs');
 
-module.exports = PolymerView.extend({
-    tagName: 'oe-radiolist',
+module.exports = Mn.PolymerView.extend({
+    tagName: 'oe-select',
     model: EddiModel,
     template: template,
     _publishedKeys: ['oe', 'response'],
@@ -21,12 +20,6 @@ module.exports = PolymerView.extend({
             this.model.attributes.oe.selection = '';
         } else {
             this.model.attributes.oe.selection = '2';
-
-            //var arrayPrompts = this.model.attributes.arrayPrompts;
-            //this.model.attributes.oe.selection= _(arrayPrompts)
-            //    .where({value: respVal})
-            //    .value()[0]
-            //    .prompt;
         }
     }
 });

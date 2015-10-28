@@ -73,9 +73,9 @@ app.on('start', function() {
 
 });
 
-$(document).ready(function () {
+// Need to wait until webcomponents are ready before launching the application
+    window.addEventListener('WebComponentsReady', function () {
     app.start();
-
     Backbone.history.start({pushState: false});
 });
 
@@ -56956,12 +56956,11 @@ arguments[4][43][0].apply(exports,arguments)
  * oe/oe_modules/control-radiolist/viewRadiolist.js
  */
 
-var PolymerView = require('../../oe_client/views/marionette.polymerview');
 var EddiModel = require('../../oe_client/models/model-eddi');
 var template = require('./templateSelect.ejs');
 
-module.exports = PolymerView.extend({
-    tagName: 'oe-radiolist',
+    module.exports = Mn.PolymerView.extend({
+        tagName: 'oe-select',
     model: EddiModel,
     template: template,
     _publishedKeys: ['oe', 'response'],
@@ -56974,18 +56973,12 @@ module.exports = PolymerView.extend({
             this.model.attributes.oe.selection = '';
         } else {
             this.model.attributes.oe.selection = '2';
-
-            //var arrayPrompts = this.model.attributes.arrayPrompts;
-            //this.model.attributes.oe.selection= _(arrayPrompts)
-            //    .where({value: respVal})
-            //    .value()[0]
-            //    .prompt;
         }
     }
 });
 
 
-},{"../../oe_client/models/model-eddi":34,"../../oe_client/views/marionette.polymerview":58,"./templateSelect.ejs":120}],122:[function(require,module,exports){
+}, {"../../oe_client/models/model-eddi": 34, "./templateSelect.ejs": 120}], 122: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-shorttext/DesignView.js:3

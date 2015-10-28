@@ -2,15 +2,15 @@
   "name": "select",
   "type": "eddi",
   "author": "Jesse Fagan (aftersox@gmail.com)",
-  "description": "A drop down select",
+  "description": "A drop down select menu",
   "components": {
     "eddicontrol": "select.html"
   },
   "templates": {
-    "eddicontrol": "TemplateSelect"
+    "eddicontrol": "templateSelect"
   },
   "views": {
-    "eddicontrol": "ViewSelect"
+    "eddicontrol": "viewSelect"
   },
   "output": {
     "responses": "ResponseTable"

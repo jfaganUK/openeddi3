@@ -6,22 +6,6 @@
 
 <dom-module id="oe-checklist">
     <style>
-        /* TODO(polyup): For speed, consider reworking these styles with .classes
-                         and #ids rather than [attributes].
-        */
-        [layout] {
-        @apply(- -layout);
-        }
-
-        [layout][horizontal] {
-        @apply(- -layout-horizontal);
-        }
-
-        [layout][vertical] {
-        @apply(- -layout-vertical);
-        }
-    </style>
-    <style>
             .oe-checklist-container {
                 margin-top: 10px;
             }
@@ -35,13 +19,10 @@
             }
         </style>
     <template>
-        <!--<paper-input class="oe-checklist-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>-->
         <div class="oe-checklist-container">
             <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
                 <iron-label class="horizontal layout" id="{{_computeAria_labelledby(arrayPrompt, oe)}}">
                     <paper-checkbox for="" role="checkbox" class="oe-checklist-checkbox" on-change="oeCheckboxChanged"
-                                    aria_labelledby$="{{_computeAria-labelledby(arrayPrompt, oe)}}"
-                                    aria_checked$="{{_computeAria-checked(arrayPrompt, response)}}"
                                     data-arrayid$="{{arrayPrompt.arrayid}}"
                                     checked$="{{_computeChecked(arrayPrompt, response)}}"></paper-checkbox>
                     <div class = "vertical layout">

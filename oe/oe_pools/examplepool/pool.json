@@ -207,6 +207,45 @@
       }
     },
     {
+      "eid": "105",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": 5,
+      "title": "pastrySelect",
+      "controlmodule": "select",
+      "prompt": "What is your favorite pastry?",
+      "arrayPrompts": [
+        {
+          "id": 0,
+          "prompt": "Croissant"
+        },
+        {
+          "id": 1,
+          "prompt": "Donut"
+        },
+        {
+          "id": 2,
+          "prompt": "Bearclaw"
+        },
+        {
+          "id": 3,
+          "prompt": "Bagel"
+        },
+        {
+          "id": 4,
+          "prompt": "Cruller"
+        },
+        {
+          "id": 5,
+          "prompt": "Strudel"
+        },
+        {
+          "id": 6,
+          "prompt": "Turnover"
+        }
+      ]
+    },
+    {
       "eid": "202",
       "sheetid": "2",
       "poolid": "test1",

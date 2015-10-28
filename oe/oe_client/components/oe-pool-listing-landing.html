@@ -33,7 +33,6 @@
             }
         </style>
         <div class="pool-listing layout vertical">
-            <content select="h2"></content>
             <h2>{{poolTitle}}</h2>
             <div class="pool-desc">{{description}}</div>
             <span class="date-created">{{dateCreated}}</span>
@@ -52,24 +51,10 @@
             dateCreated: {notify: true},
             description: {notify: true},
             oe: {notify: true},
-            poolTitle: {type: String, notify: true}
+            poolTitle: {type: 'String', notify: true}
         },
         createNewPool: function () {
             this.fire('start-new-pool');
-        },
-        ready: function () {
-            console.log('==== Everything is awesome ====');
-        },
-        created: function () {
-            console.log(this.localName + '#' + this.id + ' was created');
-        },
-
-        attached: function () {
-            console.log(this.localName + '#' + this.id + ' was attached');
-        },
-
-        detached: function () {
-            console.log(this.localName + '#' + this.id + ' was detached');
         }
     });
 </script>
