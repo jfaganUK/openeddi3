@@ -1,0 +1,20 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+
+<dom-module id="oe-boilerplate">
+    <style>
+        #boilerPlateContent {
+            margin-left: 2em;
+        }
+    </style>
+    <template>
+        <div id="boilerPlateContent" inner-h-t-m-l="{{oe.content}}"></div>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-boilerplate',
+            properties: {
+                oe: {type: 'Object', notify: true}
+            }
+        })
+    </script>
+</dom-module>

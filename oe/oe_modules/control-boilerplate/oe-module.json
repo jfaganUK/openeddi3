@@ -1,0 +1,18 @@
+{
+  "name": "boilerplate",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "Just a place to provide some text. A filler eddi.",
+  "components": {
+    "eddicontrol": "boilerplate.html"
+  },
+  "templates": {
+    "eddicontrol": "templateBoilerplate"
+  },
+  "views": {
+    "eddicontrol": "viewBoilerplate"
+  },
+  "output": {
+    "responses": "ResponseTable"
+  }
+}
