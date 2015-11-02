@@ -21,9 +21,6 @@ App.prototype.listenRadioChannels = function () {
 };
 
 App.prototype.namelistAddNewName = function (e) {
-    console.log('--- App: add new name.');
-    console.log(e);
-
     var newname = this.currentPool.namelist.create({
         name: e.name,
         namelist: e.namelist,
@@ -41,9 +38,6 @@ App.prototype.namelistAddNewName = function (e) {
 };
 
 App.prototype.namelistSaveNameDetail = function (e) {
-    console.log('--- App: add name detail.');
-    console.log(e);
-
     var m = app.currentPool.namelist.find({id: e.id});
     m.addToDetails(e.eid, e.value);
     m.save();
