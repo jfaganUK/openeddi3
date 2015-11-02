@@ -1,0 +1,57 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html"/>
+<link rel="import" href="/bower_components/paper-material/paper-material.html"/>
+
+<dom-module id="oe-ni-boxpop-undo">
+    <style>
+        :host {
+            display: none;
+            width: 100%;
+        }
+
+        #undo-box {
+            padding: 0.5em;
+            background: #ffffff;
+            margin: 1em;
+        }
+
+        paper-button.colorful {
+            background: #e8e8e8;
+        }
+    </style>
+    <template>
+        <paper-material id="undo-box">
+            <div class="layout horizontal">
+                <div class="flex">
+                    <span>You selected:&nbsp;</span><span>{{lastSave.name}}</span>&nbsp;=&nbsp;<span>{{lastSave.prompt}}</span>
+                </div>
+                <paper-button id="undo-button" class="colorful" raised>Undo</paper-button>
+            </div>
+
+        </paper-material>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-ni-boxpop-undo',
+            properties: {
+                lastSave: {type: Object, notify: true},
+                arrayPrompts: {type: Array, readOnly: true}
+            },
+            listeners: {
+                'last-save-changed': 'updateUndo',
+                'undo-button.tap': 'undoLast'
+            },
+            updateUndo: function () {
+                if (this.lastSave.name === undefined) {
+                    this.style.display = 'none';
+                } else {
+                    this.style.display = 'inline-block';
+                }
+            },
+            undoLast: function () {
+                this.fire('undo');
+                this.style.display = 'none';
+            }
+        })
+    </script>
+</dom-module>

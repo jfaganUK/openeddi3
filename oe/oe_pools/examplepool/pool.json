@@ -50,6 +50,16 @@
   "eddilogic":
   [
     {
+      "eid": "10-boily",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": -1,
+      "title": "aBoilyPlateTest",
+      "controlmodule": "boilerplate",
+      "prompt": "<h3>Welcome to OpenEddi</h3>",
+      "content": "<p>This is a <em>boilerplate</em> eddi that allows the user to create some simple explanation text.</p>"
+    },
+    {
       "eid": "101",
       "sheetid": "1",
       "poolid": "test1",
