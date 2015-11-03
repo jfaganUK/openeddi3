@@ -13,6 +13,9 @@
     "eddicontrol": "viewNIBoxpop"
   },
   "output": {
-    "responses": "ResponseTable"
+    "namedetail": {
+      "file": "NameDetailResponseTable",
+      "name": "NameDetailResponseTable"
+    }
   }
 }

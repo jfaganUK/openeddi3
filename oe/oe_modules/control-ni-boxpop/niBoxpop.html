@@ -27,7 +27,7 @@
             saveResponse: function (e) {
                 e.stopPropagation();
                 var prompt = _(this.oe.arrayPrompts)
-                        .findWhere({value: e.target.responseValue})
+                        .findWhere({arrayid: e.target.responseValue})
                         .prompt;
                 var o = {
                     id: e.model.get('item.id'),

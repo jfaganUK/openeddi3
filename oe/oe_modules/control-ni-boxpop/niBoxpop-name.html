@@ -68,7 +68,7 @@
             },
             saveResponse: function (e) {
                 console.log('[oe-ni-boxpop-name] Save response');
-                var val = e.model.get('item.value');
+                var val = e.model.get('item.arrayid');
                 this.set('responseValue', val);
                 this.fire('boxpop');
                 this.hide();
