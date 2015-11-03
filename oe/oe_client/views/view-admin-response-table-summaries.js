@@ -6,13 +6,7 @@
 var ViewAdminResponseTableSummary = require('./view-admin-response-table-summary');
 
 module.exports = Mn.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: ViewAdminResponseTableSummary,
     onShow: function() {
         console.log('[ViewResponseTableSummaries] Showing...');

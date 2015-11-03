@@ -7,12 +7,6 @@
 var AdminPoolListing = require('./view-admin-pool-listing');
 
 module.exports = Mn.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: AdminPoolListing
 });

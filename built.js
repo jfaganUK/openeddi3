@@ -54591,12 +54591,8 @@ var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
-    tagName: 'core-drawer-panel',
-    attributes: {
-        'flex': '',
-        'layout': '',
-        'vertical': ''
-    },
+    tagName: 'paper-drawer-panel',
+    className: ['flex', 'layout', 'vertical'],
     regions: {
         header: "#oe-admin-header",
         main: "#oe-admin-main",
@@ -55473,7 +55469,7 @@ return __p;
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<paper-header-panel id="adminMainDrawer" class="main"><div id="oe-admin-header" class="paper-header"></div><div id="oe-admin-main"></div><div id="oe-admin-footer"></div></paper-header-panel><paper-header-panel id="adminMenuDrawer" class="drawer"><paper-toolbar>Menu</paper-toolbar><paper-menu><paper-item label="Not all"></paper-item><paper-item label="who wander"></paper-item><paper-item label="are lost."></paper-item></paper-menu></paper-header-panel>';
+    __p += '<paper-header-panel id="adminMainDrawer" main><div id="oe-admin-header" class="paper-header"></div><div id="oe-admin-main"></div><div id="oe-admin-footer"></div></paper-header-panel><paper-header-panel id="adminMenuDrawer" drawer><paper-toolbar>Menu</paper-toolbar><paper-menu><paper-item label="Not all"></paper-item><paper-item label="who wander"></paper-item><paper-item label="are lost."></paper-item></paper-menu></paper-header-panel>';
 return __p;
 };
 
@@ -55970,13 +55966,7 @@ module.exports = Mn.PolymerView.extend({
 var AdminPoolListing = require('./view-admin-pool-listing');
 
 module.exports = Mn.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: AdminPoolListing
 });
 
@@ -56047,13 +56037,7 @@ module.exports = Mn.PolymerView.extend({
 var ViewAdminResponseTableSummary = require('./view-admin-response-table-summary');
 
 module.exports = Mn.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: ViewAdminResponseTableSummary,
     onShow: function() {
         console.log('[ViewResponseTableSummaries] Showing...');
