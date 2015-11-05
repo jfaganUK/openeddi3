@@ -1,28 +1,51 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/neon-animation/neon-animated-pages.html"/>
 <link rel="import" href="./niBoxpop-name.html">
+<link rel="import" href="./niBoxPop-endoflist.html">
 
 <dom-module id="oe-ni-boxpop">
     <style>
+        #name-pager {
+            height: 20em;
+        }
+
+        #endOfList {
+            display: block;
+            margin: 0.5em 1em;
+            padding: 0.5em;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: white;
+        }
     </style>
     <template>
         <!--<div id="helpText" inner-h-t-m-l="{{oe.helpText}}"></div>-->
         <oe-ni-boxpop-undo last-save="{{lastSave}}" array-prompts="{{oe.arrayPrompts}}"></oe-ni-boxpop-undo>
-        <template is="dom-repeat" items="{{oe.names}}">
-            <oe-ni-boxpop-name name="{{item}}" array-prompts="{{oe.arrayPrompts}}"
-                               on-boxpop="saveResponse"></oe-ni-boxpop-name>
-        </template>
+        <neon-animated-pages id="name-pager" class="flex" selected="[[nameIndex]]">
+            <template is="dom-repeat" items="{{oe.names}}">
+                <oe-ni-boxpop-name name="{{item}}" array-prompts="{{oe.arrayPrompts}}"
+                                   on-boxpop="saveResponse"></oe-ni-boxpop-name>
+            </template>
+            <oe-ni-boxpop-endoflist on-startover="reset"></oe-ni-boxpop-endoflist>
+        </neon-animated-pages>
     </template>
     <script>
         Polymer({
             is: 'oe-ni-boxpop',
             properties: {
-                oe: {type: 'Object', notify: true},
-                namelist: {type: 'String', notify: true},
+                oe: {type: Object, notify: true},
+                namelist: {type: String, notify: true},
                 response: {type: Object, notify: true},
-                lastSave: {type: Object, notify: true}
+                lastSave: {type: Object, notify: true},
+                nameIndex: {type: Number, default: 0}
             },
             listeners: {
                 'undo': 'undoLast'
+            },
+            ready: function () {
+                this.reset();
+            },
+            reset: function () {
+                this.$['name-pager'].selected = 0;
             },
             saveResponse: function (e) {
                 e.stopPropagation();
@@ -38,15 +61,10 @@
                 };
                 this.set('lastSave', o);
                 app.channels.namelist.command('save-name-detail', o);
+                this.$['name-pager'].selectNext();
             },
             undoLast: function () {
-                var allnames = this.shadowRoot.querySelectorAll('oe-ni-boxpop-name');
-                var lastid = this.lastSave.id;
-                var lastnode = _(allnames).filter(function (x) {
-                    return x.name.id == lastid;
-                }).value()[0];
-                lastnode.show();
-                console.log('undoooo');
+                this.$['name-pager'].selectPrevious();
             }
 
         });

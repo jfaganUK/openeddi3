@@ -1,0 +1,56 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html">
+
+<dom-module id="oe-ni-boxpop-endoflist">
+    <style>
+        :host {
+            display: block;
+        }
+
+        #endofListBox {
+            margin: 0.5em 1em;
+            padding: 0.5em;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+    </style>
+    <template>
+        <div id="endofListBox" class="layout vertical">
+            <h3>You've reached the end!</h3><br>
+            <!-- I would like to add a button here that goes to the next eddi, but that would not be entirely simple -->
+            <paper-button id="startOverButton">Start Over</paper-button>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-ni-boxpop-endoflist',
+            behaviors: [Polymer.NeonAnimationRunnerBehavior, Polymer.NeonAnimatableBehavior],
+            properties: {
+                animationConfig: {
+                    value: function () {
+                        return {
+                            'exit': {
+                                name: 'slide-right-animation',
+                                timing: {duration: 200},
+                                node: this
+                            },
+                            'entry': {
+                                name: 'slide-from-left-animation',
+                                timing: {delay: 250},
+                                node: this
+                            }
+                        }
+                    }
+                }
+            },
+            listeners: {
+                'startOverButton.tap': 'startover'
+            },
+            startover: function () {
+                this.fire('startover');
+            }
+        })
+    </script>
+</dom-module>

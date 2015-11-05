@@ -1,8 +1,8 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-material/paper-material.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
-<link rel="import" href="/bower_components/neon-animation/animations/fade-out-animation.html"/>
-<link rel="import" href="/bower_components/neon-animation/animations/scale-down-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
 <link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html">
 <link rel="import" href="./niBoxPop-undo.html"/>
 
@@ -10,6 +10,9 @@
     <style>
         :host {
             display: block;
+        }
+
+        #nameAnswerBox {
             margin: 0.5em 1em;
             padding: 0.5em;
             border: 1px solid rgba(0, 0, 0, 0.2);
@@ -18,11 +21,20 @@
 
         .select-button {
             display: block;
-            background: #f4ecde;
+            background: #e8e8e8;
             width: 75%;
             margin-top: 0.5em;
             cursor: pointer;
             padding: 0.5em;
+        }
+
+        .select-button.on {
+            background: #00BCD4;
+        }
+
+        .button-container {
+            max-height: 14em;
+            overflow-y: scroll;
         }
     </style>
     <template>
@@ -39,7 +51,7 @@
     <script>
         Polymer({
             is: 'oe-ni-boxpop-name',
-            behaviors: [Polymer.NeonAnimationRunnerBehavior],
+            behaviors: [Polymer.NeonAnimationRunnerBehavior, Polymer.NeonAnimatableBehavior],
             listeners: {
                 'neon-animation-finish': '_onNeonAnimationFinish'
             },
@@ -51,17 +63,16 @@
                 animationConfig: {
                     value: function () {
                         return {
-                            'exit': [
-                                {
-                                    name: 'fade-out-animation',
-                                    node: this
-                                },
-                                {
-                                    name: 'scale-down-animation',
-                                    node: this,
-                                    axis: 'y'
-                                }
-                            ]
+                            'exit': {
+                                name: 'slide-right-animation',
+                                timing: {duration: 200},
+                                node: this
+                            },
+                            'entry': {
+                                name: 'slide-from-left-animation',
+                                timing: {delay: 250},
+                                node: this
+                            }
                         }
                     }
                 }
@@ -71,7 +82,6 @@
                 var val = e.model.get('item.arrayid');
                 this.set('responseValue', val);
                 this.fire('boxpop');
-                this.hide();
             },
             hide: function () {
                 this.answered = true;
@@ -79,6 +89,8 @@
                 this.playAnimation('exit');
             },
             show: function () {
+                this.answered = false;
+                this.cancelAnimation();
                 this.style.display = "block";
             },
             _onNeonAnimationFinish: function () {
