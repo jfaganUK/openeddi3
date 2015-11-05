@@ -1,8 +1,9 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
-
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
+
 <dom-module id="oe-slider">
     <style>
             .slider-container {
@@ -16,13 +17,11 @@
                 padding: 5px;
                 padding-top: 10px;
             }
-
             .slider-value-label {
                 width: 75px;
                 overflow-wrap: break-word;
                 font-size: 13px;
             }
-
             .min {
                 text-align: right;
             }
@@ -32,6 +31,9 @@
             }
         </style>
     <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
         <div hidden$="{{_computeHidden(oe, undefined)}}">
             <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
                 <div class="slider-array-entry layout vertical">

@@ -54425,6 +54425,10 @@ module.exports = Backbone.Collection.extend({
         this.puid = currentPool.get('puid');
         this.poolid = currentPool.get('poolid');
         this.createStore();
+    },
+
+    comparator: function (e) {
+        e.get('sortIndex');
     }
 
 });
@@ -56476,7 +56480,7 @@ return __p;
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-    __p += '<div id="name-interpret-controls" class="flex layout horizontal"><paper-icon-button icon="arrow-back" id="ni-back"></paper-icon-button><div class="flex">Name here</div><paper-icon-button icon="arrow-forward" id="ni-forward"></paper-icon-button></div><div id="oe-basic-nameinterpreters">Name Layout!</div><style>#name-interpret-controls {\n        width: 75%;\n        margin: 1em auto;\n    }</style>';
+    __p += '<div id="oe-basic-nameinterpreters">Name Layout!</div><style>#name-interpret-controls {\n        width: 75%;\n        margin: 1em auto;\n    }</style>';
 return __p;
 };
 

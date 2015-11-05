@@ -1,0 +1,38 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/paper-material/paper-material.html"/>
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="oe-helptext">
+    <style>
+        .helptext {
+            padding: 1em;
+            margin: 0.5em 1em;
+            background: white;
+        }
+
+        .helptext > div > iron-icon {
+            color: #0097A7;
+        }
+
+        .helptext > div > div {
+            padding-left: 1em;
+        }
+    </style>
+    <template>
+        <paper-material class="helptext">
+            <div class="layout horizontal">
+                <iron-icon icon="help-outline"></iron-icon>
+                <div class="flex" inner-h-t-m-l="[[helpText]]"></div>
+            </div>
+        </paper-material>
+    </template>
+    <script>
+        Polymer({
+            is: "oe-helptext",
+            properties: {
+                helpText: {type: String}
+            }
+        });
+    </script>
+</dom-module>

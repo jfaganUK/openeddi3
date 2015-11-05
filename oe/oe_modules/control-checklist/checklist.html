@@ -3,6 +3,7 @@
 <link rel="import" href="/bower_components/iron-label/iron-label.html">
 <link rel="import" href="/bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
 <dom-module id="oe-checklist">
     <style>
@@ -19,6 +20,9 @@
             }
         </style>
     <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
         <div class="oe-checklist-container">
             <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
                 <iron-label class="horizontal layout" id="{{_computeAria_labelledby(arrayPrompt, oe)}}">

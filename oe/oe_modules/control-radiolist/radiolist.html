@@ -1,10 +1,15 @@
 <!-- oe/oe_modules/control-radiolist/radiolist.html -->
 <link rel="import" href="/bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
+
 <dom-module id="oe-radiolist">
     <style>
     </style>
     <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
         <paper-radio-group selected="{{response.value}}" class="flex vertical layout" id="oe-radiogroup">
             <template is="dom-repeat" items="{{oe.arrayPrompts}}">
                 <paper-radio-button name="{{item.value}}" data-arrayid$="{{item.arrayid}}">

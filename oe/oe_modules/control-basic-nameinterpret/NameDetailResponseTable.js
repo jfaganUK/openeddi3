@@ -15,6 +15,9 @@ function getResponseTable(eddi, response) {
         case 'checklist':
             o = parseNIChecklist(eddi, response);
             break;
+        case 'shorttext':
+            o = parseNIShorttext(eddi, response);
+            break;
         default:
             break;
     }
@@ -30,6 +33,17 @@ function parseNIRadiolist(eddi, response) {
     } else {
         // the default value if no response is provided
         o[eddi.title] = "NA";
+    }
+    return (o)
+}
+
+function parseNIShorttext(eddi, response) {
+    var o = {};
+    if (response) {
+        o[eddi.title] = response.value;
+    } else {
+        // the default value if no response is provided
+        o[eddi.title] = "";
     }
     return (o)
 }

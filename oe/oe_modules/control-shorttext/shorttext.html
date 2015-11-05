@@ -3,6 +3,7 @@
 <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
 <dom-module id="oe-shorttext">
     <style>
@@ -13,6 +14,9 @@
             }
         </style>
     <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
         <paper-input class="oe-shorttext-input" label="{{oe.prompt}}" value="{{response.value}}"
                      on-blur="updateResponse"></paper-input>
     </template>

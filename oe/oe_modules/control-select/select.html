@@ -1,6 +1,7 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
 <dom-module id="oe-select">
     <style>
@@ -8,8 +9,13 @@
             margin-left: 2em;
             width: 90%;
         }
+
+
     </style>
     <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
         <paper-dropdown-menu id="oe-paper-menu" label="{{oe.prompt}}">
             <paper-menu selected="{{response.value}}" attr-for-selected="id" class="dropdown-content">
                 <template is="dom-repeat" items="{{oe.arrayPrompts}}">

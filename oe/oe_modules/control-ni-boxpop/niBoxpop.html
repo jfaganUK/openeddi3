@@ -18,7 +18,10 @@
         }
     </style>
     <template>
-        <!--<div id="helpText" inner-h-t-m-l="{{oe.helpText}}"></div>-->
+        <template is="dom-if" if="{{oe.helpText}}">
+            <div id="helpText" inner-h-t-m-l="{{oe.helpText}}"></div>
+        </template>
+
         <oe-ni-boxpop-undo last-save="{{lastSave}}" array-prompts="{{oe.arrayPrompts}}"></oe-ni-boxpop-undo>
         <neon-animated-pages id="name-pager" class="flex" selected="[[nameIndex]]">
             <template is="dom-repeat" items="{{oe.names}}">
