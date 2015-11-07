@@ -11,8 +11,5 @@
   },
   "views": {
     "eddicontrol": "viewBoilerplate"
-  },
-  "output": {
-    "responses": "ResponseTable"
   }
 }

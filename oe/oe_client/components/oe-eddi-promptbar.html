@@ -4,17 +4,19 @@
 <dom-module id="oe-eddi-promptbar">
     <style>
         paper-toolbar {
-                height: 128px;
-            }
-            .oe-eddi-details {
-                font-size: 10px;
-            }
-        </style>
+            height: 128px;
+        }
+
+        .oe-eddi-details {
+            font-size: 10px;
+        }
+    </style>
     <template>
         <paper-toolbar>
             <div class="flex"></div>
             <div class="middle" inner-h-t-m-l="{{oe.prompt}}"></div>
-            <div class="bottom oe-eddi-details"><span>{{oe.eid}}</span> - <span>{{oe.eddiTitle}}</span></div>
+            <div class="bottom oe-eddi-details"><span>{{oe.eid}}</span> - <span>{{oe.eddiTitle}}</span> - <span>{{oe.sortIndex}}</span>
+            </div>
         </paper-toolbar>
     </template>
     <script>

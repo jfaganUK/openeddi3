@@ -1,0 +1,49 @@
+<!-- oe/oe_modules/control-radiolist/radiolist.html -->
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html"/>
+<link rel="import" href="/bower_components/paper-material/paper-material.html"/>
+
+<dom-module id="oe-consent">
+    <style>
+        #consent-container {
+            padding: 1em;
+            margin: 1em;
+            background: white;
+        }
+
+        #consent-button-container {
+        }
+    </style>
+    <template>
+        <paper-material id="consent-container" class="layout vertical">
+            <div id="consent-text" class="flex" inner-h-t-m-l="{{oe.consent}}"></div>
+            <div id="consent-button-container" class="layout horizontal flex">
+                <paper-button id="consent-agree" class="flex" raised>Agree</paper-button>
+                <paper-button id="consent-disagree" class="flex" raised>Disagree</paper-button>
+            </div>
+        </paper-material>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer({
+            is: 'oe-consent',
+            properties: {
+                oe: {type: 'Object', notify: true},
+                response: {type: 'Object', notify: true}
+            },
+            listeners: {
+                'consent-agree.tap': 'consentAgree',
+                'consent-disagree.tap': 'consentDisagree'
+            },
+            consentAgree: function () {
+                this.set('response.value', 'Agree');
+                this.fire('change:response');
+                app.channels.navigation.command('pool-next-sheet');
+            },
+            consentDisagree: function () {
+                this.set('response.value', 'Disagree');
+                this.fire('change:response');
+            }
+        });
+    </script>
+</dom-module>

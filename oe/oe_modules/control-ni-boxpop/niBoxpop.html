@@ -24,7 +24,7 @@
 
         <oe-ni-boxpop-undo last-save="{{lastSave}}" array-prompts="{{oe.arrayPrompts}}"></oe-ni-boxpop-undo>
         <neon-animated-pages id="name-pager" class="flex" selected="[[nameIndex]]">
-            <template is="dom-repeat" items="{{oe.names}}">
+            <template is="dom-repeat" items="{{oe.names}}" filter="nameFilter">
                 <oe-ni-boxpop-name name="{{item}}" array-prompts="{{oe.arrayPrompts}}"
                                    on-boxpop="saveResponse"></oe-ni-boxpop-name>
             </template>
@@ -49,6 +49,15 @@
             },
             reset: function () {
                 this.$['name-pager'].selected = 0;
+            },
+            nameFilter: function (e) {
+                if (this.oe.filter) {
+                    if (this.oe.filter.details) {
+                        var fil = this.oe.filter.details;
+                        return e.details[fil.key] == fil.value;
+                    }
+                }
+                return true;
             },
             saveResponse: function (e) {
                 e.stopPropagation();

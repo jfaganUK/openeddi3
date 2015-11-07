@@ -29,6 +29,11 @@ function checklistResponseTable(poolid, eddi, callback) {
                 }
                 vec[vecKey] = valueVec;
             }
+
+            if (eddi.other) {
+                vecKey = eddi.title + '__Other';
+                vec[vecKey] = _(rs).pluck('response').pluck('other').pluck('text').value();
+            }
             callback(vec);
         })
         .catch(function (err) {

@@ -12,10 +12,15 @@ function oeselectResponseTable(poolid, eddi, callback) {
     Response.findAll({where: {poolid: poolid, eid: eddi.eid}})
         .then(function (rs) {
             vec[eddi.title] = _.pluck(_.pluck(rs, 'response'), 'value');
+
+            if (eddi.other) {
+                var vecKey = eddi.title + '__Other';
+                vec[vecKey] = _(rs).pluck('response').pluck('other').pluck('text').value();
+            }
             callback(vec);
         })
         .catch(function (err) {
-            log('[oeselectResponseTable] Error!');
+            log('[selectResponseTable] Error!');
             console.error(err);
         });
 }

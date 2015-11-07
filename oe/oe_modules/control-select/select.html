@@ -10,7 +10,9 @@
             width: 90%;
         }
 
-
+        #other {
+            margin: 1em 1em;
+        }
     </style>
     <template>
         <template is="dom-if" if="{{oe.helptext}}">
@@ -23,7 +25,12 @@
                 </template>
             </paper-menu>
         </paper-dropdown-menu>
-
+        <template is="dom-if" if="{{oe.other}}">
+            <div id="other" class="layout horizontal">
+                <paper-input class="flex" label="Other" on-change="saveOther"
+                             value="{{oe.response.other.value}}"></paper-input>
+            </div>
+        </template>
     </template>
     <script>
         //noinspection JSUnusedGlobalSymbols
@@ -37,6 +44,10 @@
                 'oe-paper-menu.paper-dropdown-close': 'saveResponse'
             },
             ready: function () {
+            },
+            saveOther: function (e) {
+                this.set('response.other.text', e.target.value);
+                this.fire('change:response');
             },
             saveResponse: function () {
                 this.fire('change:response');

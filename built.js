@@ -53370,6 +53370,7 @@ OEModules.alterties = require('./oe_modules/control-alter-ties/client-index');
 OEModules.basicnameinterpret = require('./oe_modules/control-basic-nameinterpret/client-index');
     OEModules.boilerplate = require('./oe_modules/control-boilerplate/client-index');
 OEModules.checklist = require('./oe_modules/control-checklist/client-index');
+    OEModules.consent = require('./oe_modules/control-consent/client-index');
 OEModules.basicnamegen = require('./oe_modules/control-namegen/client-index');
 OEModules.namepick = require('./oe_modules/control-namepick/client-index');
     OEModules.niBoxpop = require('./oe_modules/control-ni-boxpop/client-index');
@@ -53386,15 +53387,16 @@ module.exports = OEModules;
     "./oe_modules/control-basic-nameinterpret/client-index": 90,
     "./oe_modules/control-boilerplate/client-index": 95,
     "./oe_modules/control-checklist/client-index": 98,
-    "./oe_modules/control-namegen/client-index": 106,
-    "./oe_modules/control-namepick/client-index": 112,
-    "./oe_modules/control-ni-boxpop/client-index": 115,
-    "./oe_modules/control-nodelink/client-index": 120,
-    "./oe_modules/control-radiolist/client-index": 122,
-    "./oe_modules/control-select/client-index": 125,
-    "./oe_modules/control-shorttext/client-index": 129,
-    "./oe_modules/control-slider/client-index": 133,
-    "./oe_modules/model-namelist/client-index": 140
+    "./oe_modules/control-consent/client-index": 101,
+    "./oe_modules/control-namegen/client-index": 109,
+    "./oe_modules/control-namepick/client-index": 115,
+    "./oe_modules/control-ni-boxpop/client-index": 118,
+    "./oe_modules/control-nodelink/client-index": 123,
+    "./oe_modules/control-radiolist/client-index": 125,
+    "./oe_modules/control-select/client-index": 128,
+    "./oe_modules/control-shorttext/client-index": 132,
+    "./oe_modules/control-slider/client-index": 136,
+    "./oe_modules/model-namelist/client-index": 143
 }],
     12: [function (require, module, exports) {
 /**
@@ -54428,7 +54430,7 @@ module.exports = Backbone.Collection.extend({
     },
 
     comparator: function (e) {
-        e.get('sortIndex');
+        return e.get('sortIndex');
     }
 
 });
@@ -55507,6 +55509,8 @@ __p+='<paper-toolbar class="oe-eddi-promptbar"><div class="flex"></div><div clas
 ((__t=( rc.oe.eid ))==null?'':_.escape(__t))+
 '&nbsp;-&nbsp;'+
 ((__t=( rc.oe.title ))==null?'':_.escape(__t))+
+    '&nbsp;-&nbsp;' +
+    ((__t = ( rc.oe.sortIndex )) == null ? '' : _.escape(__t)) +
 '</div></paper-toolbar><style>paper-toolbar.oe-eddi-promptbar {\n        height: 128px;\n    }\n    .oe-eddi-details {\n        font-size: 10px;\n    }</style>';
 return __p;
 };
@@ -56387,7 +56391,7 @@ module.exports = Mn.LayoutView.extend({
 });
     }, {
         "../../oe_client/models/model-eddi": 34,
-        "../model-namelist/NameModel": 137,
+        "../model-namelist/NameModel": 140,
         "./NINameTag": 88,
         "./templateNINameLayout.ejs": 91
     }],
@@ -56405,7 +56409,7 @@ module.exports = Mn.ItemView.extend({
     template: template
 });
 
-    }, {"../model-namelist/NameModel": 137, "./templateNINameTag.ejs": 92}],
+    }, {"../model-namelist/NameModel": 140, "./templateNINameTag.ejs": 92}],
     89: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/10/15.
@@ -56597,6 +56601,51 @@ module.exports = PolymerView.extend({
     }],
     101: [function (require, module, exports) {
 /**
+ * Created by jfagan on 4/15/15.
+ * oe/oe_modules/control-radiolist/client-index.js
+ */
+
+var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./viewConsent');
+
+        templates.eddicontrol = require('./templateConsent.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+
+    }, {"./templateConsent.ejs": 102, "./viewConsent": 103}],
+    102: [function (require, module, exports) {
+        arguments[4][43][0].apply(exports, arguments)
+    }, {"dup": 43, "lodash": 10}],
+    103: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/15/15.
+         * oe/oe_modules/control-radiolist/viewRadiolist.js
+         */
+
+        var PolymerView = require('../../oe_client/views/marionette.polymerview');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('./templateConsent.ejs');
+
+        module.exports = PolymerView.extend({
+            tagName: 'oe-consent',
+            model: EddiModel,
+            template: template,
+            _publishedKeys: ['oe', 'response'],
+            initialize: function () {
+            }
+        });
+
+
+    }, {
+        "../../oe_client/models/model-eddi": 34,
+        "../../oe_client/views/marionette.polymerview": 58,
+        "./templateConsent.ejs": 102
+    }],
+    104: [function (require, module, exports) {
+        /**
  * Created by jfagan on 5/5/15.
  * oe/oe_modules/control-namegen/BasicNameCard.js
  */
@@ -56622,8 +56671,8 @@ module.exports = PolymerView.extend({
 });
 
 
-    }, {"../../oe_client/views/marionette.polymerview": 58, "./templateBasicNameCard.ejs": 107}],
-    102: [function (require, module, exports) {
+    }, {"../../oe_client/views/marionette.polymerview": 58, "./templateBasicNameCard.ejs": 110}],
+    105: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/29/15.
  * oe/oe_modules/control-namegen/BasicNameGen-NameInput.js
@@ -56644,9 +56693,9 @@ module.exports = PolymerView.extend({
     }, {
         "../../oe_client/models/model-eddi": 34,
         "../../oe_client/views/marionette.polymerview": 58,
-        "./templateBasicNameGen-NameInput.ejs": 108
+        "./templateBasicNameGen-NameInput.ejs": 111
     }],
-    103: [function (require, module, exports) {
+    106: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/5/15.
  * oe/oe_modules/control-namegen/BasicNameGen-Names.js
@@ -56673,8 +56722,8 @@ module.exports = Mn.CollectionView.extend({
     }
 });
 
-    }, {"./BasicNameCard": 101}],
-    104: [function (require, module, exports) {
+    }, {"./BasicNameCard": 104}],
+    107: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/27/15.
  * oe/oe_modules/control-namegen/BasicNameGenerator.js
@@ -56714,11 +56763,11 @@ module.exports = Mn.LayoutView.extend({
 });
     }, {
         "../../oe_client/models/model-eddi": 34,
-        "./BasicNameGen-NameInput": 102,
-        "./BasicNameGen-Names": 103,
-        "./templateBasicNamegen.ejs": 109
+        "./BasicNameGen-NameInput": 105,
+        "./BasicNameGen-Names": 106,
+        "./templateBasicNamegen.ejs": 112
     }],
-    105: [function (require, module, exports) {
+    108: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-namegen/DesignView.js:3
@@ -56735,7 +56784,7 @@ var NamegenDesignView = Mn.PolymerView.extend({
 });
 module.exports = NamegenDesignView;
     }, {"../../oe_client/templates/template-blank-template.ejs": 47}],
-    106: [function (require, module, exports) {
+    109: [function (require, module, exports) {
 /**
  *
  * oe/oe_modules/control-namegen/client-index.js
@@ -56753,14 +56802,14 @@ design.eddicontrol = require('./DesignView');
 module.exports.views = views;
 module.exports.templates = templates;
 module.exports.design = design;
-    }, {"./BasicNameGenerator": 104, "./DesignView": 105, "./templateBasicNamegen.ejs": 109}],
-    107: [function (require, module, exports) {
+    }, {"./BasicNameGenerator": 107, "./DesignView": 108, "./templateBasicNamegen.ejs": 112}],
+    110: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    108: [function (require, module, exports) {
+    111: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    109: [function (require, module, exports) {
+    112: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -56769,7 +56818,7 @@ return __p;
 };
 
     }, {"lodash": 10}],
-    110: [function (require, module, exports) {
+    113: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/NamePick-Name.js:3
@@ -56806,8 +56855,8 @@ module.exports = Mn.PolymerView.extend({
     }
 });
 
-    }, {"./templateNamePickName.ejs": 114}],
-    111: [function (require, module, exports) {
+    }, {"./templateNamePickName.ejs": 117}],
+    114: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/NamePick.js:3
@@ -56853,8 +56902,8 @@ module.exports = Mn.LayoutView.extend({
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 34, "./NamePick-Name": 110, "./templateNamePick.ejs": 113}],
-    112: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 34, "./NamePick-Name": 113, "./templateNamePick.ejs": 116}],
+    115: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/client-index.js:3
@@ -56868,8 +56917,8 @@ templates.eddicontrol = require('./templateNamePick.ejs');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./NamePick": 111, "./templateNamePick.ejs": 113}],
-    113: [function (require, module, exports) {
+    }, {"./NamePick": 114, "./templateNamePick.ejs": 116}],
+    116: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -56878,10 +56927,10 @@ return __p;
 };
 
     }, {"lodash": 10}],
-    114: [function (require, module, exports) {
+    117: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    115: [function (require, module, exports) {
+    118: [function (require, module, exports) {
 /**
  * Created by jfagan on 10/28/15.
  * oe/oe_modules/control-ni-boxpop/client-index.js:3
@@ -56906,11 +56955,11 @@ var views = {};
         module.exports.templates = templates;
         module.exports.design = design;
 
-    }, {"./templateNIBoxpop.ejs": 116, "./viewNIBoxpop": 117}],
-    116: [function (require, module, exports) {
+    }, {"./templateNIBoxpop.ejs": 119, "./viewNIBoxpop": 120}],
+    119: [function (require, module, exports) {
         arguments[4][43][0].apply(exports, arguments)
     }, {"dup": 43, "lodash": 10}],
-    117: [function (require, module, exports) {
+    120: [function (require, module, exports) {
         /**
          * Created by jfagan on 10/28/15.
          * oe/oe_modules/control-boilerplate/viewBoilerplate.js:3
@@ -56934,7 +56983,7 @@ var views = {};
 
 
     }, {"../../oe_client/models/model-eddi": 34, "../../oe_client/templates/template-blank-template.ejs": 47}],
-    118: [function (require, module, exports) {
+    121: [function (require, module, exports) {
         /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-nodelink/DesignView.js:3
@@ -56952,7 +57001,7 @@ var NodelinkDesignView = Mn.PolymerView.extend({
 module.exports = NodelinkDesignView;
 
     }, {"../../oe_client/templates/template-blank-template.ejs": 47}],
-    119: [function (require, module, exports) {
+    122: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/control-nodelink/NodeLink.js:3
@@ -57006,8 +57055,8 @@ module.exports = Mn.PolymerView.extend({
     }
 });
 
-    }, {"../model-namelist/GraphModel": 135, "./templateNodeLink.ejs": 121}],
-    120: [function (require, module, exports) {
+    }, {"../model-namelist/GraphModel": 138, "./templateNodeLink.ejs": 124}],
+    123: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/control-nodelink/client-index.js:3
@@ -57024,11 +57073,11 @@ design.eddicontrol = require('./DesignView');
 module.exports.views = views;
 module.exports.templates = templates;
 module.exports.design = design;
-    }, {"./DesignView": 118, "./NodeLink": 119}],
-    121: [function (require, module, exports) {
+    }, {"./DesignView": 121, "./NodeLink": 122}],
+    124: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    122: [function (require, module, exports) {
+    125: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/client-index.js
@@ -57044,11 +57093,11 @@ templates.eddicontrol = require('./templateRadiolist.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateRadiolist.ejs": 123, "./viewRadiolist": 124}],
-    123: [function (require, module, exports) {
+    }, {"./templateRadiolist.ejs": 126, "./viewRadiolist": 127}],
+    126: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    124: [function (require, module, exports) {
+    127: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/viewRadiolist.js
@@ -57086,9 +57135,9 @@ module.exports = PolymerView.extend({
     }, {
         "../../oe_client/models/model-eddi": 34,
         "../../oe_client/views/marionette.polymerview": 58,
-        "./templateRadiolist.ejs": 123
+        "./templateRadiolist.ejs": 126
     }],
-    125: [function (require, module, exports) {
+    128: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/client-index.js
@@ -57104,11 +57153,11 @@ templates.eddicontrol = require('./templateSelect.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateSelect.ejs": 126, "./viewSelect": 127}],
-    126: [function (require, module, exports) {
+    }, {"./templateSelect.ejs": 129, "./viewSelect": 130}],
+    129: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    127: [function (require, module, exports) {
+    130: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/viewRadiolist.js
@@ -57136,8 +57185,8 @@ var template = require('./templateSelect.ejs');
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 34, "./templateSelect.ejs": 126}],
-    128: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 34, "./templateSelect.ejs": 129}],
+    131: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-shorttext/DesignView.js:3
@@ -57155,7 +57204,7 @@ var ShorttextDesignView = Mn.PolymerView.extend({
 module.exports = ShorttextDesignView;
 
     }, {"../../oe_client/templates/template-blank-template.ejs": 47}],
-    129: [function (require, module, exports) {
+    132: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/7/15.
  * The index file for the shorttext file
@@ -57182,11 +57231,11 @@ module.exports.views = views;
 module.exports.templates = templates;
 module.exports.design = design;
 
-    }, {"./DesignView": 128, "./templateShorttext.ejs": 130, "./viewShorttext": 131}],
-    130: [function (require, module, exports) {
+    }, {"./DesignView": 131, "./templateShorttext.ejs": 133, "./viewShorttext": 134}],
+    133: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    131: [function (require, module, exports) {
+    134: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-shorttext/view-shorttext.js
@@ -57203,8 +57252,8 @@ module.exports = Mn.PolymerView.extend({
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 34, "./templateShorttext.ejs": 130}],
-    132: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 34, "./templateShorttext.ejs": 133}],
+    135: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-slider/SliderControl.js:3
@@ -57243,8 +57292,8 @@ module.exports = Mn.PolymerView.extend({
 });
 
 
-    }, {"./templateSlider.ejs": 134}],
-    133: [function (require, module, exports) {
+    }, {"./templateSlider.ejs": 137}],
+    136: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-slider/client-index.js
@@ -57260,11 +57309,11 @@ module.exports.views = views;
 module.exports.templates = templates;
 
 
-    }, {"./SliderControl": 132, "./templateSlider.ejs": 134}],
-    134: [function (require, module, exports) {
+    }, {"./SliderControl": 135, "./templateSlider.ejs": 137}],
+    137: [function (require, module, exports) {
 arguments[4][43][0].apply(exports,arguments)
     }, {"dup": 43, "lodash": 10}],
-    135: [function (require, module, exports) {
+    138: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/model-namelist/GraphModel.js:3
@@ -57280,7 +57329,7 @@ module.exports = Backbone.Model.extend({
     }
 });
     }, {}],
-    136: [function (require, module, exports) {
+    139: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/27/15.
  * oe/oe_modules/control-shorttext/NameCollection.js
@@ -57328,8 +57377,8 @@ module.exports = Backbone.Collection.extend({
     }
 
 });
-    }, {"./NameModel": 137}],
-    137: [function (require, module, exports) {
+    }, {"./NameModel": 140}],
+    140: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/23/15.
  * oe/oe_modules/model-namelist/NameModel.js
@@ -57590,7 +57639,7 @@ module.exports = Backbone.Model.extend({
 
 });
     }, {"../../oe_client/helpers/guid": 22}],
-    138: [function (require, module, exports) {
+    141: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/4/15.
  * oe/oe_modules/model-namelist/NamelistPrep.js:3
@@ -57627,8 +57676,8 @@ App.prototype.initialize = function () {
     this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
 };
 
-    }, {"../../oe_client/application": 12, "./NameCollection": 136}],
-    139: [function (require, module, exports) {
+    }, {"../../oe_client/application": 12, "./NameCollection": 139}],
+    142: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/1/15.
  * oe/oe_modules/model-namelist/NamelistRadio.js
@@ -57676,7 +57725,7 @@ App.prototype.namelistAddNewName = function (e) {
 
 
     }, {"../../oe_client/application": 12}],
-    140: [function (require, module, exports) {
+    143: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/22/15.
  *
@@ -57699,5 +57748,5 @@ require('./NamelistPrep');
 
 module.exports.models = models;
 module.exports.views = views;
-    }, {"./NameCollection": 136, "./NameModel": 137, "./NamelistPrep": 138, "./NamelistRadio": 139}]
+    }, {"./NameCollection": 139, "./NameModel": 140, "./NamelistPrep": 141, "./NamelistRadio": 142}]
 }, {}, [1]);

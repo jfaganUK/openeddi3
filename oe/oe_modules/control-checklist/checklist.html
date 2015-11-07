@@ -3,6 +3,7 @@
 <link rel="import" href="/bower_components/iron-label/iron-label.html">
 <link rel="import" href="/bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
 <link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
 <dom-module id="oe-checklist">
@@ -10,13 +11,22 @@
             .oe-checklist-container {
                 margin-top: 10px;
             }
+
+            .oe-checklist-container > iron-label {
+                cursor: pointer;
+            }
+
             .oe-checklist-checkbox {
                 padding-right: 20px;
-                margin-left: 20px;
+                margin-left: 1em;
             }
 
             :host {
                 margin-top: 10px;
+            }
+
+            #other {
+                margin: 1em 1em;
             }
         </style>
     <template>
@@ -35,6 +45,12 @@
                 </iron-label>
                 <br>
             </template>
+            <template is="dom-if" if="{{oe.other}}">
+                <div id="other" class="layout horizontal">
+                    <paper-input class="flex" label="Other" on-change="saveOther"
+                                 value="{{oe.response.other.value}}"></paper-input>
+                </div>
+            </template>
         </div>
     </template>
     <script>
@@ -51,6 +67,10 @@
                 var cb = detail.currentTarget;
                 var arrayid = cb.attributes['data-arrayid'].value;
                 this.set('response.value' + ('.' + arrayid), cb.checked);
+                this.fire('change:response');
+            },
+            saveOther: function (e) {
+                this.set('response.other.text', e.target.value);
                 this.fire('change:response');
             },
             _computeAria_labelledby: function (arrayPrompt, oe) {

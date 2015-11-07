@@ -21,7 +21,7 @@ module.exports = Backbone.Collection.extend({
     },
 
     comparator: function (e) {
-        e.get('sortIndex');
+        return e.get('sortIndex');
     }
 
 });
