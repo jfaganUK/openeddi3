@@ -1,0 +1,51 @@
+<!-- oe/oe_modules/control-radiolist/radiolist.html -->
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
+    <link rel="import" href="/bower_components/paper-radio-group/paper-radio-group.html">
+
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-radiolist">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
+
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
+
+            [layout][flex] {
+            @apply(- -layout-flex);
+            }
+        </style>
+        <style>
+        </style>
+        <template>
+            <paper-radio-group selected="{{response.value}}" flex="" vertical="" layout="" on-tap="saveResponse">
+                <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
+                    <paper-radio-button class="oe-radio-button" label="{{arrayPrompt.prompt}}"
+                                        data-arrayid$="{{arrayPrompt.arrayid}}">
+                </paper-radio-button>
+            </template>
+        </paper-radio-group>
+    </template>
+        <script>
+            //noinspection JSUnusedGlobalSymbols
+            Polymer({
+                is: 'oe-radiolist',
+                properties: {
+                    oe: {notify: true},
+                    response: {notify: true}
+                },
+                ready: function () {
+                },
+                saveResponse: function () {
+                    this.fire('change:response');
+                }
+            });
+        </script>
+    </dom-module>
