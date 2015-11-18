@@ -8,5 +8,6 @@ var template = require('../templates/template-pool-header.ejs');
 
 module.exports = PolymerView.extend({
     tagName: 'oe-pool-header',
+    _publishedKeys: ['sheetid'],
     template: template
 });

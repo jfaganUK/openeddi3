@@ -1,5 +1,6 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/neon-animation/neon-animated-pages.html"/>
+<link rel="import" href="../../oe_client/components/oe-helptext.html"/>
 <link rel="import" href="./niBoxpop-name.html">
 <link rel="import" href="./niBoxPop-endoflist.html">
 
@@ -19,7 +20,7 @@
     </style>
     <template>
         <template is="dom-if" if="{{oe.helpText}}">
-            <div id="helpText" inner-h-t-m-l="{{oe.helpText}}"></div>
+            <oe-helptext id="helpText" help-text="{{oe.helpText}}"></oe-helptext>
         </template>
 
         <oe-ni-boxpop-undo last-save="{{lastSave}}" array-prompts="{{oe.arrayPrompts}}"></oe-ni-boxpop-undo>

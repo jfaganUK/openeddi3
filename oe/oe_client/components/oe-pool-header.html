@@ -11,7 +11,7 @@
     <template>
         <paper-toolbar id="oe-pool-header-toolbar" class="dark-primary-color" flex="">
             <paper-icon-button icon="arrow-back" class="poolNavBack" on-tap="poolNavBackClick"></paper-icon-button>
-            <span class="poolTitle flex">{{ pool.title }}</span>
+            <span class="poolTitle flex">{{ sheetTitle }}</span>
             <paper-icon-button icon="arrow-forward" class="poolNavForward"
                                on-tap="poolNavForwardClick"></paper-icon-button>
         </paper-toolbar>
@@ -20,11 +20,20 @@
         Polymer({
             is: 'oe-pool-header',
             properties: {
-                oe: {notify: true},
-                pool: {notify: true}
+                sheetid: {notify: true}
+            },
+            ready: function () {
+                app.channels.navigation.on('sheet-loaded', this.getSheetTitle, this);
+                this.getSheetTitle();
             },
             poolNavBackClick: function () {
                 app.channels.navigation.command('pool-prev-sheet');
+            },
+            getSheetTitle: function () {
+                var sheetid = app.appState.get('sheetid');
+                var sheet = app.currentPool.sheets.find({sheetid: sheetid});
+                this.sheetTitle = sheet.get('title');
+                return sheet.get('title');
             },
             poolNavForwardClick: function () {
                 app.channels.navigation.command('pool-next-sheet');

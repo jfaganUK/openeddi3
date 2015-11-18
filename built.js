@@ -54847,7 +54847,7 @@ module.exports = Marionette.LayoutView.extend({
         eddispace: '#oe-sheet-eddi-space'
     },
 
-    initialize: function (opts) {
+    initialize: function () {
         this.sheetid = app.appState.get('sheetid');
 
         app.channels.media.on('window-resize', function () {
@@ -56296,6 +56296,7 @@ var template = require('../templates/template-pool-header.ejs');
 
 module.exports = PolymerView.extend({
     tagName: 'oe-pool-header',
+    _publishedKeys: ['sheetid'],
     template: template
 });
 
