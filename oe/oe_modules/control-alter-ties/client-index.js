@@ -7,5 +7,7 @@
 var views = {};
 var templates = {};
 
+views.eddicontrol = require('./AlterTies');
+templates.eddicontrol = require('./templateAlterTiesLayout.ejs');
 module.exports.views = views;
 module.exports.templates = templates;

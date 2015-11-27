@@ -68,7 +68,7 @@ module.exports = Marionette.ItemView.extend({
         var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
         _.each(attributeNames, this._setElAttr, this);
         // This won't work under a polyfill. We will have to take another approach
-        //this.el.fire('attributes-updated', this.model);
+        this.el.fire('attributes-updated', this.model);
         app.channels.pool.trigger('attributes-updated', this.model);
         this.el['attrUpdate'] = new Date();
     },

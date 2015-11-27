@@ -8,5 +8,7 @@ var template = require('./templateAlterTiesLayout.ejs');
 
 module.exports = Mn.PolymerView.extend({
     template: template,
-    tagName: 'oe-alter-ties'
+    tagName: 'oe-alter-ties',
+    _publishedKeys: ['oe', 'response']
+
 });

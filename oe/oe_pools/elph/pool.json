@@ -13,6 +13,7 @@
       "4",
       "5",
       "6",
+      "altertiesSheet",
       "7"
     ],
     "dateCreated": "2015-10-13 11:21:23-04:00"
@@ -52,6 +53,11 @@
       "sheetid": "6",
       "title": "More about your contacts",
       "description": "List your contacts."
+    },
+    {
+      "sheetid": "altertiesSheet",
+      "title": "How do your contacts communicate?",
+      "description": "Tell us a bit about how your contacts communicate and work with each other."
     },
     {
       "sheetid": "7",
@@ -781,7 +787,7 @@
     },
     {
       "eid": "500",
-      "sheetid": "2",
+      "sheetid": "5",
       "sortIndex": -10,
       "title": "alterBoiler",
       "controlmodule": "boilerplate",
@@ -1094,6 +1100,25 @@
             "value": "Other type of support"
           }
         ]
+      }
+    },
+    {
+      "eid": "801",
+      "sheetid": "altertiesSheet",
+      "poolid": "elph",
+      "sortIndex": "1",
+      "title": "alterCommunication",
+      "controlmodule": "alterties",
+      "prompt": "Look at each pair of contacts. Tell us if you think the pair of contacts knows one another professionally.",
+      "verb": "knows",
+      "connectOptions": {
+        "connected": "Know each other",
+        "notconnected": "Don't know each other"
+      },
+      "tieDetails": {
+        "relation": "communicate",
+        "type": "undirected",
+        "weighted": false
       }
     },
     {

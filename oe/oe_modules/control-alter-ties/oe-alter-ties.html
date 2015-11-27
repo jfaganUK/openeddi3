@@ -1,11 +1,110 @@
 <link rel="import" href="/bower_components/polymer/polymer.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animated-pages.html"/>
+<link rel="import" href="../../oe_client/components/oe-helptext.html"/>
+<link rel="import" href="./oe-alter-ties-dyad.html"/>
+<link rel="import" href="./oe-alter-ties-endoflist.html"/>
+
+<!-- TODO: right now this is good for a one-time push to get ties. But it doesn't load the previous responses. -->
 
 <dom-module id="oe-alter-ties">
-    <style></style>
-    <template></template>
+    <style>
+        :host {
+            display: block;
+        }
+
+        #dyad-pager {
+            height: 20em;
+        }
+    </style>
+    <template>
+        <template is="dom-if" if="{{oe.helpText}}">
+            <oe-helptext id="helpText" help-text="{{oe.helpText}}"></oe-helptext>
+        </template>
+        <neon-animated-pages id="dyad-pager" class="flex">
+            <template is="dom-repeat" items="{{dyads}}">
+                <oe-alter-ties-dyad dyad="{{item}}" on-next-dyad="nextDyad" verb="[[oe.verb]]"
+                                    connect-options="[[oe.connectOptions]]"></oe-alter-ties-dyad>
+            </template>
+            <oe-alter-ties-endoflist on-startover="reset"></oe-alter-ties-endoflist>
+        </neon-animated-pages>
+
+    </template>
     <script>
         Polymer({
-            is: "oe-alter-ties"
+            is: "oe-alter-ties",
+            /**
+             * There are three import parts of the data data.
+             * 1) The ties in the namelist. This is really the point of this module. But it is accessed through an API
+             * and not directly.
+             * 2) The dyads array. It is used for the operation of the module. So that we can actuall run through the list
+             * of all the dyads and display the names and access ID's.
+             * 3) The response.dyads array. To store result of the operation of the module. To save which were selected. I don't
+             * want to save names to the server. There are confidentiality reasons to prevent *this* modue from doing that.
+             */
+            attributes: {
+                oe: {type: Object, notify: true},
+                dyads: {type: Array, notify: true},
+                response: {type: Object, notify: true},
+                names: {type: Array},
+                createdDyads: {type: Boolean, value: false}
+            },
+            listeners: {
+                'attributes-updated': 'createDyads' // Once
+            },
+            ready: function () {
+                console.log('[oe-alter-ties] Ready!');
+                this.reset();
+            },
+            nextDyad: function (m) {
+                this.saveTie(m);
+                this.$['dyad-pager'].selectNext();
+            },
+            reset: function () {
+                this.$['dyad-pager'].selected = 0;
+            },
+            saveTie: function (m) {
+                // Save the tie
+                var nameid1 = m.model.item.name1, nameid2 = m.model.item.name2;
+                var name1 = app.currentPool.namelist.find({id: nameid1});
+                var name2 = app.currentPool.namelist.find({id: nameid2});
+                var td = this.oe.tieDetails;
+
+                if (m.model.item.tie == 'connected') {
+                    name1.addTie(nameid2, td, true);
+                    name2.addTie(nameid1, td, true);
+                } else {
+                    name1.removeTie(nameid2, td);
+                    name2.removeTie(nameid1, td);
+                }
+
+                // Now update the response object
+                var i = this.response.dyads.indexOf(m.model.item);
+                this.set('response.dyads.' + i, m.model.item);
+                this.fire('change:response');
+            },
+            createDyads: function () {
+                if (!this.createdDyads) {
+                    var names = app.currentPool.namelist.toJSON();
+                    var dyads = [];
+
+                    // Loop through the upper triangle of this matrix
+                    for (var i = 0; i < (names.length - 1); i++) {
+                        for (var j = (i + 1); j < names.length; j++) {
+                            dyads.push({
+                                name1: names[i].id,
+                                name2: names[j].id,
+                                tie: ''
+                            });
+                        }
+                    }
+
+                    this.dyads = dyads;
+                    this.set('response.dyads', dyads);
+                    this.notifyPath('response.dyads', this.response.dyads);
+                    this.createdDyads = true;
+                }
+
+            }
         });
     </script>
 </dom-module>
