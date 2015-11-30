@@ -1,5 +1,6 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html"/>
 
 <dom-module id="oe-pool-header">
     <style>
@@ -9,6 +10,8 @@
             }
         </style>
     <template>
+        <iron-a11y-keys target="[[navTarget]]" keys="left" on-keys-pressed="poolNavBackClick"></iron-a11y-keys>
+        <iron-a11y-keys target="[[navTarget]]" keys="right" on-keys-pressed="poolNavForwardClick"></iron-a11y-keys>
         <paper-toolbar id="oe-pool-header-toolbar" class="dark-primary-color" flex="">
             <paper-icon-button icon="arrow-back" class="poolNavBack" on-tap="poolNavBackClick"></paper-icon-button>
             <span class="poolTitle flex">{{ sheetTitle }}</span>
@@ -20,7 +23,13 @@
         Polymer({
             is: 'oe-pool-header',
             properties: {
-                sheetid: {notify: true}
+                sheetid: {notify: true},
+                navTarget: {
+                    type: Object,
+                    value: function () {
+                        return document.body;
+                    }
+                }
             },
             ready: function () {
                 app.channels.navigation.on('sheet-loaded', this.getSheetTitle, this);
