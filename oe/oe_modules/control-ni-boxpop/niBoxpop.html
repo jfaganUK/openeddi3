@@ -7,15 +7,7 @@
 <dom-module id="oe-ni-boxpop">
     <style>
         #name-pager {
-            height: 20em;
-        }
-
-        #endOfList {
-            display: block;
-            margin: 0.5em 1em;
-            padding: 0.5em;
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            background: white;
+            height: 23em;
         }
     </style>
     <template>
@@ -27,9 +19,9 @@
         <neon-animated-pages id="name-pager" class="flex" selected="[[nameIndex]]">
             <template is="dom-repeat" items="{{oe.names}}" filter="nameFilter">
                 <oe-ni-boxpop-name name="{{item}}" array-prompts="{{oe.arrayPrompts}}"
-                                   on-boxpop="saveResponse"></oe-ni-boxpop-name>
+                                   on-boxpop="saveResponse" show-other="{{oe.other}}"></oe-ni-boxpop-name>
             </template>
-            <oe-ni-boxpop-endoflist on-startover="reset"></oe-ni-boxpop-endoflist>
+            <oe-ni-boxpop-endoflist on-startover="reset" on-nexteddi="nexteddi"></oe-ni-boxpop-endoflist>
         </neon-animated-pages>
     </template>
     <script>
@@ -40,7 +32,7 @@
                 namelist: {type: String, notify: true},
                 response: {type: Object, notify: true},
                 lastSave: {type: Object, notify: true},
-                nameIndex: {type: Number, default: 0}
+                nameIndex: {type: Number, value: 0}
             },
             listeners: {
                 'undo': 'undoLast'
@@ -55,21 +47,18 @@
                 if (this.oe.filter) {
                     if (this.oe.filter.details) {
                         var fil = this.oe.filter.details;
-                        return e.details[fil.key] == fil.value;
+                        return e.details[fil.key].value == fil.value;
                     }
                 }
                 return true;
             },
             saveResponse: function (e) {
+                console.log('[oe-ni-boxpop] Save response.');
                 e.stopPropagation();
-                var prompt = _(this.oe.arrayPrompts)
-                        .findWhere({arrayid: e.target.responseValue})
-                        .prompt;
                 var o = {
                     id: e.model.get('item.id'),
                     name: e.model.get('item.name'),
-                    value: e.target.responseValue,
-                    prompt: prompt,
+                    value: e.target.nameResponse,
                     eid: this.oe.eid
                 };
                 this.set('lastSave', o);
@@ -78,6 +67,9 @@
             },
             undoLast: function () {
                 this.$['name-pager'].selectPrevious();
+            },
+            nexteddi: function () {
+
             }
 
         });

@@ -53682,6 +53682,15 @@ var App = Marionette.Application.extend({
         }
     },
 
+    //TODO: create a 'goto location' function that will scroll or move to any arbtrary location on
+    // the pool. But for now, this will just scroll to a certain eddi.
+    gotoEddi: function (eid) {
+        // Find what sheet the eddi is on
+        // Load that sheet
+        // Scroll down to that eddi location
+        app.currentPool;
+    },
+
     getCurrentSheetIndex: function () {
         // Figure out what the previous sheet should be
         //noinspection JSUnresolvedVariable

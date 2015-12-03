@@ -12,10 +12,17 @@ function getResponseTable(eddi, response) {
 
     var ap = eddi.arrayPrompts;
     if (response) {
-        o[eddi.title] = _.result(_.findWhere(ap, {arrayid: response}), 'prompt');
+        //o[eddi.title] = _.result(_.findWhere(ap, {arrayid: response}), 'prompt');
+        o[eddi.title] = response.value;
+        if (eddi.other) {
+            o[eddi.title + '__other'] = response.other;
+        }
     } else {
         // the default value if no response is provided
         o[eddi.title] = "NA";
+        if (eddi.other) {
+            o[eddi.title + '__other'] = "";
+        }
     }
 
     return (o);

@@ -80,7 +80,7 @@
       "title": "elphIntro",
       "controlmodule": "boilerplate",
       "prompt": "Welcome to the Equity Lens in Public Health intersectoral collaboration study!",
-      "content": "<p>We're using social network analysis to study intersectoral collaboration in public health. Our website has more information about Equity Lens in Public Health: <a href=\"www.uvic.ca/elph\">www.uvic.ca/elph</a>.</p><p>What is Social Network Analysis? It's a well-established methodology for collecting and    analyzing data from multiple individuals or organizations that may be interacting with one another.    Social network analysis focuses on the linkages among the different people within a system, and the    impact of these relationships. We are using social network analysis to study intersectoral collaboration    in public health.</p>"
+      "content": "<p>We're using social network analysis to study intersectoral collaboration in public health. Our website has more information about Equity Lens in Public Health: <a href=\"http://www.uvic.ca/elph\">www.uvic.ca/elph</a>.</p><p>What is Social Network Analysis? It's a well-established methodology for collecting and    analyzing data from multiple individuals or organizations that may be interacting with one another.    Social network analysis focuses on the linkages among the different people within a system, and the    impact of these relationships. We are using social network analysis to study intersectoral collaboration    in public health.</p>"
     },
     {
       "eid": "consent1",
@@ -822,7 +822,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "arrayPrompts": [
@@ -860,7 +860,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "arrayPrompts": [
@@ -899,7 +899,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "arrayPrompts": [
@@ -952,9 +952,10 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
+      "other": true,
       "arrayPrompts": [
         {
           "arrayid": 0,
@@ -990,7 +991,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "arrayPrompts": [
@@ -1028,7 +1029,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "niEddi": "shorttext"
@@ -1045,7 +1046,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "arrayPrompts": [
@@ -1084,7 +1085,7 @@
       "filter": {
         "details": {
           "key": "405",
-          "value": "0"
+          "value": "Yes"
         }
       },
       "niEddiDetails": {

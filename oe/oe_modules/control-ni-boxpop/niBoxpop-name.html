@@ -4,6 +4,7 @@
 <link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
 <link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
 <link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="./niBoxpop-other.html"/>
 <link rel="import" href="./niBoxPop-undo.html"/>
 
 <dom-module id="oe-ni-boxpop-name">
@@ -43,9 +44,12 @@
             <div class="layout horizontal"><h3>{{name.name}}</h3></div>
             <div class="button-container">
                 <template is="dom-repeat" items="{{arrayPrompts}}">
-                    <paper-material class="select-button" on-tap="saveResponse">{{item.prompt}}</paper-material>
+                    <paper-material class="select-button" on-tap="itemSelect">{{item.prompt}}</paper-material>
                 </template>
             </div>
+            <template is="dom-if" if="{{showOther}}">
+                <oe-boxpop-other other-value="{{nameResponse.other}}" on-other-change="otherChange"></oe-boxpop-other>
+            </template>
         </div>
     </template>
     <script>
@@ -58,8 +62,9 @@
             properties: {
                 name: {type: 'Object', notify: true},
                 arrayPrompts: {type: 'Array', notify: true},
-                answered: {type: Boolean, default: false},
-                responseValue: {type: 'String', notify: true, default: null},
+                answered: {type: Boolean, value: false},
+                nameResponse: {type: Object, notify: true, value: {value: '', other: ''}},
+                showOther: {type: Boolean},
                 animationConfig: {
                     value: function () {
                         return {
@@ -77,26 +82,16 @@
                     }
                 }
             },
-            saveResponse: function (e) {
-                console.log('[oe-ni-boxpop-name] Save response');
-                var val = e.model.get('item.arrayid');
-                this.set('responseValue', val);
+            itemSelect: function (e) {
+                var val = e.model.get('item.prompt');
+                this.set('nameResponse.value', val);
                 this.fire('boxpop');
             },
-            hide: function () {
-                this.answered = true;
-                this.cancelAnimation();
-                this.playAnimation('exit');
-            },
-            show: function () {
-                this.answered = false;
-                this.cancelAnimation();
-                this.style.display = "block";
-            },
-            _onNeonAnimationFinish: function () {
-                if (this.answered) {
-                    this.style.display = 'none';
-                }
+            otherChange: function (e) {
+                console.log('Other change');
+                e.stopPropagation();
+                this.set('nameResponse.value', '');
+                this.fire('boxpop');
             }
         });
     </script>
