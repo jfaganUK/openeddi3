@@ -108,7 +108,8 @@
                 },
                 downloadCSV: function () {
                     var csv = this.convertCSV();
-                    var b64 = window.btoa(csv);
+                    //lots of documentation says I shouldn't use unescape, but it works perfectly. I just hope it isn't deprecated
+                    var b64 = window.btoa(unescape(encodeURIComponent(csv)));
                     var link = document.createElement('a');
                     var tempDate = new Date();
                     var dateString = tempDate.toISOString().substring(0, 10);
