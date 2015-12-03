@@ -11,7 +11,7 @@ function consentResponseTable(poolid, eddi, callback) {
     var vec = {};
     Response.findAll({where: {poolid: poolid, eid: eddi.eid}})
         .then(function (rs) {
-            vec[eddi.title] = _(rs).pluck('response').pluck(value).value();
+            vec[eddi.title] = _(rs).pluck('response').pluck('value').value();
             callback(vec);
         })
         .catch(function (err) {
