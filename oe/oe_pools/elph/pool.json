@@ -1024,7 +1024,7 @@
       "sortIndex": 3,
       "title": "alterHealthEquityLens",
       "controlmodule": "basicnameinterpret",
-      "prompt": "If the collaboration involves a type of health equity lens, please specify lens below. If no lens is used please skip to the next contact.",
+      "prompt": "If the collaboration involves a type of health equity lens, please specify lens below (e.g. determinants of health lens, gender lens, intersectional lens, LGBTQ lens, Indigenous lens or other). If no lens is used please skip to the next contact.",
       "namelist": "genContacts",
       "filter": {
         "details": {
@@ -1079,7 +1079,7 @@
       "sortIndex": 5,
       "title": "alterFunding",
       "controlmodule": "basicnameinterpret",
-      "prompt": "Is there any dedicated funding or support for the work you do together each contact (check all that apply)?",
+      "prompt": "Is there any dedicated funding or support for the work you do together with each contact (check all that apply)?",
       "helpText": "In-kind support is non-monetary resources an organization might provide. This might include: staff time, facility space, supplies (office supplies, photocopying).",
       "niEddi": "checklist",
       "filter": {
