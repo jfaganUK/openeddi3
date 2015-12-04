@@ -601,10 +601,10 @@
       "poolid": "elph",
       "sortIndex": 0,
       "title": "alterOrganization",
-      "controlmodule": "basicnameinterpret",
+      "controlmodule": "niBoxpop",
       "prompt": "Please provide a name for each contact's organization.",
       "namelist": "genContacts",
-      "niEddi": "shorttext"
+      "controltype": "shorttext"
     },
     {
       "eid": "407",
@@ -612,10 +612,10 @@
       "poolid": "elph",
       "sortIndex": 1,
       "title": "alterTitle",
-      "controlmodule": "basicnameinterpret",
+      "controlmodule": "niBoxpop",
       "prompt": "What is the job title of each contact?",
       "namelist": "genContacts",
-      "niEddi": "shorttext"
+      "controltype": "shorttext"
     },
     {
       "eid": "408",
@@ -623,10 +623,10 @@
       "poolid": "elph",
       "sortIndex": 2,
       "title": "alterDepartment",
-      "controlmodule": "basicnameinterpret",
+      "controlmodule": "niBoxpop",
       "prompt": "What department does the contact work in?",
       "namelist": "genContacts",
-      "niEddi": "shorttext"
+      "controltype": "shorttext"
     },
     {
       "eid": "401",
@@ -637,6 +637,7 @@
       "controlmodule": "niBoxpop",
       "prompt": "What is the gender of each of the contacts you named?",
       "namelist": "genContacts",
+      "controltype": "radio",
       "arrayPrompts": [
         {
           "arrayid": 0,
@@ -664,6 +665,7 @@
       "controlmodule": "niBoxpop",
       "prompt": "In which province is each contact located?",
       "namelist": "genContacts",
+      "controltype": "radio",
       "arrayPrompts": [
         {
           "arrayid": 0,
@@ -741,6 +743,7 @@
       "controlmodule": "niBoxpop",
       "prompt": "How long have you been interacting with each contact about professional matters?",
       "namelist": "genContacts",
+      "controltype": "radio",
       "arrayPrompts": [
         {
           "arrayid": 0,
@@ -783,6 +786,7 @@
       "controlmodule": "niBoxpop",
       "prompt": "Does your work with each contact relate to health equity?",
       "namelist": "genContacts",
+      "controltype": "radio",
       "arrayPrompts": [
         {
           "arrayid": 0,
