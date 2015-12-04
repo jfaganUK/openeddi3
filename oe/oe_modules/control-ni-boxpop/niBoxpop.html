@@ -4,11 +4,13 @@
 <link rel="import" href="./niBoxpop-radio.html">
 <link rel="import" href="./niBoxPop-endoflist.html">
 <link rel="import" href="./niBoxpop-shorttext.html"/>
+<link rel="import" href="./niBoxpop-checklist.html"/>
 
 <dom-module id="oe-ni-boxpop">
     <style>
         #name-pager {
             height: 23em;
+            overflow-y: scroll;
         }
     </style>
     <template>
@@ -30,6 +32,13 @@
                 <template is="dom-if" if="{{_isShorttext()}}">
                     <oe-boxpop-shorttext name="{{item}}" on-boxpop="saveResponse"></oe-boxpop-shorttext>
                 </template>
+
+                <!-- NI checklist type -->
+                <template is="dom-if" if="{{_isChecklist()}}">
+                    <oe-boxpop-checklist name="{{item}}" on-boxpop="saveResponse" array-prompts="{{oe.arrayPrompts}}"
+                                         show-other="{{oe.other}}"></oe-boxpop-checklist>
+                </template>
+
 
             </template>
             <oe-ni-boxpop-endoflist on-startover="reset" on-nexteddi="nexteddi"></oe-ni-boxpop-endoflist>
@@ -53,6 +62,9 @@
             },
             _isShorttext: function () {
                 return this.oe.controltype == 'shorttext';
+            },
+            _isChecklist: function () {
+                return this.oe.controltype == 'checklist';
             },
             ready: function () {
                 this.reset();

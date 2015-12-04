@@ -1,0 +1,99 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html"/>
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
+
+<dom-module id="oe-boxpop-checklist">
+    <style>
+        #name-checklist-container {
+            background: rgba(255, 255, 255, 0.4);
+            margin: 1em 2em;
+            padding: 0.5em 0.5em;
+        }
+
+        #checklist-header {
+            border-bottom: 1px solid rgba(33, 34, 51, 0.2);
+        }
+
+        #checklist-header > h3 {
+            margin-right: 2em;
+        }
+
+        #checklist-container {
+            margin-top: 1em;
+        }
+
+        #checklist-container > paper-checkbox {
+            margin-bottom: 0.2em;
+        }
+    </style>
+    <template>
+        Checklist
+        <div id="name-checklist-container">
+            <div id="checklist-header" class="layout horizontal">
+                <h3 class="flex">{{name.name}}</h3>
+                <paper-button on-tap="_goNext">Next
+                    <iron-icon icon="arrow-forward"></iron-icon>
+                </paper-button>
+            </div>
+            <div id="checklist-container" class="layout vertical">
+                <template is="dom-repeat" items="{{arrayPrompts}}">
+                    <paper-checkbox on-change="saveCheck">{{item.prompt}}</paper-checkbox>
+                </template>
+            </div>
+            <template is="dom-if" if="{{showOther}}">
+                <div id="otherContainer">
+                    <paper-input label="Other" class="flex" id="otherInput" on-change="saveOther"
+                                 value="{{otherValue}}">
+                        <paper-icon-button suffix icon="check" on-tap="saveOther"></paper-icon-button>
+                        <iron-a11y-keys id="a11y" target="[[otherInput]]" keys="enter"
+                                        on-keys-pressed="saveOther"></iron-a11y-keys>
+                    </paper-input>
+                </div>
+            </template>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-boxpop-checklist',
+            behaviors: [Polymer.NeonAnimationRunnerBehavior, Polymer.NeonAnimatableBehavior],
+            properties: {
+                name: {type: Object},
+                arrayPrompts: {type: Array},
+                showOther: {type: Boolean},
+                nameResponse: {type: Object, value: {value: {}, other: ''}, notify: true},
+                otherValue: {type: String, notify: true},
+                animationConfig: {
+                    value: function () {
+                        return {
+                            'exit': {
+                                name: 'slide-right-animation',
+                                timing: {duration: 200},
+                                node: this
+                            },
+                            'entry': {
+                                name: 'slide-from-left-animation',
+                                timing: {delay: 250},
+                                node: this
+                            }
+                        }
+                    }
+                }
+            },
+            _goNext: function () {
+                this.fire('boxpop');
+            },
+            saveCheck: function (e) {
+                var checked = e.target.checked;
+                var arrayid = e.model.item.arrayid;
+                this.set('nameResponse.value.' + arrayid, checked);
+            },
+            saveOther: function () {
+                this.set('nameResponse.other', this.otherValue);
+            }
+        });
+    </script>
+</dom-module>
