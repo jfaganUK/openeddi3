@@ -1257,7 +1257,7 @@
       "title": "elphExit",
       "controlmodule": "boilerplate",
       "prompt": "Thank you!",
-      "content": "<p>That's it. Thank you for helping us.Equity Lens in Public Health: <a href=\"http://www.uvic.ca/elph\">www.uvic.ca/elph</a></p>"
+      "content": "<p>That's it. Thank you for helping us.</p><p>Equity Lens in Public Health: <a href=\"http://www.uvic.ca/elph\">www.uvic.ca/elph</a></p>"
     }
   ]
 }
