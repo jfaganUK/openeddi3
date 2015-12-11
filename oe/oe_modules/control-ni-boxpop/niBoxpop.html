@@ -5,6 +5,7 @@
 <link rel="import" href="./niBoxPop-endoflist.html">
 <link rel="import" href="./niBoxpop-shorttext.html"/>
 <link rel="import" href="./niBoxpop-checklist.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html"/>
 
 <dom-module id="oe-ni-boxpop">
     <style>
@@ -30,7 +31,7 @@
 
                 <!-- NI Shorttext type -->
                 <template is="dom-if" if="{{_isShorttext()}}">
-                    <oe-boxpop-shorttext name="{{item}}" on-boxpop="saveResponse"></oe-boxpop-shorttext>
+                    <oe-boxpop-shorttext name="{{item}}" oe="[[oe]]" on-boxpop="saveResponse"></oe-boxpop-shorttext>
                 </template>
 
                 <!-- NI checklist type -->
@@ -47,6 +48,7 @@
     <script>
         Polymer({
             is: 'oe-ni-boxpop',
+            behaviors: [Polymer.NeonAnimationRunnerBehavior],
             properties: {
                 oe: {type: Object, notify: true},
                 namelist: {type: String, notify: true},
@@ -55,7 +57,8 @@
                 nameIndex: {type: Number, value: 0}
             },
             listeners: {
-                'undo': 'undoLast'
+                'undo': 'undoLast',
+                'neon-animation-finish': '_onNeonAnimationFinish'
             },
             _isRadio: function () {
                 return this.oe.controltype == 'radio';
@@ -65,6 +68,12 @@
             },
             _isChecklist: function () {
                 return this.oe.controltype == 'checklist';
+            },
+            _onNeonAnimationFinish: function (e, anim) {
+                console.log('[oe-ni-boxpop] Neon Animation Finish');
+                if (this._isShorttext()) {
+                    anim.toPage.focusInput();
+                }
             },
             ready: function () {
                 this.reset();

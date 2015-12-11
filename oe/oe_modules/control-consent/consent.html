@@ -43,6 +43,7 @@
             consentDisagree: function () {
                 this.set('response.value', 'Disagree');
                 this.fire('change:response');
+                app.channels.navigation.command('pool-exit');
             }
         });
     </script>
