@@ -69,6 +69,11 @@
       "sheetid": "7",
       "title": "Thank you!",
       "description": ""
+    },
+    {
+      "sheetid": "exit",
+      "title": "Thank you!",
+      "description": ""
     }
   ],
   "eddilogic": [
@@ -104,32 +109,39 @@
       "helptext": "If more than one applies, select the primary organization that employs you.",
       "arrayPrompts": [
         {
-          "id": 0,
-          "prompt": "First Nations Health Authority"
+          "arrayid": 0,
+          "prompt": "First Nations Health Authority",
+          "value": "First Nations Health Authority"
         },
         {
-          "id": 1,
-          "prompt": "Fraser Health"
+          "arrayid": 1,
+          "prompt": "Fraser Health",
+          "value": "Fraser Health"
         },
         {
-          "id": 2,
-          "prompt": "Interior Health"
+          "arrayid": 2,
+          "prompt": "Interior Health",
+          "value": "Interior Health"
         },
         {
-          "id": 3,
-          "prompt": "Island Health"
+          "arrayid": 3,
+          "prompt": "Island Health",
+          "value": "Island Health"
         },
         {
-          "id": 4,
-          "prompt": "Northern Health"
+          "arrayid": 4,
+          "prompt": "Northern Health",
+          "value": "Northern Health"
         },
         {
-          "id": 5,
-          "prompt": "Provincial Health Services Authority"
+          "arrayid": 5,
+          "prompt": "Provincial Health Services Authority",
+          "value": "Provincial Health Services Authority"
         },
         {
-          "id": 6,
-          "prompt": "Vancouver Coastal Health"
+          "arrayid": 6,
+          "prompt": "Vancouver Coastal Health",
+          "value": "Vancouver Coastal Health"
         }
       ]
     },
@@ -183,90 +195,112 @@
       "title": "primaryPosition",
       "controlmodule": "radiolist",
       "prompt": "What is your primary position? Does your job fall into one of these categories?",
+      "other": true,
       "arrayPrompts": [
         {
-          "id": 0,
-          "prompt": "Public Health Nurse"
+          "arrayid": 0,
+          "prompt": "Public Health Nurse",
+          "value": "Public Health Nurse"
         },
         {
-          "id": 1,
-          "prompt": "Manager"
+          "arrayid": 1,
+          "prompt": "Manager",
+          "value": "Manager"
         },
         {
-          "id": 2,
-          "prompt": "Supervisor"
+          "arrayid": 2,
+          "prompt": "Supervisor",
+          "value": "Supervisor"
         },
         {
-          "id": 3,
-          "prompt": "Acting Supervisor"
+          "arrayid": 3,
+          "prompt": "Acting Supervisor",
+          "value": "Acting Supervisor"
         },
         {
-          "id": 4,
-          "prompt": "Director"
+          "arrayid": 4,
+          "prompt": "Director",
+          "value": "Director"
         },
         {
-          "id": 5,
-          "prompt": "Project Officer"
+          "arrayid": 5,
+          "prompt": "Project Officer",
+          "value": "Project Officer"
         },
         {
-          "id": 6,
-          "prompt": "Health Promoter"
+          "arrayid": 6,
+          "prompt": "Health Promoter",
+          "value": "Health Promoter"
         },
         {
-          "id": 6,
-          "prompt": "Public Health Nutritionist"
+          "arrayid": 7,
+          "prompt": "Public Health Nutritionist",
+          "value": "Public Health Nutritionist"
         },
         {
-          "id": 6,
-          "prompt": "Policy Analyst"
+          "arrayid": 8,
+          "prompt": "Policy Analyst",
+          "value": "Policy Analyst"
         },
         {
-          "id": 6,
-          "prompt": "Public Health Dietitian"
+          "arrayid": 9,
+          "prompt": "Public Health Dietitian",
+          "value": "Public Health Dietitian"
         },
         {
-          "id": 6,
-          "prompt": "Medical Health Officer"
+          "arrayid": 10,
+          "prompt": "Medical Health Officer",
+          "value": "Medical Health Officer"
         },
         {
-          "id": 6,
-          "prompt": "Coordinator"
+          "arrayid": 11,
+          "prompt": "Coordinator",
+          "value": "Coordinator"
         },
         {
-          "id": 6,
-          "prompt": "Community Health Nurse"
+          "arrayid": 12,
+          "prompt": "Community Health Nurse",
+          "value": "Community Health Nurse"
         },
         {
-          "id": 6,
-          "prompt": "Community Developer"
+          "arrayid": 13,
+          "prompt": "Community Developer",
+          "value": "Community Developer"
         },
         {
-          "id": 6,
-          "prompt": "Harm Reduction Coordinator"
+          "arrayid": 14,
+          "prompt": "Harm Reduction Coordinator",
+          "value": "Harm Reduction Coordinator"
         },
         {
-          "id": 6,
-          "prompt": "Senior Executive"
+          "arrayid": 15,
+          "prompt": "Senior Executive",
+          "value": "Senior Executive"
         },
         {
-          "id": 6,
-          "prompt": "Outreach Counsellor"
+          "arrayid": 16,
+          "prompt": "Outreach Counsellor",
+          "value": "Outreach Counsellor"
         },
         {
-          "id": 6,
-          "prompt": "HIV Prevention Worker"
+          "arrayid": 17,
+          "prompt": "HIV Prevention Worker",
+          "value": "HIV Prevention Worker"
         },
         {
-          "id": 6,
-          "prompt": "Street Nurse"
+          "arrayid": 18,
+          "prompt": "Street Nurse",
+          "value": "Street Nurse"
         },
         {
-          "id": 6,
-          "prompt": "Nutritionist"
+          "arrayid": 19,
+          "prompt": "Nutritionist",
+          "value": "Nutritionist"
         },
         {
-          "id": 6,
-          "prompt": "Other"
+          "arrayid": 20,
+          "prompt": "Other",
+          "value": "Other"
         }
       ]
     },
@@ -1213,6 +1247,16 @@
           "value": "BC Association of Aboriginal Friendship Centres (www.bcaafc.com)"
         }
       ]
+    },
+    {
+      "eid": "exit1",
+      "sheetid": "exit",
+      "poolid": "elph",
+      "sortIndex": 0,
+      "title": "elphExit",
+      "controlmodule": "boilerplate",
+      "prompt": "Thank you!",
+      "content": "<p>That's it. Thank you for helping us.Equity Lens in Public Health: <a href=\"http://www.uvic.ca/elph\">www.uvic.ca/elph</a></p>"
     }
   ]
 }
