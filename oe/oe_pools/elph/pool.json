@@ -8,6 +8,7 @@
     "sheetOrder": [
       "intro",
       "consent",
+      "7",
       "1",
       "2",
       "3",
@@ -15,7 +16,6 @@
       "5",
       "6",
       "altertiesSheet",
-      "7",
       "exit"
     ],
     "dateCreated": "2015-10-13 11:21:23-04:00"

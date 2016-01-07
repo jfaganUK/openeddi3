@@ -30,7 +30,6 @@
             properties: {
                 nameResponse: {type: Object, value: {value: ''}, notify: true},
                 name: {type: Object, notify: true},
-
                 prompt: {type: String, value: 'Type response - press Enter or click check for next name.'},
                 answered: {type: Boolean, value: false},
                 animationConfig: {
@@ -52,7 +51,6 @@
             },
             saveResponse: function () {
                 if (!this.answered) {
-                    console.log('[oe-boxpop-shorttext] Save response');
                     this.answered = true;
                     this.fire('boxpop');
                 }
@@ -60,15 +58,20 @@
             focusInput: function () {
                 this.$.shorttextInput.$.input.focus();
             },
+            _getNameResponse: function () {
+                var details = this.name.details[this.oe.eid];
+                console.log('Name: ' + this.name.name);
+                console.table(this.name.details);
+                if (details) {
+                    this.set('nameResponse.value', details.value);
+                } else {
+                    this.set('nameResponse.value', '');
+                }
+            },
             attached: function () {
-                this.async(function () {
-                    document.addEventListener('neon-animation-finish', function () {
-                        console.log('animation finished');
-                    });
-                });
+                this._getNameResponse();
             },
             ready: function () {
-
             }
         });
     </script>
