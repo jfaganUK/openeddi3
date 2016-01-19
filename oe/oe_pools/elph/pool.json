@@ -646,7 +646,7 @@
       "controlmodule": "boilerplate",
       "sortIndex": 0,
       "prompt": "In the next few questions, you be prompted to answer the question for each of the contacts you listed.",
-      "content": "<img style=\"width: 100%;\" src=\"./assets/boxpop-demo.gif\"></img>"
+      "content": "<p>Below is a short animated image showing how these next questions will work. You will be prompted for information regarding each contact you named. After providinga response the next contact will appear. At the end of your list, you will be asked to continue with the survey.</p><div class=\"flex\"><img style=\"width: 100%;\" src=\"./assets/boxpop-demo.gif\"></img></div>"
     },
     {
       "eid": "406",
