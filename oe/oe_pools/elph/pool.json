@@ -68,7 +68,7 @@
     },
     {
       "sheetid": "7",
-      "title": "Thank you!",
+      "title": "Thank you for agreeing to take the survey.",
       "description": ""
     },
     {
@@ -691,21 +691,27 @@
       "prompt": "What is the gender of each of the contacts you named?",
       "namelist": "genContacts",
       "controltype": "radio",
+      "other": true,
       "arrayPrompts": [
         {
           "arrayid": 0,
           "prompt": "Male",
-          "value": "0"
+          "value": "male"
         },
         {
           "arrayid": 1,
           "prompt": "Female",
-          "value": "1"
+          "value": "female"
         },
         {
           "arrayid": 2,
-          "prompt": "Neither male or female",
-          "value": "2"
+          "prompt": "Prefer not to say",
+          "value": "preferNotToSay"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Trans*",
+          "value": "trans"
         }
       ]
     },
@@ -1105,7 +1111,7 @@
       "controlmodule": "niBoxpop",
       "prompt": "Please rate your agreement with this statement for each contact. “This collaboration is effective in incorporating a health equity lens (e.g. determinants of health lens, gender lens, intersectional lens, LGBTQ lens, Indigenous lens or other).\"",
       "namelist": "genContacts",
-      "controltype": "shorttext",
+      "controltype": "radio",
       "filter": {
         "details": {
           "key": "405",
@@ -1144,7 +1150,7 @@
       "controlmodule": "niBoxpop",
       "prompt": "Is there any dedicated funding or support for the work you do together with each contact (check all that apply)?",
       "helpText": "In-kind support is non-monetary resources an organization might provide. This might include: staff time, facility space, supplies (office supplies, photocopying).",
-      "controltype": "checklist",
+      "controltype": "radiolist",
       "filter": {
         "details": {
           "key": "405",
