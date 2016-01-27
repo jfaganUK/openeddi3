@@ -30,10 +30,6 @@ module.exports = Mn.ItemView.extend({
         app.appState.updateSheetIndex();
     },
 
-    onBeforeDestroy: function () {
-        console.log('[view-pool-footer] About to be destroyed');
-    },
-
     nextSheet: function () {
         app.channels.navigation.command('pool-next-sheet');
     },
