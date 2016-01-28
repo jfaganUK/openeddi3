@@ -54993,8 +54993,9 @@ module.exports = Backbone.Model.extend({
 
     updateSheetIndex: function () {
         if (app.currentPool) {
-            var sheets = app.currentPool.get('sheetlogic');
-            var sids = _(sheets).pluck('sheetid').value();
+            //var sheets = app.currentPool.get('sheetlogic');
+            //var sids = _(sheets).pluck('sheetid').value();
+            var sids = app.currentPool.get('poollogic').sheetOrder;
             var sid = this.get('sheetid');
             var ix = _.indexOf(sids, sid);
             // if we can't find the sheetid in the array, set it to the first page
@@ -56271,10 +56272,6 @@ module.exports = Mn.ItemView.extend({
     initialize: function () {
         // Otherwise it will show 1/x instead of the actual page
         app.appState.updateSheetIndex();
-    },
-
-    onBeforeDestroy: function () {
-        console.log('[view-pool-footer] About to be destroyed');
     },
 
     nextSheet: function () {

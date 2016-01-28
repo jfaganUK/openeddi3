@@ -35,8 +35,9 @@ module.exports = Backbone.Model.extend({
 
     updateSheetIndex: function () {
         if (app.currentPool) {
-            var sheets = app.currentPool.get('sheetlogic');
-            var sids = _(sheets).pluck('sheetid').value();
+            //var sheets = app.currentPool.get('sheetlogic');
+            //var sids = _(sheets).pluck('sheetid').value();
+            var sids = app.currentPool.get('poollogic').sheetOrder;
             var sid = this.get('sheetid');
             var ix = _.indexOf(sids, sid);
             // if we can't find the sheetid in the array, set it to the first page
