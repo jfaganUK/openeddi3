@@ -143,6 +143,11 @@
           "arrayid": 6,
           "prompt": "Vancouver Coastal Health",
           "value": "Vancouver Coastal Health"
+        },
+        {
+          "arrayid": 7,
+          "prompt": "Ministry of Health",
+          "value": "Ministry of Health"
         }
       ]
     },
@@ -154,7 +159,7 @@
       "title": "workDrugs",
       "controlmodule": "checklist",
       "other": true,
-      "prompt": "Does your work involve preventing the use of alcohol, tobacco, illicit or prescription drugs or reducing harms of alcohol, tobacco, illicit drugs or prescription drugs (including harm reduction programs)?",
+      "prompt": "Does your work involve preventing the use of alcohol, tobacco, illicit or pharmaceutical drugs or reducing harms of alcohol, tobacco, illicit drugs or pharmaceutical drugs (including harm reduction programs)?",
       "helptext": "Check all that apply. If your work does not involve one of these areas, but you still think you should do this survey, please get in touch with us: elph@uvic.ca.",
       "arrayPrompts": [
         {
@@ -174,8 +179,8 @@
         },
         {
           "arrayid": 4,
-          "prompt": "Prescription drugs",
-          "value": "Prescription drugs"
+          "prompt": "Pharmaceutical drugs",
+          "value": "Pharmaceutical drugs"
         }
       ]
     },
@@ -312,7 +317,7 @@
       "sortIndex": 4,
       "title": "departmentName",
       "controlmodule": "shorttext",
-      "prompt": "What is the name of your program, department, unit or branch?"
+      "prompt": "What is the name of your program, department, unit or branch (if known or applicable)?"
     },
     {
       "eid": "106",
@@ -365,7 +370,7 @@
       "sortIndex": 8,
       "title": "healthEquityAuthority",
       "controlmodule": "radiolist",
-      "prompt": "Is health equity a priority in your health authority?",
+      "prompt": "Is health equity a priority in your organization?",
       "arrayPrompts": [
         {
           "arrayid": 0,
@@ -626,7 +631,7 @@
       "controlmodule": "boilerplate",
       "sortIndex": 0,
       "prompt": "Your Contacts",
-      "content": "<p>We are interested in who you work with to prevent harms of substance use outside of BC health authorities and the BC Ministry of Health.</p><p>For example, do you work with anyone from a non-profit organization, a peer run organization or community group, school districts or municipalities, faith organizations or universities to prevent harms of alcohol, tobacco, illicit substances, or misuse of prescription drugs? Also, consider if you work directly with peers, families, communities or other individuals who are affected by substance use and/or harms of substance use?</p><p>There are many examples of public health programs and policies that prevent substance use and/or harms of substance use such as harm reduction programs, tobacco reduction, school-based programs, and municipal alcohol policies. You can list any number of people up to a <strong>maximum of 20</strong> that you have had <strong>contact with in the last 12 months</strong>.<p>Please list each person only once. To protect confidentiality, please use their initials rather than name.</p><p>For our analysis to work, it's important that you use their real initials. If two people have the same initials, please add an extra character that will help you remember which person is which.</p><p>DO NOT INCLUDE:  people in your immediate work environment, your supervisor, people in your department or health authority, people in other health authorities, or people in the Ministry of Health. <strong>We are interested in collaborations outside of health authorities and the  Ministry of Health.</strong></p>"
+      "content": "<p>We are interested in who you work with to prevent harms of substance use outside of BC health authorities and the BC Ministry of Health.</p><p>For example, do you work with anyone from a non-profit organization, a peer run organization or community group, school districts or municipalities, faith organizations or universities to prevent harms of alcohol, tobacco, illicit substances, or misuse of pharmaceutical drugs? Also, consider if you work directly with peers, families, communities or other individuals who are affected by substance use and/or harms of substance use?</p><p>There are many examples of public health programs and policies that prevent substance use and/or harms of substance use such as harm reduction programs, tobacco reduction, school-based programs, and municipal alcohol policies. You can list any number of people up to a <strong>maximum of 20</strong> that you have had <strong>contact with in the last 12 months</strong>.<p>Please list each person only once. To protect confidentiality, please use their initials rather than name.</p><p>For our analysis to work, it's important that you use their real initials. If two people have the same initials, please add an extra character that will help you remember which person is which.</p><p>DO NOT INCLUDE:  people in your immediate work environment, your supervisor, people in your department or health authority, people in other health authorities, or people in the Ministry of Health. <strong>We are interested in collaborations outside of health authorities and the  Ministry of Health.</strong></p>"
     },
     {
       "eid": "301",
