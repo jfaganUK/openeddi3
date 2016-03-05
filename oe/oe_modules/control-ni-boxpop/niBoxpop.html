@@ -73,6 +73,7 @@
                 console.log('[oe-ni-boxpop] Neon Animation Finish');
                 if (this._isShorttext()) {
                     anim.toPage.focusInput();
+                    anim.toPage.answered = false;
                 }
             },
             ready: function () {

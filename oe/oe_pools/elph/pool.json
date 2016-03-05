@@ -1046,7 +1046,7 @@
         },
         {
           "arrayid": 3,
-          "prompt": "Actively involved in identification of needs or issues in planning and ",
+          "prompt": "Planning and developing interventions with focus on empowerment.",
           "value": "3"
         }
       ]
@@ -1271,6 +1271,15 @@
       "controlmodule": "boilerplate",
       "prompt": "Thank you!",
       "content": "<p>That's it. Thank you for helping us.</p><p>Equity Lens in Public Health: <a href=\"http://www.uvic.ca/elph\">www.uvic.ca/elph</a></p>"
+    },
+    {
+      "eid": "exit2",
+      "sheetid": "exit",
+      "poolid": "elph",
+      "sortIndex": 1,
+      "title": "exitComments",
+      "controlmodule": "shorttext",
+      "prompt": "If you had any additional comments for the researchers, you can leave them here."
     }
   ]
 }
