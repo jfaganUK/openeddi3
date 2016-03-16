@@ -28,10 +28,10 @@ _.templateSettings.variable = 'rc';
 
 // Determine local storage is active or not
 // This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
-Backbone.Collection.prototype.local = true;
-Backbone.Collection.prototype.remote = true;
-Backbone.Model.prototype.local = true;
-Backbone.Model.prototype.remote = true;
+//Backbone.Collection.prototype.local = true;
+//Backbone.Collection.prototype.remote = false;
+//Backbone.Model.prototype.local = true;
+//Backbone.Model.prototype.remote = false;
 
 window.RESIZE_WIDTH = 600;
 
