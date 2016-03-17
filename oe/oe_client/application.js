@@ -172,6 +172,7 @@ var App = Marionette.Application.extend({
     },
 
     loadPool: function (e) {
+
         if (e.poolid) {
             app.appState.set('poolid', e.poolid);
         }
@@ -179,8 +180,8 @@ var App = Marionette.Application.extend({
         // If the load-pool-sheet command was complied with, then there will be a sheetid property
         if(e.sheetid) {
             app.appState.set({sheetid: e.sheetid});
-            app.appState.save();
         }
+        app.appState.save();
 
         // Once the pool is ready, launch it
         app.channels.pool.once('load-pool-ready', _.bind(this.poolLaunch, this));
@@ -278,7 +279,17 @@ var App = Marionette.Application.extend({
             app.currentPool.set('poolstatus', poolstatus);
             app.currentPool.set('sheetindex', idx);
             app.currentPool.save();
+            app.appState.save();
         }
+    },
+
+    //TODO: create a 'goto location' function that will scroll or move to any arbtrary location on
+    // the pool. But for now, this will just scroll to a certain eddi.
+    gotoEddi: function (eid) {
+        // Find what sheet the eddi is on
+        // Load that sheet
+        // Scroll down to that eddi location
+        app.currentPool;
     },
 
     getCurrentSheetIndex: function () {

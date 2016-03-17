@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-    (function (global) {
+(function (global){
 /*
  * OpenEddi
  * (c) 2015, Jesse Fagan
@@ -8,17 +8,17 @@
 
 
 //var WebComponents = require('webcomponents');
-        global.jQuery = global.$ = require('jquery');
-        var dataTable = require('datatables');
-        $.DataTable = dataTable;
-        $.fn.DataTable = dataTable;
+global.jQuery = global.$ = require('jquery');
+var dataTable = require('datatables');
+$.DataTable = dataTable;
+$.fn.DataTable = dataTable;
 var _ = require('lodash');
 var Backbone = require('backbone');
 Backbone.$ = $;
 Backbone.Radio = require('backbone.radio');
 require('./oe_client/backbone.dualstorage.browserify');
 require('./oe_client/backbone.dualstorage.oe.helpers');
-var Marionette = require('marionette');
+var Marionette = require('backbone.marionette');
 var PolymerView = require('./oe_client/views/marionette.polymerview');
 Mn.PolymerView = Marionette.PolymerView = PolymerView;
 
@@ -30,10 +30,11 @@ _.templateSettings.variable = 'rc';
 
 // Determine local storage is active or not
 // This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
-Backbone.Collection.prototype.local = true;
-Backbone.Collection.prototype.remote = true;
-Backbone.Model.prototype.local = true;
-Backbone.Model.prototype.remote = true;
+// Both - meaning we do nothing to the defaults, apparently
+//Backbone.Collection.prototype.local = true;
+//Backbone.Collection.prototype.remote = false;
+//Backbone.Model.prototype.local = true;
+//Backbone.Model.prototype.remote = false;
 
 window.RESIZE_WIDTH = 600;
 
@@ -62,40 +63,45 @@ app.on('start', function() {
     // Create the router
     var Router = require('./oe_client/routers/oe-router');
     app.router = new Router();
-
-    // We want to retrieve the appstate from localstorage, if it exists there.
-    // That way, on a refresh, the previous state can be restored
-    AppState = require('./oe_client/models/model-appstate');
-    app.appState = new AppState();
-    app.appState.fetch();
+    Backbone.history.start({pushState: false});
 
     console.log('--- OpenEddi Application Started --');
 
 });
 
-$(document).ready(function () {
-    app.start();
+    /*
+     Order of events here.
+     Wait for webcomponents to be ready, otherwise we can't render anything
+     Sync the appstate and either get the existing last saved appstate, or get a new appstate
+     Then start the application
+     */
 
-    Backbone.history.start({pushState: false});
+// Need to wait until webcomponents are ready before launching the application
+    window.addEventListener('WebComponentsReady', function () {
+
+    // We want to retrieve the appstate from localstorage, if it exists there.
+    // That way, on a refresh, the previous state can be restored
+    AppState = require('./oe_client/models/model-appstate');
+    app.appState = new AppState();
+        app.appState.fetch({
+            success: function (model, response, options) {
+                console.log('[appState] Fetch success.');
+                //app.appState.trigger('initialFetchSuccess');
+                app.start();
+            },
+            error: function (model, response, options) {
+                console.error('[appState] ERROR failure to fetch appstate');
+                app.appState.trigger('initialFetchError');
+            }
+        });
+
+        // Wait for the appstate to sync, then start the application
+        //app.listenTo(app.appState, 'initialFetchSuccess', app.start());
+        //app.start();
 });
 
-    }).call(this, typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-}, {
-    "./oe-modules": 11,
-    "./oe_client/application": 12,
-    "./oe_client/backbone.dualstorage.browserify": 13,
-    "./oe_client/backbone.dualstorage.oe.helpers": 14,
-    "./oe_client/models/model-appstate": 32,
-    "./oe_client/routers/oe-router": 39,
-    "./oe_client/views/marionette.polymerview": 58,
-    "backbone": 7,
-    "backbone.radio": 6,
-    "datatables": 4,
-    "jquery": 8,
-    "lodash": 9,
-    "marionette": 10
-}],
-    2: [function (require, module, exports) {
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./oe-modules":11,"./oe_client/application":12,"./oe_client/backbone.dualstorage.browserify":13,"./oe_client/backbone.dualstorage.oe.helpers":14,"./oe_client/models/model-appstate":32,"./oe_client/routers/oe-router":39,"./oe_client/views/marionette.polymerview":58,"backbone":8,"backbone.marionette":6,"backbone.radio":7,"datatables":4,"jquery":9,"lodash":10}],2:[function(require,module,exports){
 (function (process,global){
 /*!
  * async
@@ -25513,30 +25519,3973 @@ return jQuery;
 },{}],6:[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
-// Backbone.Radio v0.9.0
+// MarionetteJS (Backbone.Marionette)
+// ----------------------------------
+// v2.4.3
+//
+// Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
+// Distributed under MIT license
+//
+// http://marionettejs.com
+
+
+/*!
+ * Includes BabySitter
+ * https://github.com/marionettejs/backbone.babysitter/
+ *
+ * Includes Wreqr
+ * https://github.com/marionettejs/backbone.wreqr/
+ */
+
+
 (function(root, factory) {
+
+  /* istanbul ignore next */
   if (typeof define === 'function' && define.amd) {
-    define(['../../backbone/backbone', 'underscore'], function(Backbone, _) {
-      return factory(Backbone, _);
+    define(['backbone', 'underscore'], function(Backbone, _) {
+      return (root.Marionette = root.Mn = factory(root, Backbone, _));
     });
-  }
-  else if (typeof exports !== 'undefined') {
+  } else if (typeof exports !== 'undefined') {
     var Backbone = __browserify_shim_require__('backbone');
     var _ = __browserify_shim_require__('underscore');
-    module.exports = factory(Backbone, _);
+    module.exports = factory(root, Backbone, _);
+  } else {
+    root.Marionette = root.Mn = factory(root, root.Backbone, root._);
   }
-  else {
-    factory(root.Backbone, root._);
-  }
-}(this, function(Backbone, _) {
+
+}(this, function(root, Backbone, _) {
   'use strict';
 
+  /* istanbul ignore next */
+  // Backbone.BabySitter
+  // -------------------
+  // v0.1.10
+  //
+  // Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
+  // Distributed under MIT license
+  //
+  // http://github.com/marionettejs/backbone.babysitter
+  (function(Backbone, _) {
+    "use strict";
+    var previousChildViewContainer = Backbone.ChildViewContainer;
+    // BabySitter.ChildViewContainer
+    // -----------------------------
+    //
+    // Provide a container to store, retrieve and
+    // shut down child views.
+    Backbone.ChildViewContainer = function(Backbone, _) {
+      // Container Constructor
+      // ---------------------
+      var Container = function(views) {
+        this._views = {};
+        this._indexByModel = {};
+        this._indexByCustom = {};
+        this._updateLength();
+        _.each(views, this.add, this);
+      };
+      // Container Methods
+      // -----------------
+      _.extend(Container.prototype, {
+        // Add a view to this container. Stores the view
+        // by `cid` and makes it searchable by the model
+        // cid (and model itself). Optionally specify
+        // a custom key to store an retrieve the view.
+        add: function(view, customIndex) {
+          var viewCid = view.cid;
+          // store the view
+          this._views[viewCid] = view;
+          // index it by model
+          if (view.model) {
+            this._indexByModel[view.model.cid] = viewCid;
+          }
+          // index by custom
+          if (customIndex) {
+            this._indexByCustom[customIndex] = viewCid;
+          }
+          this._updateLength();
+          return this;
+        },
+        // Find a view by the model that was attached to
+        // it. Uses the model's `cid` to find it.
+        findByModel: function(model) {
+          return this.findByModelCid(model.cid);
+        },
+        // Find a view by the `cid` of the model that was attached to
+        // it. Uses the model's `cid` to find the view `cid` and
+        // retrieve the view using it.
+        findByModelCid: function(modelCid) {
+          var viewCid = this._indexByModel[modelCid];
+          return this.findByCid(viewCid);
+        },
+        // Find a view by a custom indexer.
+        findByCustom: function(index) {
+          var viewCid = this._indexByCustom[index];
+          return this.findByCid(viewCid);
+        },
+        // Find by index. This is not guaranteed to be a
+        // stable index.
+        findByIndex: function(index) {
+          return _.values(this._views)[index];
+        },
+        // retrieve a view by its `cid` directly
+        findByCid: function(cid) {
+          return this._views[cid];
+        },
+        // Remove a view
+        remove: function(view) {
+          var viewCid = view.cid;
+          // delete model index
+          if (view.model) {
+            delete this._indexByModel[view.model.cid];
+          }
+          // delete custom index
+          _.any(this._indexByCustom, function(cid, key) {
+            if (cid === viewCid) {
+              delete this._indexByCustom[key];
+              return true;
+            }
+          }, this);
+          // remove the view from the container
+          delete this._views[viewCid];
+          // update the length
+          this._updateLength();
+          return this;
+        },
+        // Call a method on every view in the container,
+        // passing parameters to the call method one at a
+        // time, like `function.call`.
+        call: function(method) {
+          this.apply(method, _.tail(arguments));
+        },
+        // Apply a method on every view in the container,
+        // passing parameters to the call method one at a
+        // time, like `function.apply`.
+        apply: function(method, args) {
+          _.each(this._views, function(view) {
+            if (_.isFunction(view[method])) {
+              view[method].apply(view, args || []);
+            }
+          });
+        },
+        // Update the `.length` attribute on this container
+        _updateLength: function() {
+          this.length = _.size(this._views);
+        }
+      });
+      // Borrowing this code from Backbone.Collection:
+      // http://backbonejs.org/docs/backbone.html#section-106
+      //
+      // Mix in methods from Underscore, for iteration, and other
+      // collection related features.
+      var methods = [ "forEach", "each", "map", "find", "detect", "filter", "select", "reject", "every", "all", "some", "any", "include", "contains", "invoke", "toArray", "first", "initial", "rest", "last", "without", "isEmpty", "pluck", "reduce" ];
+      _.each(methods, function(method) {
+        Container.prototype[method] = function() {
+          var views = _.values(this._views);
+          var args = [ views ].concat(_.toArray(arguments));
+          return _[method].apply(_, args);
+        };
+      });
+      // return the public API
+      return Container;
+    }(Backbone, _);
+    Backbone.ChildViewContainer.VERSION = "0.1.10";
+    Backbone.ChildViewContainer.noConflict = function() {
+      Backbone.ChildViewContainer = previousChildViewContainer;
+      return this;
+    };
+    return Backbone.ChildViewContainer;
+  })(Backbone, _);
+
+  /* istanbul ignore next */
+  // Backbone.Wreqr (Backbone.Marionette)
+  // ----------------------------------
+  // v1.3.5
+  //
+  // Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
+  // Distributed under MIT license
+  //
+  // http://github.com/marionettejs/backbone.wreqr
+  (function(Backbone, _) {
+    "use strict";
+    var previousWreqr = Backbone.Wreqr;
+    var Wreqr = Backbone.Wreqr = {};
+    Backbone.Wreqr.VERSION = "1.3.5";
+    Backbone.Wreqr.noConflict = function() {
+      Backbone.Wreqr = previousWreqr;
+      return this;
+    };
+    // Handlers
+    // --------
+    // A registry of functions to call, given a name
+    Wreqr.Handlers = function(Backbone, _) {
+      "use strict";
+      // Constructor
+      // -----------
+      var Handlers = function(options) {
+        this.options = options;
+        this._wreqrHandlers = {};
+        if (_.isFunction(this.initialize)) {
+          this.initialize(options);
+        }
+      };
+      Handlers.extend = Backbone.Model.extend;
+      // Instance Members
+      // ----------------
+      _.extend(Handlers.prototype, Backbone.Events, {
+        // Add multiple handlers using an object literal configuration
+        setHandlers: function(handlers) {
+          _.each(handlers, function(handler, name) {
+            var context = null;
+            if (_.isObject(handler) && !_.isFunction(handler)) {
+              context = handler.context;
+              handler = handler.callback;
+            }
+            this.setHandler(name, handler, context);
+          }, this);
+        },
+        // Add a handler for the given name, with an
+        // optional context to run the handler within
+        setHandler: function(name, handler, context) {
+          var config = {
+            callback: handler,
+            context: context
+          };
+          this._wreqrHandlers[name] = config;
+          this.trigger("handler:add", name, handler, context);
+        },
+        // Determine whether or not a handler is registered
+        hasHandler: function(name) {
+          return !!this._wreqrHandlers[name];
+        },
+        // Get the currently registered handler for
+        // the specified name. Throws an exception if
+        // no handler is found.
+        getHandler: function(name) {
+          var config = this._wreqrHandlers[name];
+          if (!config) {
+            return;
+          }
+          return function() {
+            return config.callback.apply(config.context, arguments);
+          };
+        },
+        // Remove a handler for the specified name
+        removeHandler: function(name) {
+          delete this._wreqrHandlers[name];
+        },
+        // Remove all handlers from this registry
+        removeAllHandlers: function() {
+          this._wreqrHandlers = {};
+        }
+      });
+      return Handlers;
+    }(Backbone, _);
+    // Wreqr.CommandStorage
+    // --------------------
+    //
+    // Store and retrieve commands for execution.
+    Wreqr.CommandStorage = function() {
+      "use strict";
+      // Constructor function
+      var CommandStorage = function(options) {
+        this.options = options;
+        this._commands = {};
+        if (_.isFunction(this.initialize)) {
+          this.initialize(options);
+        }
+      };
+      // Instance methods
+      _.extend(CommandStorage.prototype, Backbone.Events, {
+        // Get an object literal by command name, that contains
+        // the `commandName` and the `instances` of all commands
+        // represented as an array of arguments to process
+        getCommands: function(commandName) {
+          var commands = this._commands[commandName];
+          // we don't have it, so add it
+          if (!commands) {
+            // build the configuration
+            commands = {
+              command: commandName,
+              instances: []
+            };
+            // store it
+            this._commands[commandName] = commands;
+          }
+          return commands;
+        },
+        // Add a command by name, to the storage and store the
+        // args for the command
+        addCommand: function(commandName, args) {
+          var command = this.getCommands(commandName);
+          command.instances.push(args);
+        },
+        // Clear all commands for the given `commandName`
+        clearCommands: function(commandName) {
+          var command = this.getCommands(commandName);
+          command.instances = [];
+        }
+      });
+      return CommandStorage;
+    }();
+    // Wreqr.Commands
+    // --------------
+    //
+    // A simple command pattern implementation. Register a command
+    // handler and execute it.
+    Wreqr.Commands = function(Wreqr, _) {
+      "use strict";
+      return Wreqr.Handlers.extend({
+        // default storage type
+        storageType: Wreqr.CommandStorage,
+        constructor: function(options) {
+          this.options = options || {};
+          this._initializeStorage(this.options);
+          this.on("handler:add", this._executeCommands, this);
+          Wreqr.Handlers.prototype.constructor.apply(this, arguments);
+        },
+        // Execute a named command with the supplied args
+        execute: function(name) {
+          name = arguments[0];
+          var args = _.rest(arguments);
+          if (this.hasHandler(name)) {
+            this.getHandler(name).apply(this, args);
+          } else {
+            this.storage.addCommand(name, args);
+          }
+        },
+        // Internal method to handle bulk execution of stored commands
+        _executeCommands: function(name, handler, context) {
+          var command = this.storage.getCommands(name);
+          // loop through and execute all the stored command instances
+          _.each(command.instances, function(args) {
+            handler.apply(context, args);
+          });
+          this.storage.clearCommands(name);
+        },
+        // Internal method to initialize storage either from the type's
+        // `storageType` or the instance `options.storageType`.
+        _initializeStorage: function(options) {
+          var storage;
+          var StorageType = options.storageType || this.storageType;
+          if (_.isFunction(StorageType)) {
+            storage = new StorageType();
+          } else {
+            storage = StorageType;
+          }
+          this.storage = storage;
+        }
+      });
+    }(Wreqr, _);
+    // Wreqr.RequestResponse
+    // ---------------------
+    //
+    // A simple request/response implementation. Register a
+    // request handler, and return a response from it
+    Wreqr.RequestResponse = function(Wreqr, _) {
+      "use strict";
+      return Wreqr.Handlers.extend({
+        request: function(name) {
+          if (this.hasHandler(name)) {
+            return this.getHandler(name).apply(this, _.rest(arguments));
+          }
+        }
+      });
+    }(Wreqr, _);
+    // Event Aggregator
+    // ----------------
+    // A pub-sub object that can be used to decouple various parts
+    // of an application through event-driven architecture.
+    Wreqr.EventAggregator = function(Backbone, _) {
+      "use strict";
+      var EA = function() {};
+      // Copy the `extend` function used by Backbone's classes
+      EA.extend = Backbone.Model.extend;
+      // Copy the basic Backbone.Events on to the event aggregator
+      _.extend(EA.prototype, Backbone.Events);
+      return EA;
+    }(Backbone, _);
+    // Wreqr.Channel
+    // --------------
+    //
+    // An object that wraps the three messaging systems:
+    // EventAggregator, RequestResponse, Commands
+    Wreqr.Channel = function(Wreqr) {
+      "use strict";
+      var Channel = function(channelName) {
+        this.vent = new Backbone.Wreqr.EventAggregator();
+        this.reqres = new Backbone.Wreqr.RequestResponse();
+        this.commands = new Backbone.Wreqr.Commands();
+        this.channelName = channelName;
+      };
+      _.extend(Channel.prototype, {
+        // Remove all handlers from the messaging systems of this channel
+        reset: function() {
+          this.vent.off();
+          this.vent.stopListening();
+          this.reqres.removeAllHandlers();
+          this.commands.removeAllHandlers();
+          return this;
+        },
+        // Connect a hash of events; one for each messaging system
+        connectEvents: function(hash, context) {
+          this._connect("vent", hash, context);
+          return this;
+        },
+        connectCommands: function(hash, context) {
+          this._connect("commands", hash, context);
+          return this;
+        },
+        connectRequests: function(hash, context) {
+          this._connect("reqres", hash, context);
+          return this;
+        },
+        // Attach the handlers to a given message system `type`
+        _connect: function(type, hash, context) {
+          if (!hash) {
+            return;
+          }
+          context = context || this;
+          var method = type === "vent" ? "on" : "setHandler";
+          _.each(hash, function(fn, eventName) {
+            this[type][method](eventName, _.bind(fn, context));
+          }, this);
+        }
+      });
+      return Channel;
+    }(Wreqr);
+    // Wreqr.Radio
+    // --------------
+    //
+    // An object that lets you communicate with many channels.
+    Wreqr.radio = function(Wreqr, _) {
+      "use strict";
+      var Radio = function() {
+        this._channels = {};
+        this.vent = {};
+        this.commands = {};
+        this.reqres = {};
+        this._proxyMethods();
+      };
+      _.extend(Radio.prototype, {
+        channel: function(channelName) {
+          if (!channelName) {
+            throw new Error("Channel must receive a name");
+          }
+          return this._getChannel(channelName);
+        },
+        _getChannel: function(channelName) {
+          var channel = this._channels[channelName];
+          if (!channel) {
+            channel = new Wreqr.Channel(channelName);
+            this._channels[channelName] = channel;
+          }
+          return channel;
+        },
+        _proxyMethods: function() {
+          _.each([ "vent", "commands", "reqres" ], function(system) {
+            _.each(messageSystems[system], function(method) {
+              this[system][method] = proxyMethod(this, system, method);
+            }, this);
+          }, this);
+        }
+      });
+      var messageSystems = {
+        vent: [ "on", "off", "trigger", "once", "stopListening", "listenTo", "listenToOnce" ],
+        commands: [ "execute", "setHandler", "setHandlers", "removeHandler", "removeAllHandlers" ],
+        reqres: [ "request", "setHandler", "setHandlers", "removeHandler", "removeAllHandlers" ]
+      };
+      var proxyMethod = function(radio, system, method) {
+        return function(channelName) {
+          var messageSystem = radio._getChannel(channelName)[system];
+          return messageSystem[method].apply(messageSystem, _.rest(arguments));
+        };
+      };
+      return new Radio();
+    }(Wreqr, _);
+    return Backbone.Wreqr;
+  })(Backbone, _);
+
+  var previousMarionette = root.Marionette;
+  var previousMn = root.Mn;
+
+  var Marionette = Backbone.Marionette = {};
+
+  Marionette.VERSION = '2.4.3';
+
+  Marionette.noConflict = function() {
+    root.Marionette = previousMarionette;
+    root.Mn = previousMn;
+    return this;
+  };
+
+  Backbone.Marionette = Marionette;
+
+  // Get the Deferred creator for later use
+  Marionette.Deferred = Backbone.$.Deferred;
+
+  /* jshint unused: false *//* global console */
+  
+  // Helpers
+  // -------
+  
+  // Marionette.extend
+  // -----------------
+  
+  // Borrow the Backbone `extend` method so we can use it as needed
+  Marionette.extend = Backbone.Model.extend;
+  
+  // Marionette.isNodeAttached
+  // -------------------------
+  
+  // Determine if `el` is a child of the document
+  Marionette.isNodeAttached = function(el) {
+    return Backbone.$.contains(document.documentElement, el);
+  };
+  
+  // Merge `keys` from `options` onto `this`
+  Marionette.mergeOptions = function(options, keys) {
+    if (!options) { return; }
+    _.extend(this, _.pick(options, keys));
+  };
+  
+  // Marionette.getOption
+  // --------------------
+  
+  // Retrieve an object, function or other value from a target
+  // object or its `options`, with `options` taking precedence.
+  Marionette.getOption = function(target, optionName) {
+    if (!target || !optionName) { return; }
+    if (target.options && (target.options[optionName] !== undefined)) {
+      return target.options[optionName];
+    } else {
+      return target[optionName];
+    }
+  };
+  
+  // Proxy `Marionette.getOption`
+  Marionette.proxyGetOption = function(optionName) {
+    return Marionette.getOption(this, optionName);
+  };
+  
+  // Similar to `_.result`, this is a simple helper
+  // If a function is provided we call it with context
+  // otherwise just return the value. If the value is
+  // undefined return a default value
+  Marionette._getValue = function(value, context, params) {
+    if (_.isFunction(value)) {
+      value = params ? value.apply(context, params) : value.call(context);
+    }
+    return value;
+  };
+  
+  // Marionette.normalizeMethods
+  // ----------------------
+  
+  // Pass in a mapping of events => functions or function names
+  // and return a mapping of events => functions
+  Marionette.normalizeMethods = function(hash) {
+    return _.reduce(hash, function(normalizedHash, method, name) {
+      if (!_.isFunction(method)) {
+        method = this[method];
+      }
+      if (method) {
+        normalizedHash[name] = method;
+      }
+      return normalizedHash;
+    }, {}, this);
+  };
+  
+  // utility method for parsing @ui. syntax strings
+  // into associated selector
+  Marionette.normalizeUIString = function(uiString, ui) {
+    return uiString.replace(/@ui\.[a-zA-Z_$0-9]*/g, function(r) {
+      return ui[r.slice(4)];
+    });
+  };
+  
+  // allows for the use of the @ui. syntax within
+  // a given key for triggers and events
+  // swaps the @ui with the associated selector.
+  // Returns a new, non-mutated, parsed events hash.
+  Marionette.normalizeUIKeys = function(hash, ui) {
+    return _.reduce(hash, function(memo, val, key) {
+      var normalizedKey = Marionette.normalizeUIString(key, ui);
+      memo[normalizedKey] = val;
+      return memo;
+    }, {});
+  };
+  
+  // allows for the use of the @ui. syntax within
+  // a given value for regions
+  // swaps the @ui with the associated selector
+  Marionette.normalizeUIValues = function(hash, ui, properties) {
+    _.each(hash, function(val, key) {
+      if (_.isString(val)) {
+        hash[key] = Marionette.normalizeUIString(val, ui);
+      } else if (_.isObject(val) && _.isArray(properties)) {
+        _.extend(val, Marionette.normalizeUIValues(_.pick(val, properties), ui));
+        /* Value is an object, and we got an array of embedded property names to normalize. */
+        _.each(properties, function(property) {
+          var propertyVal = val[property];
+          if (_.isString(propertyVal)) {
+            val[property] = Marionette.normalizeUIString(propertyVal, ui);
+          }
+        });
+      }
+    });
+    return hash;
+  };
+  
+  // Mix in methods from Underscore, for iteration, and other
+  // collection related features.
+  // Borrowing this code from Backbone.Collection:
+  // http://backbonejs.org/docs/backbone.html#section-121
+  Marionette.actAsCollection = function(object, listProperty) {
+    var methods = ['forEach', 'each', 'map', 'find', 'detect', 'filter',
+      'select', 'reject', 'every', 'all', 'some', 'any', 'include',
+      'contains', 'invoke', 'toArray', 'first', 'initial', 'rest',
+      'last', 'without', 'isEmpty', 'pluck'];
+  
+    _.each(methods, function(method) {
+      object[method] = function() {
+        var list = _.values(_.result(this, listProperty));
+        var args = [list].concat(_.toArray(arguments));
+        return _[method].apply(_, args);
+      };
+    });
+  };
+  
+  var deprecate = Marionette.deprecate = function(message, test) {
+    if (_.isObject(message)) {
+      message = (
+        message.prev + ' is going to be removed in the future. ' +
+        'Please use ' + message.next + ' instead.' +
+        (message.url ? ' See: ' + message.url : '')
+      );
+    }
+  
+    if ((test === undefined || !test) && !deprecate._cache[message]) {
+      deprecate._warn('Deprecation warning: ' + message);
+      deprecate._cache[message] = true;
+    }
+  };
+  
+  deprecate._warn = typeof console !== 'undefined' && (console.warn || console.log) || function() {};
+  deprecate._cache = {};
+  
+  /* jshint maxstatements: 14, maxcomplexity: 7 */
+  
+  // Trigger Method
+  // --------------
+  
+  Marionette._triggerMethod = (function() {
+    // split the event name on the ":"
+    var splitter = /(^|:)(\w)/gi;
+  
+    // take the event section ("section1:section2:section3")
+    // and turn it in to uppercase name
+    function getEventName(match, prefix, eventName) {
+      return eventName.toUpperCase();
+    }
+  
+    return function(context, event, args) {
+      var noEventArg = arguments.length < 3;
+      if (noEventArg) {
+        args = event;
+        event = args[0];
+      }
+  
+      // get the method name from the event name
+      var methodName = 'on' + event.replace(splitter, getEventName);
+      var method = context[methodName];
+      var result;
+  
+      // call the onMethodName if it exists
+      if (_.isFunction(method)) {
+        // pass all args, except the event name
+        result = method.apply(context, noEventArg ? _.rest(args) : args);
+      }
+  
+      // trigger the event, if a trigger method exists
+      if (_.isFunction(context.trigger)) {
+        if (noEventArg + args.length > 1) {
+          context.trigger.apply(context, noEventArg ? args : [event].concat(_.drop(args, 0)));
+        } else {
+          context.trigger(event);
+        }
+      }
+  
+      return result;
+    };
+  })();
+  
+  // Trigger an event and/or a corresponding method name. Examples:
+  //
+  // `this.triggerMethod("foo")` will trigger the "foo" event and
+  // call the "onFoo" method.
+  //
+  // `this.triggerMethod("foo:bar")` will trigger the "foo:bar" event and
+  // call the "onFooBar" method.
+  Marionette.triggerMethod = function(event) {
+    return Marionette._triggerMethod(this, arguments);
+  };
+  
+  // triggerMethodOn invokes triggerMethod on a specific context
+  //
+  // e.g. `Marionette.triggerMethodOn(view, 'show')`
+  // will trigger a "show" event or invoke onShow the view.
+  Marionette.triggerMethodOn = function(context) {
+    var fnc = _.isFunction(context.triggerMethod) ?
+                  context.triggerMethod :
+                  Marionette.triggerMethod;
+  
+    return fnc.apply(context, _.rest(arguments));
+  };
+  
+  // DOM Refresh
+  // -----------
+  
+  // Monitor a view's state, and after it has been rendered and shown
+  // in the DOM, trigger a "dom:refresh" event every time it is
+  // re-rendered.
+  
+  Marionette.MonitorDOMRefresh = function(view) {
+    if (view._isDomRefreshMonitored) { return; }
+    view._isDomRefreshMonitored = true;
+  
+    // track when the view has been shown in the DOM,
+    // using a Marionette.Region (or by other means of triggering "show")
+    function handleShow() {
+      view._isShown = true;
+      triggerDOMRefresh();
+    }
+  
+    // track when the view has been rendered
+    function handleRender() {
+      view._isRendered = true;
+      triggerDOMRefresh();
+    }
+  
+    // Trigger the "dom:refresh" event and corresponding "onDomRefresh" method
+    function triggerDOMRefresh() {
+      if (view._isShown && view._isRendered && Marionette.isNodeAttached(view.el)) {
+        Marionette.triggerMethodOn(view, 'dom:refresh', view);
+      }
+    }
+  
+    view.on({
+      show: handleShow,
+      render: handleRender
+    });
+  };
+  
+  /* jshint maxparams: 5 */
+  
+  // Bind Entity Events & Unbind Entity Events
+  // -----------------------------------------
+  //
+  // These methods are used to bind/unbind a backbone "entity" (e.g. collection/model)
+  // to methods on a target object.
+  //
+  // The first parameter, `target`, must have the Backbone.Events module mixed in.
+  //
+  // The second parameter is the `entity` (Backbone.Model, Backbone.Collection or
+  // any object that has Backbone.Events mixed in) to bind the events from.
+  //
+  // The third parameter is a hash of { "event:name": "eventHandler" }
+  // configuration. Multiple handlers can be separated by a space. A
+  // function can be supplied instead of a string handler name.
+  
+  (function(Marionette) {
+    'use strict';
+  
+    // Bind the event to handlers specified as a string of
+    // handler names on the target object
+    function bindFromStrings(target, entity, evt, methods) {
+      var methodNames = methods.split(/\s+/);
+  
+      _.each(methodNames, function(methodName) {
+  
+        var method = target[methodName];
+        if (!method) {
+          throw new Marionette.Error('Method "' + methodName +
+            '" was configured as an event handler, but does not exist.');
+        }
+  
+        target.listenTo(entity, evt, method);
+      });
+    }
+  
+    // Bind the event to a supplied callback function
+    function bindToFunction(target, entity, evt, method) {
+      target.listenTo(entity, evt, method);
+    }
+  
+    // Bind the event to handlers specified as a string of
+    // handler names on the target object
+    function unbindFromStrings(target, entity, evt, methods) {
+      var methodNames = methods.split(/\s+/);
+  
+      _.each(methodNames, function(methodName) {
+        var method = target[methodName];
+        target.stopListening(entity, evt, method);
+      });
+    }
+  
+    // Bind the event to a supplied callback function
+    function unbindToFunction(target, entity, evt, method) {
+      target.stopListening(entity, evt, method);
+    }
+  
+    // generic looping function
+    function iterateEvents(target, entity, bindings, functionCallback, stringCallback) {
+      if (!entity || !bindings) { return; }
+  
+      // type-check bindings
+      if (!_.isObject(bindings)) {
+        throw new Marionette.Error({
+          message: 'Bindings must be an object or function.',
+          url: 'marionette.functions.html#marionettebindentityevents'
+        });
+      }
+  
+      // allow the bindings to be a function
+      bindings = Marionette._getValue(bindings, target);
+  
+      // iterate the bindings and bind them
+      _.each(bindings, function(methods, evt) {
+  
+        // allow for a function as the handler,
+        // or a list of event names as a string
+        if (_.isFunction(methods)) {
+          functionCallback(target, entity, evt, methods);
+        } else {
+          stringCallback(target, entity, evt, methods);
+        }
+  
+      });
+    }
+  
+    // Export Public API
+    Marionette.bindEntityEvents = function(target, entity, bindings) {
+      iterateEvents(target, entity, bindings, bindToFunction, bindFromStrings);
+    };
+  
+    Marionette.unbindEntityEvents = function(target, entity, bindings) {
+      iterateEvents(target, entity, bindings, unbindToFunction, unbindFromStrings);
+    };
+  
+    // Proxy `bindEntityEvents`
+    Marionette.proxyBindEntityEvents = function(entity, bindings) {
+      return Marionette.bindEntityEvents(this, entity, bindings);
+    };
+  
+    // Proxy `unbindEntityEvents`
+    Marionette.proxyUnbindEntityEvents = function(entity, bindings) {
+      return Marionette.unbindEntityEvents(this, entity, bindings);
+    };
+  })(Marionette);
+  
+
+  // Error
+  // -----
+  
+  var errorProps = ['description', 'fileName', 'lineNumber', 'name', 'message', 'number'];
+  
+  Marionette.Error = Marionette.extend.call(Error, {
+    urlRoot: 'http://marionettejs.com/docs/v' + Marionette.VERSION + '/',
+  
+    constructor: function(message, options) {
+      if (_.isObject(message)) {
+        options = message;
+        message = options.message;
+      } else if (!options) {
+        options = {};
+      }
+  
+      var error = Error.call(this, message);
+      _.extend(this, _.pick(error, errorProps), _.pick(options, errorProps));
+  
+      this.captureStackTrace();
+  
+      if (options.url) {
+        this.url = this.urlRoot + options.url;
+      }
+    },
+  
+    captureStackTrace: function() {
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, Marionette.Error);
+      }
+    },
+  
+    toString: function() {
+      return this.name + ': ' + this.message + (this.url ? ' See: ' + this.url : '');
+    }
+  });
+  
+  Marionette.Error.extend = Marionette.extend;
+  
+  // Callbacks
+  // ---------
+  
+  // A simple way of managing a collection of callbacks
+  // and executing them at a later point in time, using jQuery's
+  // `Deferred` object.
+  Marionette.Callbacks = function() {
+    this._deferred = Marionette.Deferred();
+    this._callbacks = [];
+  };
+  
+  _.extend(Marionette.Callbacks.prototype, {
+  
+    // Add a callback to be executed. Callbacks added here are
+    // guaranteed to execute, even if they are added after the
+    // `run` method is called.
+    add: function(callback, contextOverride) {
+      var promise = _.result(this._deferred, 'promise');
+  
+      this._callbacks.push({cb: callback, ctx: contextOverride});
+  
+      promise.then(function(args) {
+        if (contextOverride) { args.context = contextOverride; }
+        callback.call(args.context, args.options);
+      });
+    },
+  
+    // Run all registered callbacks with the context specified.
+    // Additional callbacks can be added after this has been run
+    // and they will still be executed.
+    run: function(options, context) {
+      this._deferred.resolve({
+        options: options,
+        context: context
+      });
+    },
+  
+    // Resets the list of callbacks to be run, allowing the same list
+    // to be run multiple times - whenever the `run` method is called.
+    reset: function() {
+      var callbacks = this._callbacks;
+      this._deferred = Marionette.Deferred();
+      this._callbacks = [];
+  
+      _.each(callbacks, function(cb) {
+        this.add(cb.cb, cb.ctx);
+      }, this);
+    }
+  });
+  
+  // Controller
+  // ----------
+  
+  // A multi-purpose object to use as a controller for
+  // modules and routers, and as a mediator for workflow
+  // and coordination of other objects, views, and more.
+  Marionette.Controller = function(options) {
+    this.options = options || {};
+  
+    if (_.isFunction(this.initialize)) {
+      this.initialize(this.options);
+    }
+  };
+  
+  Marionette.Controller.extend = Marionette.extend;
+  
+  // Controller Methods
+  // --------------
+  
+  // Ensure it can trigger events with Backbone.Events
+  _.extend(Marionette.Controller.prototype, Backbone.Events, {
+    destroy: function() {
+      Marionette._triggerMethod(this, 'before:destroy', arguments);
+      Marionette._triggerMethod(this, 'destroy', arguments);
+  
+      this.stopListening();
+      this.off();
+      return this;
+    },
+  
+    // import the `triggerMethod` to trigger events with corresponding
+    // methods if the method exists
+    triggerMethod: Marionette.triggerMethod,
+  
+    // A handy way to merge options onto the instance
+    mergeOptions: Marionette.mergeOptions,
+  
+    // Proxy `getOption` to enable getting options from this or this.options by name.
+    getOption: Marionette.proxyGetOption
+  
+  });
+  
+  // Object
+  // ------
+  
+  // A Base Class that other Classes should descend from.
+  // Object borrows many conventions and utilities from Backbone.
+  Marionette.Object = function(options) {
+    this.options = _.extend({}, _.result(this, 'options'), options);
+  
+    this.initialize.apply(this, arguments);
+  };
+  
+  Marionette.Object.extend = Marionette.extend;
+  
+  // Object Methods
+  // --------------
+  
+  // Ensure it can trigger events with Backbone.Events
+  _.extend(Marionette.Object.prototype, Backbone.Events, {
+  
+    //this is a noop method intended to be overridden by classes that extend from this base
+    initialize: function() {},
+  
+    destroy: function() {
+      this.triggerMethod('before:destroy');
+      this.triggerMethod('destroy');
+      this.stopListening();
+  
+      return this;
+    },
+  
+    // Import the `triggerMethod` to trigger events with corresponding
+    // methods if the method exists
+    triggerMethod: Marionette.triggerMethod,
+  
+    // A handy way to merge options onto the instance
+    mergeOptions: Marionette.mergeOptions,
+  
+    // Proxy `getOption` to enable getting options from this or this.options by name.
+    getOption: Marionette.proxyGetOption,
+  
+    // Proxy `bindEntityEvents` to enable binding view's events from another entity.
+    bindEntityEvents: Marionette.proxyBindEntityEvents,
+  
+    // Proxy `unbindEntityEvents` to enable unbinding view's events from another entity.
+    unbindEntityEvents: Marionette.proxyUnbindEntityEvents
+  });
+  
+  /* jshint maxcomplexity: 16, maxstatements: 45, maxlen: 120 */
+  
+  // Region
+  // ------
+  
+  // Manage the visual regions of your composite application. See
+  // http://lostechies.com/derickbailey/2011/12/12/composite-js-apps-regions-and-region-managers/
+  
+  Marionette.Region = Marionette.Object.extend({
+    constructor: function(options) {
+  
+      // set options temporarily so that we can get `el`.
+      // options will be overriden by Object.constructor
+      this.options = options || {};
+      this.el = this.getOption('el');
+  
+      // Handle when this.el is passed in as a $ wrapped element.
+      this.el = this.el instanceof Backbone.$ ? this.el[0] : this.el;
+  
+      if (!this.el) {
+        throw new Marionette.Error({
+          name: 'NoElError',
+          message: 'An "el" must be specified for a region.'
+        });
+      }
+  
+      this.$el = this.getEl(this.el);
+      Marionette.Object.call(this, options);
+    },
+  
+    // Displays a backbone view instance inside of the region.
+    // Handles calling the `render` method for you. Reads content
+    // directly from the `el` attribute. Also calls an optional
+    // `onShow` and `onDestroy` method on your view, just after showing
+    // or just before destroying the view, respectively.
+    // The `preventDestroy` option can be used to prevent a view from
+    // the old view being destroyed on show.
+    // The `forceShow` option can be used to force a view to be
+    // re-rendered if it's already shown in the region.
+    show: function(view, options) {
+      if (!this._ensureElement()) {
+        return;
+      }
+  
+      this._ensureViewIsIntact(view);
+      Marionette.MonitorDOMRefresh(view);
+  
+      var showOptions     = options || {};
+      var isDifferentView = view !== this.currentView;
+      var preventDestroy  = !!showOptions.preventDestroy;
+      var forceShow       = !!showOptions.forceShow;
+  
+      // We are only changing the view if there is a current view to change to begin with
+      var isChangingView = !!this.currentView;
+  
+      // Only destroy the current view if we don't want to `preventDestroy` and if
+      // the view given in the first argument is different than `currentView`
+      var _shouldDestroyView = isDifferentView && !preventDestroy;
+  
+      // Only show the view given in the first argument if it is different than
+      // the current view or if we want to re-show the view. Note that if
+      // `_shouldDestroyView` is true, then `_shouldShowView` is also necessarily true.
+      var _shouldShowView = isDifferentView || forceShow;
+  
+      if (isChangingView) {
+        this.triggerMethod('before:swapOut', this.currentView, this, options);
+      }
+  
+      if (this.currentView) {
+        delete this.currentView._parent;
+      }
+  
+      if (_shouldDestroyView) {
+        this.empty();
+  
+      // A `destroy` event is attached to the clean up manually removed views.
+      // We need to detach this event when a new view is going to be shown as it
+      // is no longer relevant.
+      } else if (isChangingView && _shouldShowView) {
+        this.currentView.off('destroy', this.empty, this);
+      }
+  
+      if (_shouldShowView) {
+  
+        // We need to listen for if a view is destroyed
+        // in a way other than through the region.
+        // If this happens we need to remove the reference
+        // to the currentView since once a view has been destroyed
+        // we can not reuse it.
+        view.once('destroy', this.empty, this);
+  
+        this._renderView(view);
+  
+        view._parent = this;
+  
+        if (isChangingView) {
+          this.triggerMethod('before:swap', view, this, options);
+        }
+  
+        this.triggerMethod('before:show', view, this, options);
+        Marionette.triggerMethodOn(view, 'before:show', view, this, options);
+  
+        if (isChangingView) {
+          this.triggerMethod('swapOut', this.currentView, this, options);
+        }
+  
+        // An array of views that we're about to display
+        var attachedRegion = Marionette.isNodeAttached(this.el);
+  
+        // The views that we're about to attach to the document
+        // It's important that we prevent _getNestedViews from being executed unnecessarily
+        // as it's a potentially-slow method
+        var displayedViews = [];
+  
+        var attachOptions = _.extend({
+          triggerBeforeAttach: this.triggerBeforeAttach,
+          triggerAttach: this.triggerAttach
+        }, showOptions);
+  
+        if (attachedRegion && attachOptions.triggerBeforeAttach) {
+          displayedViews = this._displayedViews(view);
+          this._triggerAttach(displayedViews, 'before:');
+        }
+  
+        this.attachHtml(view);
+        this.currentView = view;
+  
+        if (attachedRegion && attachOptions.triggerAttach) {
+          displayedViews = this._displayedViews(view);
+          this._triggerAttach(displayedViews);
+        }
+  
+        if (isChangingView) {
+          this.triggerMethod('swap', view, this, options);
+        }
+  
+        this.triggerMethod('show', view, this, options);
+        Marionette.triggerMethodOn(view, 'show', view, this, options);
+  
+        return this;
+      }
+  
+      return this;
+    },
+  
+    triggerBeforeAttach: true,
+    triggerAttach: true,
+  
+    _triggerAttach: function(views, prefix) {
+      var eventName = (prefix || '') + 'attach';
+      _.each(views, function(view) {
+        Marionette.triggerMethodOn(view, eventName, view, this);
+      }, this);
+    },
+  
+    _displayedViews: function(view) {
+      return _.union([view], _.result(view, '_getNestedViews') || []);
+    },
+  
+    _renderView: function(view) {
+      if (!view.supportsRenderLifecycle) {
+        Marionette.triggerMethodOn(view, 'before:render', view);
+      }
+      view.render();
+      if (!view.supportsRenderLifecycle) {
+        Marionette.triggerMethodOn(view, 'render', view);
+      }
+    },
+  
+    _ensureElement: function() {
+      if (!_.isObject(this.el)) {
+        this.$el = this.getEl(this.el);
+        this.el = this.$el[0];
+      }
+  
+      if (!this.$el || this.$el.length === 0) {
+        if (this.getOption('allowMissingEl')) {
+          return false;
+        } else {
+          throw new Marionette.Error('An "el" ' + this.$el.selector + ' must exist in DOM');
+        }
+      }
+      return true;
+    },
+  
+    _ensureViewIsIntact: function(view) {
+      if (!view) {
+        throw new Marionette.Error({
+          name: 'ViewNotValid',
+          message: 'The view passed is undefined and therefore invalid. You must pass a view instance to show.'
+        });
+      }
+  
+      if (view.isDestroyed) {
+        throw new Marionette.Error({
+          name: 'ViewDestroyedError',
+          message: 'View (cid: "' + view.cid + '") has already been destroyed and cannot be used.'
+        });
+      }
+    },
+  
+    // Override this method to change how the region finds the DOM
+    // element that it manages. Return a jQuery selector object scoped
+    // to a provided parent el or the document if none exists.
+    getEl: function(el) {
+      return Backbone.$(el, Marionette._getValue(this.options.parentEl, this));
+    },
+  
+    // Override this method to change how the new view is
+    // appended to the `$el` that the region is managing
+    attachHtml: function(view) {
+      this.$el.contents().detach();
+  
+      this.el.appendChild(view.el);
+    },
+  
+    // Destroy the current view, if there is one. If there is no
+    // current view, it does nothing and returns immediately.
+    empty: function(options) {
+      var view = this.currentView;
+  
+      var emptyOptions = options || {};
+      var preventDestroy  = !!emptyOptions.preventDestroy;
+      // If there is no view in the region
+      // we should not remove anything
+      if (!view) { return; }
+  
+      view.off('destroy', this.empty, this);
+      this.triggerMethod('before:empty', view);
+      if (!preventDestroy) {
+        this._destroyView();
+      }
+      this.triggerMethod('empty', view);
+  
+      // Remove region pointer to the currentView
+      delete this.currentView;
+  
+      if (preventDestroy) {
+        this.$el.contents().detach();
+      }
+  
+      return this;
+    },
+  
+    // call 'destroy' or 'remove', depending on which is found
+    // on the view (if showing a raw Backbone view or a Marionette View)
+    _destroyView: function() {
+      var view = this.currentView;
+      if (view.isDestroyed) { return; }
+  
+      if (!view.supportsDestroyLifecycle) {
+        Marionette.triggerMethodOn(view, 'before:destroy', view);
+      }
+      if (view.destroy) {
+        view.destroy();
+      } else {
+        view.remove();
+  
+        // appending isDestroyed to raw Backbone View allows regions
+        // to throw a ViewDestroyedError for this view
+        view.isDestroyed = true;
+      }
+      if (!view.supportsDestroyLifecycle) {
+        Marionette.triggerMethodOn(view, 'destroy', view);
+      }
+    },
+  
+    // Attach an existing view to the region. This
+    // will not call `render` or `onShow` for the new view,
+    // and will not replace the current HTML for the `el`
+    // of the region.
+    attachView: function(view) {
+      if (this.currentView) {
+        delete this.currentView._parent;
+      }
+      view._parent = this;
+      this.currentView = view;
+      return this;
+    },
+  
+    // Checks whether a view is currently present within
+    // the region. Returns `true` if there is and `false` if
+    // no view is present.
+    hasView: function() {
+      return !!this.currentView;
+    },
+  
+    // Reset the region by destroying any existing view and
+    // clearing out the cached `$el`. The next time a view
+    // is shown via this region, the region will re-query the
+    // DOM for the region's `el`.
+    reset: function() {
+      this.empty();
+  
+      if (this.$el) {
+        this.el = this.$el.selector;
+      }
+  
+      delete this.$el;
+      return this;
+    }
+  
+  },
+  
+  // Static Methods
+  {
+  
+    // Build an instance of a region by passing in a configuration object
+    // and a default region class to use if none is specified in the config.
+    //
+    // The config object should either be a string as a jQuery DOM selector,
+    // a Region class directly, or an object literal that specifies a selector,
+    // a custom regionClass, and any options to be supplied to the region:
+    //
+    // ```js
+    // {
+    //   selector: "#foo",
+    //   regionClass: MyCustomRegion,
+    //   allowMissingEl: false
+    // }
+    // ```
+    //
+    buildRegion: function(regionConfig, DefaultRegionClass) {
+      if (_.isString(regionConfig)) {
+        return this._buildRegionFromSelector(regionConfig, DefaultRegionClass);
+      }
+  
+      if (regionConfig.selector || regionConfig.el || regionConfig.regionClass) {
+        return this._buildRegionFromObject(regionConfig, DefaultRegionClass);
+      }
+  
+      if (_.isFunction(regionConfig)) {
+        return this._buildRegionFromRegionClass(regionConfig);
+      }
+  
+      throw new Marionette.Error({
+        message: 'Improper region configuration type.',
+        url: 'marionette.region.html#region-configuration-types'
+      });
+    },
+  
+    // Build the region from a string selector like '#foo-region'
+    _buildRegionFromSelector: function(selector, DefaultRegionClass) {
+      return new DefaultRegionClass({el: selector});
+    },
+  
+    // Build the region from a configuration object
+    // ```js
+    // { selector: '#foo', regionClass: FooRegion, allowMissingEl: false }
+    // ```
+    _buildRegionFromObject: function(regionConfig, DefaultRegionClass) {
+      var RegionClass = regionConfig.regionClass || DefaultRegionClass;
+      var options = _.omit(regionConfig, 'selector', 'regionClass');
+  
+      if (regionConfig.selector && !options.el) {
+        options.el = regionConfig.selector;
+      }
+  
+      return new RegionClass(options);
+    },
+  
+    // Build the region directly from a given `RegionClass`
+    _buildRegionFromRegionClass: function(RegionClass) {
+      return new RegionClass();
+    }
+  });
+  
+  // Region Manager
+  // --------------
+  
+  // Manage one or more related `Marionette.Region` objects.
+  Marionette.RegionManager = Marionette.Controller.extend({
+    constructor: function(options) {
+      this._regions = {};
+      this.length = 0;
+  
+      Marionette.Controller.call(this, options);
+  
+      this.addRegions(this.getOption('regions'));
+    },
+  
+    // Add multiple regions using an object literal or a
+    // function that returns an object literal, where
+    // each key becomes the region name, and each value is
+    // the region definition.
+    addRegions: function(regionDefinitions, defaults) {
+      regionDefinitions = Marionette._getValue(regionDefinitions, this, arguments);
+  
+      return _.reduce(regionDefinitions, function(regions, definition, name) {
+        if (_.isString(definition)) {
+          definition = {selector: definition};
+        }
+        if (definition.selector) {
+          definition = _.defaults({}, definition, defaults);
+        }
+  
+        regions[name] = this.addRegion(name, definition);
+        return regions;
+      }, {}, this);
+    },
+  
+    // Add an individual region to the region manager,
+    // and return the region instance
+    addRegion: function(name, definition) {
+      var region;
+  
+      if (definition instanceof Marionette.Region) {
+        region = definition;
+      } else {
+        region = Marionette.Region.buildRegion(definition, Marionette.Region);
+      }
+  
+      this.triggerMethod('before:add:region', name, region);
+  
+      region._parent = this;
+      this._store(name, region);
+  
+      this.triggerMethod('add:region', name, region);
+      return region;
+    },
+  
+    // Get a region by name
+    get: function(name) {
+      return this._regions[name];
+    },
+  
+    // Gets all the regions contained within
+    // the `regionManager` instance.
+    getRegions: function() {
+      return _.clone(this._regions);
+    },
+  
+    // Remove a region by name
+    removeRegion: function(name) {
+      var region = this._regions[name];
+      this._remove(name, region);
+  
+      return region;
+    },
+  
+    // Empty all regions in the region manager, and
+    // remove them
+    removeRegions: function() {
+      var regions = this.getRegions();
+      _.each(this._regions, function(region, name) {
+        this._remove(name, region);
+      }, this);
+  
+      return regions;
+    },
+  
+    // Empty all regions in the region manager, but
+    // leave them attached
+    emptyRegions: function() {
+      var regions = this.getRegions();
+      _.invoke(regions, 'empty');
+      return regions;
+    },
+  
+    // Destroy all regions and shut down the region
+    // manager entirely
+    destroy: function() {
+      this.removeRegions();
+      return Marionette.Controller.prototype.destroy.apply(this, arguments);
+    },
+  
+    // internal method to store regions
+    _store: function(name, region) {
+      if (!this._regions[name]) {
+        this.length++;
+      }
+  
+      this._regions[name] = region;
+    },
+  
+    // internal method to remove a region
+    _remove: function(name, region) {
+      this.triggerMethod('before:remove:region', name, region);
+      region.empty();
+      region.stopListening();
+  
+      delete region._parent;
+      delete this._regions[name];
+      this.length--;
+      this.triggerMethod('remove:region', name, region);
+    }
+  });
+  
+  Marionette.actAsCollection(Marionette.RegionManager.prototype, '_regions');
+  
+
+  // Template Cache
+  // --------------
+  
+  // Manage templates stored in `<script>` blocks,
+  // caching them for faster access.
+  Marionette.TemplateCache = function(templateId) {
+    this.templateId = templateId;
+  };
+  
+  // TemplateCache object-level methods. Manage the template
+  // caches from these method calls instead of creating
+  // your own TemplateCache instances
+  _.extend(Marionette.TemplateCache, {
+    templateCaches: {},
+  
+    // Get the specified template by id. Either
+    // retrieves the cached version, or loads it
+    // from the DOM.
+    get: function(templateId, options) {
+      var cachedTemplate = this.templateCaches[templateId];
+  
+      if (!cachedTemplate) {
+        cachedTemplate = new Marionette.TemplateCache(templateId);
+        this.templateCaches[templateId] = cachedTemplate;
+      }
+  
+      return cachedTemplate.load(options);
+    },
+  
+    // Clear templates from the cache. If no arguments
+    // are specified, clears all templates:
+    // `clear()`
+    //
+    // If arguments are specified, clears each of the
+    // specified templates from the cache:
+    // `clear("#t1", "#t2", "...")`
+    clear: function() {
+      var i;
+      var args = _.toArray(arguments);
+      var length = args.length;
+  
+      if (length > 0) {
+        for (i = 0; i < length; i++) {
+          delete this.templateCaches[args[i]];
+        }
+      } else {
+        this.templateCaches = {};
+      }
+    }
+  });
+  
+  // TemplateCache instance methods, allowing each
+  // template cache object to manage its own state
+  // and know whether or not it has been loaded
+  _.extend(Marionette.TemplateCache.prototype, {
+  
+    // Internal method to load the template
+    load: function(options) {
+      // Guard clause to prevent loading this template more than once
+      if (this.compiledTemplate) {
+        return this.compiledTemplate;
+      }
+  
+      // Load the template and compile it
+      var template = this.loadTemplate(this.templateId, options);
+      this.compiledTemplate = this.compileTemplate(template, options);
+  
+      return this.compiledTemplate;
+    },
+  
+    // Load a template from the DOM, by default. Override
+    // this method to provide your own template retrieval
+    // For asynchronous loading with AMD/RequireJS, consider
+    // using a template-loader plugin as described here:
+    // https://github.com/marionettejs/backbone.marionette/wiki/Using-marionette-with-requirejs
+    loadTemplate: function(templateId, options) {
+      var $template = Backbone.$(templateId);
+  
+      if (!$template.length) {
+        throw new Marionette.Error({
+          name: 'NoTemplateError',
+          message: 'Could not find template: "' + templateId + '"'
+        });
+      }
+      return $template.html();
+    },
+  
+    // Pre-compile the template before caching it. Override
+    // this method if you do not need to pre-compile a template
+    // (JST / RequireJS for example) or if you want to change
+    // the template engine used (Handebars, etc).
+    compileTemplate: function(rawTemplate, options) {
+      return _.template(rawTemplate, options);
+    }
+  });
+  
+  // Renderer
+  // --------
+  
+  // Render a template with data by passing in the template
+  // selector and the data to render.
+  Marionette.Renderer = {
+  
+    // Render a template with data. The `template` parameter is
+    // passed to the `TemplateCache` object to retrieve the
+    // template function. Override this method to provide your own
+    // custom rendering and template handling for all of Marionette.
+    render: function(template, data) {
+      if (!template) {
+        throw new Marionette.Error({
+          name: 'TemplateNotFoundError',
+          message: 'Cannot render the template since its false, null or undefined.'
+        });
+      }
+  
+      var templateFunc = _.isFunction(template) ? template : Marionette.TemplateCache.get(template);
+  
+      return templateFunc(data);
+    }
+  };
+  
+
+  /* jshint maxlen: 114, nonew: false */
+  // View
+  // ----
+  
+  // The core view class that other Marionette views extend from.
+  Marionette.View = Backbone.View.extend({
+    isDestroyed: false,
+    supportsRenderLifecycle: true,
+    supportsDestroyLifecycle: true,
+  
+    constructor: function(options) {
+      this.render = _.bind(this.render, this);
+  
+      options = Marionette._getValue(options, this);
+  
+      // this exposes view options to the view initializer
+      // this is a backfill since backbone removed the assignment
+      // of this.options
+      // at some point however this may be removed
+      this.options = _.extend({}, _.result(this, 'options'), options);
+  
+      this._behaviors = Marionette.Behaviors(this);
+  
+      Backbone.View.call(this, this.options);
+  
+      Marionette.MonitorDOMRefresh(this);
+    },
+  
+    // Get the template for this view
+    // instance. You can set a `template` attribute in the view
+    // definition or pass a `template: "whatever"` parameter in
+    // to the constructor options.
+    getTemplate: function() {
+      return this.getOption('template');
+    },
+  
+    // Serialize a model by returning its attributes. Clones
+    // the attributes to allow modification.
+    serializeModel: function(model) {
+      return model.toJSON.apply(model, _.rest(arguments));
+    },
+  
+    // Mix in template helper methods. Looks for a
+    // `templateHelpers` attribute, which can either be an
+    // object literal, or a function that returns an object
+    // literal. All methods and attributes from this object
+    // are copies to the object passed in.
+    mixinTemplateHelpers: function(target) {
+      target = target || {};
+      var templateHelpers = this.getOption('templateHelpers');
+      templateHelpers = Marionette._getValue(templateHelpers, this);
+      return _.extend(target, templateHelpers);
+    },
+  
+    // normalize the keys of passed hash with the views `ui` selectors.
+    // `{"@ui.foo": "bar"}`
+    normalizeUIKeys: function(hash) {
+      var uiBindings = _.result(this, '_uiBindings');
+      return Marionette.normalizeUIKeys(hash, uiBindings || _.result(this, 'ui'));
+    },
+  
+    // normalize the values of passed hash with the views `ui` selectors.
+    // `{foo: "@ui.bar"}`
+    normalizeUIValues: function(hash, properties) {
+      var ui = _.result(this, 'ui');
+      var uiBindings = _.result(this, '_uiBindings');
+      return Marionette.normalizeUIValues(hash, uiBindings || ui, properties);
+    },
+  
+    // Configure `triggers` to forward DOM events to view
+    // events. `triggers: {"click .foo": "do:foo"}`
+    configureTriggers: function() {
+      if (!this.triggers) { return; }
+  
+      // Allow `triggers` to be configured as a function
+      var triggers = this.normalizeUIKeys(_.result(this, 'triggers'));
+  
+      // Configure the triggers, prevent default
+      // action and stop propagation of DOM events
+      return _.reduce(triggers, function(events, value, key) {
+        events[key] = this._buildViewTrigger(value);
+        return events;
+      }, {}, this);
+    },
+  
+    // Overriding Backbone.View's delegateEvents to handle
+    // the `triggers`, `modelEvents`, and `collectionEvents` configuration
+    delegateEvents: function(events) {
+      this._delegateDOMEvents(events);
+      this.bindEntityEvents(this.model, this.getOption('modelEvents'));
+      this.bindEntityEvents(this.collection, this.getOption('collectionEvents'));
+  
+      _.each(this._behaviors, function(behavior) {
+        behavior.bindEntityEvents(this.model, behavior.getOption('modelEvents'));
+        behavior.bindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
+      }, this);
+  
+      return this;
+    },
+  
+    // internal method to delegate DOM events and triggers
+    _delegateDOMEvents: function(eventsArg) {
+      var events = Marionette._getValue(eventsArg || this.events, this);
+  
+      // normalize ui keys
+      events = this.normalizeUIKeys(events);
+      if (_.isUndefined(eventsArg)) {this.events = events;}
+  
+      var combinedEvents = {};
+  
+      // look up if this view has behavior events
+      var behaviorEvents = _.result(this, 'behaviorEvents') || {};
+      var triggers = this.configureTriggers();
+      var behaviorTriggers = _.result(this, 'behaviorTriggers') || {};
+  
+      // behavior events will be overriden by view events and or triggers
+      _.extend(combinedEvents, behaviorEvents, events, triggers, behaviorTriggers);
+  
+      Backbone.View.prototype.delegateEvents.call(this, combinedEvents);
+    },
+  
+    // Overriding Backbone.View's undelegateEvents to handle unbinding
+    // the `triggers`, `modelEvents`, and `collectionEvents` config
+    undelegateEvents: function() {
+      Backbone.View.prototype.undelegateEvents.apply(this, arguments);
+  
+      this.unbindEntityEvents(this.model, this.getOption('modelEvents'));
+      this.unbindEntityEvents(this.collection, this.getOption('collectionEvents'));
+  
+      _.each(this._behaviors, function(behavior) {
+        behavior.unbindEntityEvents(this.model, behavior.getOption('modelEvents'));
+        behavior.unbindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
+      }, this);
+  
+      return this;
+    },
+  
+    // Internal helper method to verify whether the view hasn't been destroyed
+    _ensureViewIsIntact: function() {
+      if (this.isDestroyed) {
+        throw new Marionette.Error({
+          name: 'ViewDestroyedError',
+          message: 'View (cid: "' + this.cid + '") has already been destroyed and cannot be used.'
+        });
+      }
+    },
+  
+    // Default `destroy` implementation, for removing a view from the
+    // DOM and unbinding it. Regions will call this method
+    // for you. You can specify an `onDestroy` method in your view to
+    // add custom code that is called after the view is destroyed.
+    destroy: function() {
+      if (this.isDestroyed) { return this; }
+  
+      var args = _.toArray(arguments);
+  
+      this.triggerMethod.apply(this, ['before:destroy'].concat(args));
+  
+      // mark as destroyed before doing the actual destroy, to
+      // prevent infinite loops within "destroy" event handlers
+      // that are trying to destroy other views
+      this.isDestroyed = true;
+      this.triggerMethod.apply(this, ['destroy'].concat(args));
+  
+      // unbind UI elements
+      this.unbindUIElements();
+  
+      this.isRendered = false;
+  
+      // remove the view from the DOM
+      this.remove();
+  
+      // Call destroy on each behavior after
+      // destroying the view.
+      // This unbinds event listeners
+      // that behaviors have registered for.
+      _.invoke(this._behaviors, 'destroy', args);
+  
+      return this;
+    },
+  
+    bindUIElements: function() {
+      this._bindUIElements();
+      _.invoke(this._behaviors, this._bindUIElements);
+    },
+  
+    // This method binds the elements specified in the "ui" hash inside the view's code with
+    // the associated jQuery selectors.
+    _bindUIElements: function() {
+      if (!this.ui) { return; }
+  
+      // store the ui hash in _uiBindings so they can be reset later
+      // and so re-rendering the view will be able to find the bindings
+      if (!this._uiBindings) {
+        this._uiBindings = this.ui;
+      }
+  
+      // get the bindings result, as a function or otherwise
+      var bindings = _.result(this, '_uiBindings');
+  
+      // empty the ui so we don't have anything to start with
+      this.ui = {};
+  
+      // bind each of the selectors
+      _.each(bindings, function(selector, key) {
+        this.ui[key] = this.$(selector);
+      }, this);
+    },
+  
+    // This method unbinds the elements specified in the "ui" hash
+    unbindUIElements: function() {
+      this._unbindUIElements();
+      _.invoke(this._behaviors, this._unbindUIElements);
+    },
+  
+    _unbindUIElements: function() {
+      if (!this.ui || !this._uiBindings) { return; }
+  
+      // delete all of the existing ui bindings
+      _.each(this.ui, function($el, name) {
+        delete this.ui[name];
+      }, this);
+  
+      // reset the ui element to the original bindings configuration
+      this.ui = this._uiBindings;
+      delete this._uiBindings;
+    },
+  
+    // Internal method to create an event handler for a given `triggerDef` like
+    // 'click:foo'
+    _buildViewTrigger: function(triggerDef) {
+  
+      var options = _.defaults({}, triggerDef, {
+        preventDefault: true,
+        stopPropagation: true
+      });
+  
+      var eventName = _.isObject(triggerDef) ? options.event : triggerDef;
+  
+      return function(e) {
+        if (e) {
+          if (e.preventDefault && options.preventDefault) {
+            e.preventDefault();
+          }
+  
+          if (e.stopPropagation && options.stopPropagation) {
+            e.stopPropagation();
+          }
+        }
+  
+        var args = {
+          view: this,
+          model: this.model,
+          collection: this.collection
+        };
+  
+        this.triggerMethod(eventName, args);
+      };
+    },
+  
+    setElement: function() {
+      var ret = Backbone.View.prototype.setElement.apply(this, arguments);
+  
+      // proxy behavior $el to the view's $el.
+      // This is needed because a view's $el proxy
+      // is not set until after setElement is called.
+      _.invoke(this._behaviors, 'proxyViewProperties', this);
+  
+      return ret;
+    },
+  
+    // import the `triggerMethod` to trigger events with corresponding
+    // methods if the method exists
+    triggerMethod: function() {
+      var ret = Marionette._triggerMethod(this, arguments);
+  
+      this._triggerEventOnBehaviors(arguments);
+      this._triggerEventOnParentLayout(arguments[0], _.rest(arguments));
+  
+      return ret;
+    },
+  
+    _triggerEventOnBehaviors: function(args) {
+      var triggerMethod = Marionette._triggerMethod;
+      var behaviors = this._behaviors;
+      // Use good ol' for as this is a very hot function
+      for (var i = 0, length = behaviors && behaviors.length; i < length; i++) {
+        triggerMethod(behaviors[i], args);
+      }
+    },
+  
+    _triggerEventOnParentLayout: function(eventName, args) {
+      var layoutView = this._parentLayoutView();
+      if (!layoutView) {
+        return;
+      }
+  
+      // invoke triggerMethod on parent view
+      var eventPrefix = Marionette.getOption(layoutView, 'childViewEventPrefix');
+      var prefixedEventName = eventPrefix + ':' + eventName;
+      var callArgs = [this].concat(args);
+  
+      Marionette._triggerMethod(layoutView, prefixedEventName, callArgs);
+  
+      // call the parent view's childEvents handler
+      var childEvents = Marionette.getOption(layoutView, 'childEvents');
+      var normalizedChildEvents = layoutView.normalizeMethods(childEvents);
+  
+      if (normalizedChildEvents && _.isFunction(normalizedChildEvents[eventName])) {
+        normalizedChildEvents[eventName].apply(layoutView, callArgs);
+      }
+    },
+  
+    // This method returns any views that are immediate
+    // children of this view
+    _getImmediateChildren: function() {
+      return [];
+    },
+  
+    // Returns an array of every nested view within this view
+    _getNestedViews: function() {
+      var children = this._getImmediateChildren();
+  
+      if (!children.length) { return children; }
+  
+      return _.reduce(children, function(memo, view) {
+        if (!view._getNestedViews) { return memo; }
+        return memo.concat(view._getNestedViews());
+      }, children);
+    },
+  
+    // Internal utility for building an ancestor
+    // view tree list.
+    _getAncestors: function() {
+      var ancestors = [];
+      var parent  = this._parent;
+  
+      while (parent) {
+        ancestors.push(parent);
+        parent = parent._parent;
+      }
+  
+      return ancestors;
+    },
+  
+    // Returns the containing parent view.
+    _parentLayoutView: function() {
+      var ancestors = this._getAncestors();
+      return _.find(ancestors, function(parent) {
+        return parent instanceof Marionette.LayoutView;
+      });
+    },
+  
+    // Imports the "normalizeMethods" to transform hashes of
+    // events=>function references/names to a hash of events=>function references
+    normalizeMethods: Marionette.normalizeMethods,
+  
+    // A handy way to merge passed-in options onto the instance
+    mergeOptions: Marionette.mergeOptions,
+  
+    // Proxy `getOption` to enable getting options from this or this.options by name.
+    getOption: Marionette.proxyGetOption,
+  
+    // Proxy `bindEntityEvents` to enable binding view's events from another entity.
+    bindEntityEvents: Marionette.proxyBindEntityEvents,
+  
+    // Proxy `unbindEntityEvents` to enable unbinding view's events from another entity.
+    unbindEntityEvents: Marionette.proxyUnbindEntityEvents
+  });
+  
+  // Item View
+  // ---------
+  
+  // A single item view implementation that contains code for rendering
+  // with underscore.js templates, serializing the view's model or collection,
+  // and calling several methods on extended views, such as `onRender`.
+  Marionette.ItemView = Marionette.View.extend({
+  
+    // Setting up the inheritance chain which allows changes to
+    // Marionette.View.prototype.constructor which allows overriding
+    constructor: function() {
+      Marionette.View.apply(this, arguments);
+    },
+  
+    // Serialize the model or collection for the view. If a model is
+    // found, the view's `serializeModel` is called. If a collection is found,
+    // each model in the collection is serialized by calling
+    // the view's `serializeCollection` and put into an `items` array in
+    // the resulting data. If both are found, defaults to the model.
+    // You can override the `serializeData` method in your own view definition,
+    // to provide custom serialization for your view's data.
+    serializeData: function() {
+      if (!this.model && !this.collection) {
+        return {};
+      }
+  
+      var args = [this.model || this.collection];
+      if (arguments.length) {
+        args.push.apply(args, arguments);
+      }
+  
+      if (this.model) {
+        return this.serializeModel.apply(this, args);
+      } else {
+        return {
+          items: this.serializeCollection.apply(this, args)
+        };
+      }
+    },
+  
+    // Serialize a collection by serializing each of its models.
+    serializeCollection: function(collection) {
+      return collection.toJSON.apply(collection, _.rest(arguments));
+    },
+  
+    // Render the view, defaulting to underscore.js templates.
+    // You can override this in your view definition to provide
+    // a very specific rendering for your view. In general, though,
+    // you should override the `Marionette.Renderer` object to
+    // change how Marionette renders views.
+    render: function() {
+      this._ensureViewIsIntact();
+  
+      this.triggerMethod('before:render', this);
+  
+      this._renderTemplate();
+      this.isRendered = true;
+      this.bindUIElements();
+  
+      this.triggerMethod('render', this);
+  
+      return this;
+    },
+  
+    // Internal method to render the template with the serialized data
+    // and template helpers via the `Marionette.Renderer` object.
+    // Throws an `UndefinedTemplateError` error if the template is
+    // any falsely value but literal `false`.
+    _renderTemplate: function() {
+      var template = this.getTemplate();
+  
+      // Allow template-less item views
+      if (template === false) {
+        return;
+      }
+  
+      if (!template) {
+        throw new Marionette.Error({
+          name: 'UndefinedTemplateError',
+          message: 'Cannot render the template since it is null or undefined.'
+        });
+      }
+  
+      // Add in entity data and template helpers
+      var data = this.mixinTemplateHelpers(this.serializeData());
+  
+      // Render and add to el
+      var html = Marionette.Renderer.render(template, data, this);
+      this.attachElContent(html);
+  
+      return this;
+    },
+  
+    // Attaches the content of a given view.
+    // This method can be overridden to optimize rendering,
+    // or to render in a non standard way.
+    //
+    // For example, using `innerHTML` instead of `$el.html`
+    //
+    // ```js
+    // attachElContent: function(html) {
+    //   this.el.innerHTML = html;
+    //   return this;
+    // }
+    // ```
+    attachElContent: function(html) {
+      this.$el.html(html);
+  
+      return this;
+    }
+  });
+  
+  /* jshint maxstatements: 20, maxcomplexity: 7 */
+  
+  // Collection View
+  // ---------------
+  
+  // A view that iterates over a Backbone.Collection
+  // and renders an individual child view for each model.
+  Marionette.CollectionView = Marionette.View.extend({
+  
+    // used as the prefix for child view events
+    // that are forwarded through the collectionview
+    childViewEventPrefix: 'childview',
+  
+    // flag for maintaining the sorted order of the collection
+    sort: true,
+  
+    // constructor
+    // option to pass `{sort: false}` to prevent the `CollectionView` from
+    // maintaining the sorted order of the collection.
+    // This will fallback onto appending childView's to the end.
+    //
+    // option to pass `{comparator: compFunction()}` to allow the `CollectionView`
+    // to use a custom sort order for the collection.
+    constructor: function(options) {
+      this.once('render', this._initialEvents);
+      this._initChildViewStorage();
+  
+      Marionette.View.apply(this, arguments);
+  
+      this.on({
+        'before:show':   this._onBeforeShowCalled,
+        'show':          this._onShowCalled,
+        'before:attach': this._onBeforeAttachCalled,
+        'attach':        this._onAttachCalled
+      });
+      this.initRenderBuffer();
+    },
+  
+    // Instead of inserting elements one by one into the page,
+    // it's much more performant to insert elements into a document
+    // fragment and then insert that document fragment into the page
+    initRenderBuffer: function() {
+      this._bufferedChildren = [];
+    },
+  
+    startBuffering: function() {
+      this.initRenderBuffer();
+      this.isBuffering = true;
+    },
+  
+    endBuffering: function() {
+      // Only trigger attach if already shown and attached, otherwise Region#show() handles this.
+      var canTriggerAttach = this._isShown && Marionette.isNodeAttached(this.el);
+      var nestedViews;
+  
+      this.isBuffering = false;
+  
+      if (this._isShown) {
+        this._triggerMethodMany(this._bufferedChildren, this, 'before:show');
+      }
+      if (canTriggerAttach && this._triggerBeforeAttach) {
+        nestedViews = this._getNestedViews();
+        this._triggerMethodMany(nestedViews, this, 'before:attach');
+      }
+  
+      this.attachBuffer(this, this._createBuffer());
+  
+      if (canTriggerAttach && this._triggerAttach) {
+        nestedViews = this._getNestedViews();
+        this._triggerMethodMany(nestedViews, this, 'attach');
+      }
+      if (this._isShown) {
+        this._triggerMethodMany(this._bufferedChildren, this, 'show');
+      }
+      this.initRenderBuffer();
+    },
+  
+    _triggerMethodMany: function(targets, source, eventName) {
+      var args = _.drop(arguments, 3);
+  
+      _.each(targets, function(target) {
+        Marionette.triggerMethodOn.apply(target, [target, eventName, target, source].concat(args));
+      });
+    },
+  
+    // Configured the initial events that the collection view
+    // binds to.
+    _initialEvents: function() {
+      if (this.collection) {
+        this.listenTo(this.collection, 'add', this._onCollectionAdd);
+        this.listenTo(this.collection, 'remove', this._onCollectionRemove);
+        this.listenTo(this.collection, 'reset', this.render);
+  
+        if (this.getOption('sort')) {
+          this.listenTo(this.collection, 'sort', this._sortViews);
+        }
+      }
+    },
+  
+    // Handle a child added to the collection
+    _onCollectionAdd: function(child, collection, opts) {
+      // `index` is present when adding with `at` since BB 1.2; indexOf fallback for < 1.2
+      var index = opts.at !== undefined && (opts.index || collection.indexOf(child));
+  
+      // When filtered or when there is no initial index, calculate index.
+      if (this.getOption('filter') || index === false) {
+        index = _.indexOf(this._filteredSortedModels(index), child);
+      }
+  
+      if (this._shouldAddChild(child, index)) {
+        this.destroyEmptyView();
+        var ChildView = this.getChildView(child);
+        this.addChild(child, ChildView, index);
+      }
+    },
+  
+    // get the child view by model it holds, and remove it
+    _onCollectionRemove: function(model) {
+      var view = this.children.findByModel(model);
+      this.removeChildView(view);
+      this.checkEmpty();
+    },
+  
+    _onBeforeShowCalled: function() {
+      // Reset attach event flags at the top of the Region#show() event lifecycle; if the Region's
+      // show() options permit onBeforeAttach/onAttach events, these flags will be set true again.
+      this._triggerBeforeAttach = this._triggerAttach = false;
+      this.children.each(function(childView) {
+        Marionette.triggerMethodOn(childView, 'before:show', childView);
+      });
+    },
+  
+    _onShowCalled: function() {
+      this.children.each(function(childView) {
+        Marionette.triggerMethodOn(childView, 'show', childView);
+      });
+    },
+  
+    // If during Region#show() onBeforeAttach was fired, continue firing it for child views
+    _onBeforeAttachCalled: function() {
+      this._triggerBeforeAttach = true;
+    },
+  
+    // If during Region#show() onAttach was fired, continue firing it for child views
+    _onAttachCalled: function() {
+      this._triggerAttach = true;
+    },
+  
+    // Render children views. Override this method to
+    // provide your own implementation of a render function for
+    // the collection view.
+    render: function() {
+      this._ensureViewIsIntact();
+      this.triggerMethod('before:render', this);
+      this._renderChildren();
+      this.isRendered = true;
+      this.triggerMethod('render', this);
+      return this;
+    },
+  
+    // Reorder DOM after sorting. When your element's rendering
+    // do not use their index, you can pass reorderOnSort: true
+    // to only reorder the DOM after a sort instead of rendering
+    // all the collectionView
+    reorder: function() {
+      var children = this.children;
+      var models = this._filteredSortedModels();
+      var modelsChanged = _.find(models, function(model) {
+        return !children.findByModel(model);
+      });
+  
+      // If the models we're displaying have changed due to filtering
+      // We need to add and/or remove child views
+      // So render as normal
+      if (modelsChanged) {
+        this.render();
+      } else {
+        // get the DOM nodes in the same order as the models
+        var els = _.map(models, function(model, index) {
+          var view = children.findByModel(model);
+          view._index = index;
+          return view.el;
+        });
+  
+        // since append moves elements that are already in the DOM,
+        // appending the elements will effectively reorder them
+        this.triggerMethod('before:reorder');
+        this._appendReorderedChildren(els);
+        this.triggerMethod('reorder');
+      }
+    },
+  
+    // Render view after sorting. Override this method to
+    // change how the view renders after a `sort` on the collection.
+    // An example of this would be to only `renderChildren` in a `CompositeView`
+    // rather than the full view.
+    resortView: function() {
+      if (Marionette.getOption(this, 'reorderOnSort')) {
+        this.reorder();
+      } else {
+        this.render();
+      }
+    },
+  
+    // Internal method. This checks for any changes in the order of the collection.
+    // If the index of any view doesn't match, it will render.
+    _sortViews: function() {
+      var models = this._filteredSortedModels();
+  
+      // check for any changes in sort order of views
+      var orderChanged = _.find(models, function(item, index) {
+        var view = this.children.findByModel(item);
+        return !view || view._index !== index;
+      }, this);
+  
+      if (orderChanged) {
+        this.resortView();
+      }
+    },
+  
+    // Internal reference to what index a `emptyView` is.
+    _emptyViewIndex: -1,
+  
+    // Internal method. Separated so that CompositeView can append to the childViewContainer
+    // if necessary
+    _appendReorderedChildren: function(children) {
+      this.$el.append(children);
+    },
+  
+    // Internal method. Separated so that CompositeView can have
+    // more control over events being triggered, around the rendering
+    // process
+    _renderChildren: function() {
+      this.destroyEmptyView();
+      this.destroyChildren({checkEmpty: false});
+  
+      if (this.isEmpty(this.collection)) {
+        this.showEmptyView();
+      } else {
+        this.triggerMethod('before:render:collection', this);
+        this.startBuffering();
+        this.showCollection();
+        this.endBuffering();
+        this.triggerMethod('render:collection', this);
+  
+        // If we have shown children and none have passed the filter, show the empty view
+        if (this.children.isEmpty() && this.getOption('filter')) {
+          this.showEmptyView();
+        }
+      }
+    },
+  
+    // Internal method to loop through collection and show each child view.
+    showCollection: function() {
+      var ChildView;
+  
+      var models = this._filteredSortedModels();
+  
+      _.each(models, function(child, index) {
+        ChildView = this.getChildView(child);
+        this.addChild(child, ChildView, index);
+      }, this);
+    },
+  
+    // Allow the collection to be sorted by a custom view comparator
+    _filteredSortedModels: function(addedAt) {
+      var viewComparator = this.getViewComparator();
+      var models = this.collection.models;
+      addedAt = Math.min(Math.max(addedAt, 0), models.length - 1);
+  
+      if (viewComparator) {
+        var addedModel;
+        // Preserve `at` location, even for a sorted view
+        if (addedAt) {
+          addedModel = models[addedAt];
+          models = models.slice(0, addedAt).concat(models.slice(addedAt + 1));
+        }
+        models = this._sortModelsBy(models, viewComparator);
+        if (addedModel) {
+          models.splice(addedAt, 0, addedModel);
+        }
+      }
+  
+      // Filter after sorting in case the filter uses the index
+      if (this.getOption('filter')) {
+        models = _.filter(models, function(model, index) {
+          return this._shouldAddChild(model, index);
+        }, this);
+      }
+  
+      return models;
+    },
+  
+    _sortModelsBy: function(models, comparator) {
+      if (typeof comparator === 'string') {
+        return _.sortBy(models, function(model) {
+          return model.get(comparator);
+        }, this);
+      } else if (comparator.length === 1) {
+        return _.sortBy(models, comparator, this);
+      } else {
+        return models.sort(_.bind(comparator, this));
+      }
+    },
+  
+    // Internal method to show an empty view in place of
+    // a collection of child views, when the collection is empty
+    showEmptyView: function() {
+      var EmptyView = this.getEmptyView();
+  
+      if (EmptyView && !this._showingEmptyView) {
+        this.triggerMethod('before:render:empty');
+  
+        this._showingEmptyView = true;
+        var model = new Backbone.Model();
+        this.addEmptyView(model, EmptyView);
+  
+        this.triggerMethod('render:empty');
+      }
+    },
+  
+    // Internal method to destroy an existing emptyView instance
+    // if one exists. Called when a collection view has been
+    // rendered empty, and then a child is added to the collection.
+    destroyEmptyView: function() {
+      if (this._showingEmptyView) {
+        this.triggerMethod('before:remove:empty');
+  
+        this.destroyChildren();
+        delete this._showingEmptyView;
+  
+        this.triggerMethod('remove:empty');
+      }
+    },
+  
+    // Retrieve the empty view class
+    getEmptyView: function() {
+      return this.getOption('emptyView');
+    },
+  
+    // Render and show the emptyView. Similar to addChild method
+    // but "add:child" events are not fired, and the event from
+    // emptyView are not forwarded
+    addEmptyView: function(child, EmptyView) {
+      // Only trigger attach if already shown, attached, and not buffering, otherwise endBuffer() or
+      // Region#show() handles this.
+      var canTriggerAttach = this._isShown && !this.isBuffering && Marionette.isNodeAttached(this.el);
+      var nestedViews;
+  
+      // get the emptyViewOptions, falling back to childViewOptions
+      var emptyViewOptions = this.getOption('emptyViewOptions') ||
+                            this.getOption('childViewOptions');
+  
+      if (_.isFunction(emptyViewOptions)) {
+        emptyViewOptions = emptyViewOptions.call(this, child, this._emptyViewIndex);
+      }
+  
+      // build the empty view
+      var view = this.buildChildView(child, EmptyView, emptyViewOptions);
+  
+      view._parent = this;
+  
+      // Proxy emptyView events
+      this.proxyChildEvents(view);
+  
+      view.once('render', function() {
+        // trigger the 'before:show' event on `view` if the collection view has already been shown
+        if (this._isShown) {
+          Marionette.triggerMethodOn(view, 'before:show', view);
+        }
+  
+        // Trigger `before:attach` following `render` to avoid adding logic and event triggers
+        // to public method `renderChildView()`.
+        if (canTriggerAttach && this._triggerBeforeAttach) {
+          nestedViews = this._getViewAndNested(view);
+          this._triggerMethodMany(nestedViews, this, 'before:attach');
+        }
+      }, this);
+  
+      // Store the `emptyView` like a `childView` so we can properly remove and/or close it later
+      this.children.add(view);
+      this.renderChildView(view, this._emptyViewIndex);
+  
+      // Trigger `attach`
+      if (canTriggerAttach && this._triggerAttach) {
+        nestedViews = this._getViewAndNested(view);
+        this._triggerMethodMany(nestedViews, this, 'attach');
+      }
+      // call the 'show' method if the collection view has already been shown
+      if (this._isShown) {
+        Marionette.triggerMethodOn(view, 'show', view);
+      }
+    },
+  
+    // Retrieve the `childView` class, either from `this.options.childView`
+    // or from the `childView` in the object definition. The "options"
+    // takes precedence.
+    // This method receives the model that will be passed to the instance
+    // created from this `childView`. Overriding methods may use the child
+    // to determine what `childView` class to return.
+    getChildView: function(child) {
+      var childView = this.getOption('childView');
+  
+      if (!childView) {
+        throw new Marionette.Error({
+          name: 'NoChildViewError',
+          message: 'A "childView" must be specified'
+        });
+      }
+  
+      return childView;
+    },
+  
+    // Render the child's view and add it to the
+    // HTML for the collection view at a given index.
+    // This will also update the indices of later views in the collection
+    // in order to keep the children in sync with the collection.
+    addChild: function(child, ChildView, index) {
+      var childViewOptions = this.getOption('childViewOptions');
+      childViewOptions = Marionette._getValue(childViewOptions, this, [child, index]);
+  
+      var view = this.buildChildView(child, ChildView, childViewOptions);
+  
+      // increment indices of views after this one
+      this._updateIndices(view, true, index);
+  
+      this.triggerMethod('before:add:child', view);
+      this._addChildView(view, index);
+      this.triggerMethod('add:child', view);
+  
+      view._parent = this;
+  
+      return view;
+    },
+  
+    // Internal method. This decrements or increments the indices of views after the
+    // added/removed view to keep in sync with the collection.
+    _updateIndices: function(view, increment, index) {
+      if (!this.getOption('sort')) {
+        return;
+      }
+  
+      if (increment) {
+        // assign the index to the view
+        view._index = index;
+      }
+  
+      // update the indexes of views after this one
+      this.children.each(function(laterView) {
+        if (laterView._index >= view._index) {
+          laterView._index += increment ? 1 : -1;
+        }
+      });
+    },
+  
+    // Internal Method. Add the view to children and render it at
+    // the given index.
+    _addChildView: function(view, index) {
+      // Only trigger attach if already shown, attached, and not buffering, otherwise endBuffer() or
+      // Region#show() handles this.
+      var canTriggerAttach = this._isShown && !this.isBuffering && Marionette.isNodeAttached(this.el);
+      var nestedViews;
+  
+      // set up the child view event forwarding
+      this.proxyChildEvents(view);
+  
+      view.once('render', function() {
+        // trigger the 'before:show' event on `view` if the collection view has already been shown
+        if (this._isShown && !this.isBuffering) {
+          Marionette.triggerMethodOn(view, 'before:show', view);
+        }
+  
+        // Trigger `before:attach` following `render` to avoid adding logic and event triggers
+        // to public method `renderChildView()`.
+        if (canTriggerAttach && this._triggerBeforeAttach) {
+          nestedViews = this._getViewAndNested(view);
+          this._triggerMethodMany(nestedViews, this, 'before:attach');
+        }
+      }, this);
+  
+      // Store the child view itself so we can properly remove and/or destroy it later
+      this.children.add(view);
+      this.renderChildView(view, index);
+  
+      // Trigger `attach`
+      if (canTriggerAttach && this._triggerAttach) {
+        nestedViews = this._getViewAndNested(view);
+        this._triggerMethodMany(nestedViews, this, 'attach');
+      }
+      // Trigger `show`
+      if (this._isShown && !this.isBuffering) {
+        Marionette.triggerMethodOn(view, 'show', view);
+      }
+    },
+  
+    // render the child view
+    renderChildView: function(view, index) {
+      if (!view.supportsRenderLifecycle) {
+        Marionette.triggerMethodOn(view, 'before:render', view);
+      }
+      view.render();
+      if (!view.supportsRenderLifecycle) {
+        Marionette.triggerMethodOn(view, 'render', view);
+      }
+      this.attachHtml(this, view, index);
+      return view;
+    },
+  
+    // Build a `childView` for a model in the collection.
+    buildChildView: function(child, ChildViewClass, childViewOptions) {
+      var options = _.extend({model: child}, childViewOptions);
+      var childView = new ChildViewClass(options);
+      Marionette.MonitorDOMRefresh(childView);
+      return childView;
+    },
+  
+    // Remove the child view and destroy it.
+    // This function also updates the indices of
+    // later views in the collection in order to keep
+    // the children in sync with the collection.
+    removeChildView: function(view) {
+      if (!view) { return view; }
+  
+      this.triggerMethod('before:remove:child', view);
+  
+      if (!view.supportsDestroyLifecycle) {
+        Marionette.triggerMethodOn(view, 'before:destroy', view);
+      }
+      // call 'destroy' or 'remove', depending on which is found
+      if (view.destroy) {
+        view.destroy();
+      } else {
+        view.remove();
+      }
+      if (!view.supportsDestroyLifecycle) {
+        Marionette.triggerMethodOn(view, 'destroy', view);
+      }
+  
+      delete view._parent;
+      this.stopListening(view);
+      this.children.remove(view);
+      this.triggerMethod('remove:child', view);
+  
+      // decrement the index of views after this one
+      this._updateIndices(view, false);
+  
+      return view;
+    },
+  
+    // check if the collection is empty
+    isEmpty: function() {
+      return !this.collection || this.collection.length === 0;
+    },
+  
+    // If empty, show the empty view
+    checkEmpty: function() {
+      if (this.isEmpty(this.collection)) {
+        this.showEmptyView();
+      }
+    },
+  
+    // You might need to override this if you've overridden attachHtml
+    attachBuffer: function(collectionView, buffer) {
+      collectionView.$el.append(buffer);
+    },
+  
+    // Create a fragment buffer from the currently buffered children
+    _createBuffer: function() {
+      var elBuffer = document.createDocumentFragment();
+      _.each(this._bufferedChildren, function(b) {
+        elBuffer.appendChild(b.el);
+      });
+      return elBuffer;
+    },
+  
+    // Append the HTML to the collection's `el`.
+    // Override this method to do something other
+    // than `.append`.
+    attachHtml: function(collectionView, childView, index) {
+      if (collectionView.isBuffering) {
+        // buffering happens on reset events and initial renders
+        // in order to reduce the number of inserts into the
+        // document, which are expensive.
+        collectionView._bufferedChildren.splice(index, 0, childView);
+      } else {
+        // If we've already rendered the main collection, append
+        // the new child into the correct order if we need to. Otherwise
+        // append to the end.
+        if (!collectionView._insertBefore(childView, index)) {
+          collectionView._insertAfter(childView);
+        }
+      }
+    },
+  
+    // Internal method. Check whether we need to insert the view into
+    // the correct position.
+    _insertBefore: function(childView, index) {
+      var currentView;
+      var findPosition = this.getOption('sort') && (index < this.children.length - 1);
+      if (findPosition) {
+        // Find the view after this one
+        currentView = this.children.find(function(view) {
+          return view._index === index + 1;
+        });
+      }
+  
+      if (currentView) {
+        currentView.$el.before(childView.el);
+        return true;
+      }
+  
+      return false;
+    },
+  
+    // Internal method. Append a view to the end of the $el
+    _insertAfter: function(childView) {
+      this.$el.append(childView.el);
+    },
+  
+    // Internal method to set up the `children` object for
+    // storing all of the child views
+    _initChildViewStorage: function() {
+      this.children = new Backbone.ChildViewContainer();
+    },
+  
+    // Handle cleanup and other destroying needs for the collection of views
+    destroy: function() {
+      if (this.isDestroyed) { return this; }
+  
+      this.triggerMethod('before:destroy:collection');
+      this.destroyChildren({checkEmpty: false});
+      this.triggerMethod('destroy:collection');
+  
+      return Marionette.View.prototype.destroy.apply(this, arguments);
+    },
+  
+    // Destroy the child views that this collection view
+    // is holding on to, if any
+    destroyChildren: function(options) {
+      var destroyOptions = options || {};
+      var shouldCheckEmpty = true;
+      var childViews = this.children.map(_.identity);
+  
+      if (!_.isUndefined(destroyOptions.checkEmpty)) {
+        shouldCheckEmpty = destroyOptions.checkEmpty;
+      }
+  
+      this.children.each(this.removeChildView, this);
+  
+      if (shouldCheckEmpty) {
+        this.checkEmpty();
+      }
+      return childViews;
+    },
+  
+    // Return true if the given child should be shown
+    // Return false otherwise
+    // The filter will be passed (child, index, collection)
+    // Where
+    //  'child' is the given model
+    //  'index' is the index of that model in the collection
+    //  'collection' is the collection referenced by this CollectionView
+    _shouldAddChild: function(child, index) {
+      var filter = this.getOption('filter');
+      return !_.isFunction(filter) || filter.call(this, child, index, this.collection);
+    },
+  
+    // Set up the child view event forwarding. Uses a "childview:"
+    // prefix in front of all forwarded events.
+    proxyChildEvents: function(view) {
+      var prefix = this.getOption('childViewEventPrefix');
+  
+      // Forward all child view events through the parent,
+      // prepending "childview:" to the event name
+      this.listenTo(view, 'all', function() {
+        var args = _.toArray(arguments);
+        var rootEvent = args[0];
+        var childEvents = this.normalizeMethods(_.result(this, 'childEvents'));
+  
+        args[0] = prefix + ':' + rootEvent;
+        args.splice(1, 0, view);
+  
+        // call collectionView childEvent if defined
+        if (typeof childEvents !== 'undefined' && _.isFunction(childEvents[rootEvent])) {
+          childEvents[rootEvent].apply(this, args.slice(1));
+        }
+  
+        this.triggerMethod.apply(this, args);
+      });
+    },
+  
+    _getImmediateChildren: function() {
+      return _.values(this.children._views);
+    },
+  
+    _getViewAndNested: function(view) {
+      // This will not fail on Backbone.View which does not have #_getNestedViews.
+      return [view].concat(_.result(view, '_getNestedViews') || []);
+    },
+  
+    getViewComparator: function() {
+      return this.getOption('viewComparator');
+    }
+  });
+  
+  /* jshint maxstatements: 17, maxlen: 117 */
+  
+  // Composite View
+  // --------------
+  
+  // Used for rendering a branch-leaf, hierarchical structure.
+  // Extends directly from CollectionView and also renders an
+  // a child view as `modelView`, for the top leaf
+  Marionette.CompositeView = Marionette.CollectionView.extend({
+  
+    // Setting up the inheritance chain which allows changes to
+    // Marionette.CollectionView.prototype.constructor which allows overriding
+    // option to pass '{sort: false}' to prevent the CompositeView from
+    // maintaining the sorted order of the collection.
+    // This will fallback onto appending childView's to the end.
+    constructor: function() {
+      Marionette.CollectionView.apply(this, arguments);
+    },
+  
+    // Configured the initial events that the composite view
+    // binds to. Override this method to prevent the initial
+    // events, or to add your own initial events.
+    _initialEvents: function() {
+  
+      // Bind only after composite view is rendered to avoid adding child views
+      // to nonexistent childViewContainer
+  
+      if (this.collection) {
+        this.listenTo(this.collection, 'add', this._onCollectionAdd);
+        this.listenTo(this.collection, 'remove', this._onCollectionRemove);
+        this.listenTo(this.collection, 'reset', this._renderChildren);
+  
+        if (this.getOption('sort')) {
+          this.listenTo(this.collection, 'sort', this._sortViews);
+        }
+      }
+    },
+  
+    // Retrieve the `childView` to be used when rendering each of
+    // the items in the collection. The default is to return
+    // `this.childView` or Marionette.CompositeView if no `childView`
+    // has been defined
+    getChildView: function(child) {
+      var childView = this.getOption('childView') || this.constructor;
+  
+      return childView;
+    },
+  
+    // Serialize the model for the view.
+    // You can override the `serializeData` method in your own view
+    // definition, to provide custom serialization for your view's data.
+    serializeData: function() {
+      var data = {};
+  
+      if (this.model) {
+        data = _.partial(this.serializeModel, this.model).apply(this, arguments);
+      }
+  
+      return data;
+    },
+  
+    // Renders the model and the collection.
+    render: function() {
+      this._ensureViewIsIntact();
+      this._isRendering = true;
+      this.resetChildViewContainer();
+  
+      this.triggerMethod('before:render', this);
+  
+      this._renderTemplate();
+      this._renderChildren();
+  
+      this._isRendering = false;
+      this.isRendered = true;
+      this.triggerMethod('render', this);
+      return this;
+    },
+  
+    _renderChildren: function() {
+      if (this.isRendered || this._isRendering) {
+        Marionette.CollectionView.prototype._renderChildren.call(this);
+      }
+    },
+  
+    // Render the root template that the children
+    // views are appended to
+    _renderTemplate: function() {
+      var data = {};
+      data = this.serializeData();
+      data = this.mixinTemplateHelpers(data);
+  
+      this.triggerMethod('before:render:template');
+  
+      var template = this.getTemplate();
+      var html = Marionette.Renderer.render(template, data, this);
+      this.attachElContent(html);
+  
+      // the ui bindings is done here and not at the end of render since they
+      // will not be available until after the model is rendered, but should be
+      // available before the collection is rendered.
+      this.bindUIElements();
+      this.triggerMethod('render:template');
+    },
+  
+    // Attaches the content of the root.
+    // This method can be overridden to optimize rendering,
+    // or to render in a non standard way.
+    //
+    // For example, using `innerHTML` instead of `$el.html`
+    //
+    // ```js
+    // attachElContent: function(html) {
+    //   this.el.innerHTML = html;
+    //   return this;
+    // }
+    // ```
+    attachElContent: function(html) {
+      this.$el.html(html);
+  
+      return this;
+    },
+  
+    // You might need to override this if you've overridden attachHtml
+    attachBuffer: function(compositeView, buffer) {
+      var $container = this.getChildViewContainer(compositeView);
+      $container.append(buffer);
+    },
+  
+    // Internal method. Append a view to the end of the $el.
+    // Overidden from CollectionView to ensure view is appended to
+    // childViewContainer
+    _insertAfter: function(childView) {
+      var $container = this.getChildViewContainer(this, childView);
+      $container.append(childView.el);
+    },
+  
+    // Internal method. Append reordered childView'.
+    // Overidden from CollectionView to ensure reordered views
+    // are appended to childViewContainer
+    _appendReorderedChildren: function(children) {
+      var $container = this.getChildViewContainer(this);
+      $container.append(children);
+    },
+  
+    // Internal method to ensure an `$childViewContainer` exists, for the
+    // `attachHtml` method to use.
+    getChildViewContainer: function(containerView, childView) {
+      if (!!containerView.$childViewContainer) {
+        return containerView.$childViewContainer;
+      }
+  
+      var container;
+      var childViewContainer = Marionette.getOption(containerView, 'childViewContainer');
+      if (childViewContainer) {
+  
+        var selector = Marionette._getValue(childViewContainer, containerView);
+  
+        if (selector.charAt(0) === '@' && containerView.ui) {
+          container = containerView.ui[selector.substr(4)];
+        } else {
+          container = containerView.$(selector);
+        }
+  
+        if (container.length <= 0) {
+          throw new Marionette.Error({
+            name: 'ChildViewContainerMissingError',
+            message: 'The specified "childViewContainer" was not found: ' + containerView.childViewContainer
+          });
+        }
+  
+      } else {
+        container = containerView.$el;
+      }
+  
+      containerView.$childViewContainer = container;
+      return container;
+    },
+  
+    // Internal method to reset the `$childViewContainer` on render
+    resetChildViewContainer: function() {
+      if (this.$childViewContainer) {
+        this.$childViewContainer = undefined;
+      }
+    }
+  });
+  
+  // Layout View
+  // -----------
+  
+  // Used for managing application layoutViews, nested layoutViews and
+  // multiple regions within an application or sub-application.
+  //
+  // A specialized view class that renders an area of HTML and then
+  // attaches `Region` instances to the specified `regions`.
+  // Used for composite view management and sub-application areas.
+  Marionette.LayoutView = Marionette.ItemView.extend({
+    regionClass: Marionette.Region,
+  
+    options: {
+      destroyImmediate: false
+    },
+  
+    // used as the prefix for child view events
+    // that are forwarded through the layoutview
+    childViewEventPrefix: 'childview',
+  
+    // Ensure the regions are available when the `initialize` method
+    // is called.
+    constructor: function(options) {
+      options = options || {};
+  
+      this._firstRender = true;
+      this._initializeRegions(options);
+  
+      Marionette.ItemView.call(this, options);
+    },
+  
+    // LayoutView's render will use the existing region objects the
+    // first time it is called. Subsequent calls will destroy the
+    // views that the regions are showing and then reset the `el`
+    // for the regions to the newly rendered DOM elements.
+    render: function() {
+      this._ensureViewIsIntact();
+  
+      if (this._firstRender) {
+        // if this is the first render, don't do anything to
+        // reset the regions
+        this._firstRender = false;
+      } else {
+        // If this is not the first render call, then we need to
+        // re-initialize the `el` for each region
+        this._reInitializeRegions();
+      }
+  
+      return Marionette.ItemView.prototype.render.apply(this, arguments);
+    },
+  
+    // Handle destroying regions, and then destroy the view itself.
+    destroy: function() {
+      if (this.isDestroyed) { return this; }
+      // #2134: remove parent element before destroying the child views, so
+      // removing the child views doesn't retrigger repaints
+      if (this.getOption('destroyImmediate') === true) {
+        this.$el.remove();
+      }
+      this.regionManager.destroy();
+      return Marionette.ItemView.prototype.destroy.apply(this, arguments);
+    },
+  
+    showChildView: function(regionName, view) {
+      return this.getRegion(regionName).show(view);
+    },
+  
+    getChildView: function(regionName) {
+      return this.getRegion(regionName).currentView;
+    },
+  
+    // Add a single region, by name, to the layoutView
+    addRegion: function(name, definition) {
+      var regions = {};
+      regions[name] = definition;
+      return this._buildRegions(regions)[name];
+    },
+  
+    // Add multiple regions as a {name: definition, name2: def2} object literal
+    addRegions: function(regions) {
+      this.regions = _.extend({}, this.regions, regions);
+      return this._buildRegions(regions);
+    },
+  
+    // Remove a single region from the LayoutView, by name
+    removeRegion: function(name) {
+      delete this.regions[name];
+      return this.regionManager.removeRegion(name);
+    },
+  
+    // Provides alternative access to regions
+    // Accepts the region name
+    // getRegion('main')
+    getRegion: function(region) {
+      return this.regionManager.get(region);
+    },
+  
+    // Get all regions
+    getRegions: function() {
+      return this.regionManager.getRegions();
+    },
+  
+    // internal method to build regions
+    _buildRegions: function(regions) {
+      var defaults = {
+        regionClass: this.getOption('regionClass'),
+        parentEl: _.partial(_.result, this, 'el')
+      };
+  
+      return this.regionManager.addRegions(regions, defaults);
+    },
+  
+    // Internal method to initialize the regions that have been defined in a
+    // `regions` attribute on this layoutView.
+    _initializeRegions: function(options) {
+      var regions;
+      this._initRegionManager();
+  
+      regions = Marionette._getValue(this.regions, this, [options]) || {};
+  
+      // Enable users to define `regions` as instance options.
+      var regionOptions = this.getOption.call(options, 'regions');
+  
+      // enable region options to be a function
+      regionOptions = Marionette._getValue(regionOptions, this, [options]);
+  
+      _.extend(regions, regionOptions);
+  
+      // Normalize region selectors hash to allow
+      // a user to use the @ui. syntax.
+      regions = this.normalizeUIValues(regions, ['selector', 'el']);
+  
+      this.addRegions(regions);
+    },
+  
+    // Internal method to re-initialize all of the regions by updating the `el` that
+    // they point to
+    _reInitializeRegions: function() {
+      this.regionManager.invoke('reset');
+    },
+  
+    // Enable easy overriding of the default `RegionManager`
+    // for customized region interactions and business specific
+    // view logic for better control over single regions.
+    getRegionManager: function() {
+      return new Marionette.RegionManager();
+    },
+  
+    // Internal method to initialize the region manager
+    // and all regions in it
+    _initRegionManager: function() {
+      this.regionManager = this.getRegionManager();
+      this.regionManager._parent = this;
+  
+      this.listenTo(this.regionManager, 'before:add:region', function(name) {
+        this.triggerMethod('before:add:region', name);
+      });
+  
+      this.listenTo(this.regionManager, 'add:region', function(name, region) {
+        this[name] = region;
+        this.triggerMethod('add:region', name, region);
+      });
+  
+      this.listenTo(this.regionManager, 'before:remove:region', function(name) {
+        this.triggerMethod('before:remove:region', name);
+      });
+  
+      this.listenTo(this.regionManager, 'remove:region', function(name, region) {
+        delete this[name];
+        this.triggerMethod('remove:region', name, region);
+      });
+    },
+  
+    _getImmediateChildren: function() {
+      return _.chain(this.regionManager.getRegions())
+        .pluck('currentView')
+        .compact()
+        .value();
+    }
+  });
+  
+
+  // Behavior
+  // --------
+  
+  // A Behavior is an isolated set of DOM /
+  // user interactions that can be mixed into any View.
+  // Behaviors allow you to blackbox View specific interactions
+  // into portable logical chunks, keeping your views simple and your code DRY.
+  
+  Marionette.Behavior = Marionette.Object.extend({
+    constructor: function(options, view) {
+      // Setup reference to the view.
+      // this comes in handle when a behavior
+      // wants to directly talk up the chain
+      // to the view.
+      this.view = view;
+      this.defaults = _.result(this, 'defaults') || {};
+      this.options  = _.extend({}, this.defaults, options);
+      // Construct an internal UI hash using
+      // the views UI hash and then the behaviors UI hash.
+      // This allows the user to use UI hash elements
+      // defined in the parent view as well as those
+      // defined in the given behavior.
+      this.ui = _.extend({}, _.result(view, 'ui'), _.result(this, 'ui'));
+  
+      Marionette.Object.apply(this, arguments);
+    },
+  
+    // proxy behavior $ method to the view
+    // this is useful for doing jquery DOM lookups
+    // scoped to behaviors view.
+    $: function() {
+      return this.view.$.apply(this.view, arguments);
+    },
+  
+    // Stops the behavior from listening to events.
+    // Overrides Object#destroy to prevent additional events from being triggered.
+    destroy: function() {
+      this.stopListening();
+  
+      return this;
+    },
+  
+    proxyViewProperties: function(view) {
+      this.$el = view.$el;
+      this.el = view.el;
+    }
+  });
+  
+  /* jshint maxlen: 143 */
+  // Behaviors
+  // ---------
+  
+  // Behaviors is a utility class that takes care of
+  // gluing your behavior instances to their given View.
+  // The most important part of this class is that you
+  // **MUST** override the class level behaviorsLookup
+  // method for things to work properly.
+  
+  Marionette.Behaviors = (function(Marionette, _) {
+    // Borrow event splitter from Backbone
+    var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+  
+    function Behaviors(view, behaviors) {
+  
+      if (!_.isObject(view.behaviors)) {
+        return {};
+      }
+  
+      // Behaviors defined on a view can be a flat object literal
+      // or it can be a function that returns an object.
+      behaviors = Behaviors.parseBehaviors(view, behaviors || _.result(view, 'behaviors'));
+  
+      // Wraps several of the view's methods
+      // calling the methods first on each behavior
+      // and then eventually calling the method on the view.
+      Behaviors.wrap(view, behaviors, _.keys(methods));
+      return behaviors;
+    }
+  
+    var methods = {
+      behaviorTriggers: function(behaviorTriggers, behaviors) {
+        var triggerBuilder = new BehaviorTriggersBuilder(this, behaviors);
+        return triggerBuilder.buildBehaviorTriggers();
+      },
+  
+      behaviorEvents: function(behaviorEvents, behaviors) {
+        var _behaviorsEvents = {};
+  
+        _.each(behaviors, function(b, i) {
+          var _events = {};
+          var behaviorEvents = _.clone(_.result(b, 'events')) || {};
+  
+          // Normalize behavior events hash to allow
+          // a user to use the @ui. syntax.
+          behaviorEvents = Marionette.normalizeUIKeys(behaviorEvents, getBehaviorsUI(b));
+  
+          var j = 0;
+          _.each(behaviorEvents, function(behaviour, key) {
+            var match     = key.match(delegateEventSplitter);
+  
+            // Set event name to be namespaced using the view cid,
+            // the behavior index, and the behavior event index
+            // to generate a non colliding event namespace
+            // http://api.jquery.com/event.namespace/
+            var eventName = match[1] + '.' + [this.cid, i, j++, ' '].join('');
+            var selector  = match[2];
+  
+            var eventKey  = eventName + selector;
+            var handler   = _.isFunction(behaviour) ? behaviour : b[behaviour];
+  
+            _events[eventKey] = _.bind(handler, b);
+          }, this);
+  
+          _behaviorsEvents = _.extend(_behaviorsEvents, _events);
+        }, this);
+  
+        return _behaviorsEvents;
+      }
+    };
+  
+    _.extend(Behaviors, {
+  
+      // Placeholder method to be extended by the user.
+      // The method should define the object that stores the behaviors.
+      // i.e.
+      //
+      // ```js
+      // Marionette.Behaviors.behaviorsLookup: function() {
+      //   return App.Behaviors
+      // }
+      // ```
+      behaviorsLookup: function() {
+        throw new Marionette.Error({
+          message: 'You must define where your behaviors are stored.',
+          url: 'marionette.behaviors.html#behaviorslookup'
+        });
+      },
+  
+      // Takes care of getting the behavior class
+      // given options and a key.
+      // If a user passes in options.behaviorClass
+      // default to using that. Otherwise delegate
+      // the lookup to the users `behaviorsLookup` implementation.
+      getBehaviorClass: function(options, key) {
+        if (options.behaviorClass) {
+          return options.behaviorClass;
+        }
+  
+        // Get behavior class can be either a flat object or a method
+        return Marionette._getValue(Behaviors.behaviorsLookup, this, [options, key])[key];
+      },
+  
+      // Iterate over the behaviors object, for each behavior
+      // instantiate it and get its grouped behaviors.
+      parseBehaviors: function(view, behaviors) {
+        return _.chain(behaviors).map(function(options, key) {
+          var BehaviorClass = Behaviors.getBehaviorClass(options, key);
+  
+          var behavior = new BehaviorClass(options, view);
+          var nestedBehaviors = Behaviors.parseBehaviors(view, _.result(behavior, 'behaviors'));
+  
+          return [behavior].concat(nestedBehaviors);
+        }).flatten().value();
+      },
+  
+      // Wrap view internal methods so that they delegate to behaviors. For example,
+      // `onDestroy` should trigger destroy on all of the behaviors and then destroy itself.
+      // i.e.
+      //
+      // `view.delegateEvents = _.partial(methods.delegateEvents, view.delegateEvents, behaviors);`
+      wrap: function(view, behaviors, methodNames) {
+        _.each(methodNames, function(methodName) {
+          view[methodName] = _.partial(methods[methodName], view[methodName], behaviors);
+        });
+      }
+    });
+  
+    // Class to build handlers for `triggers` on behaviors
+    // for views
+    function BehaviorTriggersBuilder(view, behaviors) {
+      this._view      = view;
+      this._behaviors = behaviors;
+      this._triggers  = {};
+    }
+  
+    _.extend(BehaviorTriggersBuilder.prototype, {
+      // Main method to build the triggers hash with event keys and handlers
+      buildBehaviorTriggers: function() {
+        _.each(this._behaviors, this._buildTriggerHandlersForBehavior, this);
+        return this._triggers;
+      },
+  
+      // Internal method to build all trigger handlers for a given behavior
+      _buildTriggerHandlersForBehavior: function(behavior, i) {
+        var triggersHash = _.clone(_.result(behavior, 'triggers')) || {};
+  
+        triggersHash = Marionette.normalizeUIKeys(triggersHash, getBehaviorsUI(behavior));
+  
+        _.each(triggersHash, _.bind(this._setHandlerForBehavior, this, behavior, i));
+      },
+  
+      // Internal method to create and assign the trigger handler for a given
+      // behavior
+      _setHandlerForBehavior: function(behavior, i, eventName, trigger) {
+        // Unique identifier for the `this._triggers` hash
+        var triggerKey = trigger.replace(/^\S+/, function(triggerName) {
+          return triggerName + '.' + 'behaviortriggers' + i;
+        });
+  
+        this._triggers[triggerKey] = this._view._buildViewTrigger(eventName);
+      }
+    });
+  
+    function getBehaviorsUI(behavior) {
+      return behavior._uiBindings || behavior.ui;
+    }
+  
+    return Behaviors;
+  
+  })(Marionette, _);
+  
+
+  // App Router
+  // ----------
+  
+  // Reduce the boilerplate code of handling route events
+  // and then calling a single method on another object.
+  // Have your routers configured to call the method on
+  // your object, directly.
+  //
+  // Configure an AppRouter with `appRoutes`.
+  //
+  // App routers can only take one `controller` object.
+  // It is recommended that you divide your controller
+  // objects in to smaller pieces of related functionality
+  // and have multiple routers / controllers, instead of
+  // just one giant router and controller.
+  //
+  // You can also add standard routes to an AppRouter.
+  
+  Marionette.AppRouter = Backbone.Router.extend({
+  
+    constructor: function(options) {
+      this.options = options || {};
+  
+      Backbone.Router.apply(this, arguments);
+  
+      var appRoutes = this.getOption('appRoutes');
+      var controller = this._getController();
+      this.processAppRoutes(controller, appRoutes);
+      this.on('route', this._processOnRoute, this);
+    },
+  
+    // Similar to route method on a Backbone Router but
+    // method is called on the controller
+    appRoute: function(route, methodName) {
+      var controller = this._getController();
+      this._addAppRoute(controller, route, methodName);
+    },
+  
+    // process the route event and trigger the onRoute
+    // method call, if it exists
+    _processOnRoute: function(routeName, routeArgs) {
+      // make sure an onRoute before trying to call it
+      if (_.isFunction(this.onRoute)) {
+        // find the path that matches the current route
+        var routePath = _.invert(this.getOption('appRoutes'))[routeName];
+        this.onRoute(routeName, routePath, routeArgs);
+      }
+    },
+  
+    // Internal method to process the `appRoutes` for the
+    // router, and turn them in to routes that trigger the
+    // specified method on the specified `controller`.
+    processAppRoutes: function(controller, appRoutes) {
+      if (!appRoutes) { return; }
+  
+      var routeNames = _.keys(appRoutes).reverse(); // Backbone requires reverted order of routes
+  
+      _.each(routeNames, function(route) {
+        this._addAppRoute(controller, route, appRoutes[route]);
+      }, this);
+    },
+  
+    _getController: function() {
+      return this.getOption('controller');
+    },
+  
+    _addAppRoute: function(controller, route, methodName) {
+      var method = controller[methodName];
+  
+      if (!method) {
+        throw new Marionette.Error('Method "' + methodName + '" was not found on the controller');
+      }
+  
+      this.route(route, methodName, _.bind(method, controller));
+    },
+  
+    mergeOptions: Marionette.mergeOptions,
+  
+    // Proxy `getOption` to enable getting options from this or this.options by name.
+    getOption: Marionette.proxyGetOption,
+  
+    triggerMethod: Marionette.triggerMethod,
+  
+    bindEntityEvents: Marionette.proxyBindEntityEvents,
+  
+    unbindEntityEvents: Marionette.proxyUnbindEntityEvents
+  });
+  
+  // Application
+  // -----------
+  
+  // Contain and manage the composite application as a whole.
+  // Stores and starts up `Region` objects, includes an
+  // event aggregator as `app.vent`
+  Marionette.Application = Marionette.Object.extend({
+    constructor: function(options) {
+      this._initializeRegions(options);
+      this._initCallbacks = new Marionette.Callbacks();
+      this.submodules = {};
+      _.extend(this, options);
+      this._initChannel();
+      Marionette.Object.apply(this, arguments);
+    },
+  
+    // Command execution, facilitated by Backbone.Wreqr.Commands
+    execute: function() {
+      this.commands.execute.apply(this.commands, arguments);
+    },
+  
+    // Request/response, facilitated by Backbone.Wreqr.RequestResponse
+    request: function() {
+      return this.reqres.request.apply(this.reqres, arguments);
+    },
+  
+    // Add an initializer that is either run at when the `start`
+    // method is called, or run immediately if added after `start`
+    // has already been called.
+    addInitializer: function(initializer) {
+      this._initCallbacks.add(initializer);
+    },
+  
+    // kick off all of the application's processes.
+    // initializes all of the regions that have been added
+    // to the app, and runs all of the initializer functions
+    start: function(options) {
+      this.triggerMethod('before:start', options);
+      this._initCallbacks.run(options, this);
+      this.triggerMethod('start', options);
+    },
+  
+    // Add regions to your app.
+    // Accepts a hash of named strings or Region objects
+    // addRegions({something: "#someRegion"})
+    // addRegions({something: Region.extend({el: "#someRegion"}) });
+    addRegions: function(regions) {
+      return this._regionManager.addRegions(regions);
+    },
+  
+    // Empty all regions in the app, without removing them
+    emptyRegions: function() {
+      return this._regionManager.emptyRegions();
+    },
+  
+    // Removes a region from your app, by name
+    // Accepts the regions name
+    // removeRegion('myRegion')
+    removeRegion: function(region) {
+      return this._regionManager.removeRegion(region);
+    },
+  
+    // Provides alternative access to regions
+    // Accepts the region name
+    // getRegion('main')
+    getRegion: function(region) {
+      return this._regionManager.get(region);
+    },
+  
+    // Get all the regions from the region manager
+    getRegions: function() {
+      return this._regionManager.getRegions();
+    },
+  
+    // Create a module, attached to the application
+    module: function(moduleNames, moduleDefinition) {
+  
+      // Overwrite the module class if the user specifies one
+      var ModuleClass = Marionette.Module.getClass(moduleDefinition);
+  
+      var args = _.toArray(arguments);
+      args.unshift(this);
+  
+      // see the Marionette.Module object for more information
+      return ModuleClass.create.apply(ModuleClass, args);
+    },
+  
+    // Enable easy overriding of the default `RegionManager`
+    // for customized region interactions and business-specific
+    // view logic for better control over single regions.
+    getRegionManager: function() {
+      return new Marionette.RegionManager();
+    },
+  
+    // Internal method to initialize the regions that have been defined in a
+    // `regions` attribute on the application instance
+    _initializeRegions: function(options) {
+      var regions = _.isFunction(this.regions) ? this.regions(options) : this.regions || {};
+  
+      this._initRegionManager();
+  
+      // Enable users to define `regions` in instance options.
+      var optionRegions = Marionette.getOption(options, 'regions');
+  
+      // Enable region options to be a function
+      if (_.isFunction(optionRegions)) {
+        optionRegions = optionRegions.call(this, options);
+      }
+  
+      // Overwrite current regions with those passed in options
+      _.extend(regions, optionRegions);
+  
+      this.addRegions(regions);
+  
+      return this;
+    },
+  
+    // Internal method to set up the region manager
+    _initRegionManager: function() {
+      this._regionManager = this.getRegionManager();
+      this._regionManager._parent = this;
+  
+      this.listenTo(this._regionManager, 'before:add:region', function() {
+        Marionette._triggerMethod(this, 'before:add:region', arguments);
+      });
+  
+      this.listenTo(this._regionManager, 'add:region', function(name, region) {
+        this[name] = region;
+        Marionette._triggerMethod(this, 'add:region', arguments);
+      });
+  
+      this.listenTo(this._regionManager, 'before:remove:region', function() {
+        Marionette._triggerMethod(this, 'before:remove:region', arguments);
+      });
+  
+      this.listenTo(this._regionManager, 'remove:region', function(name) {
+        delete this[name];
+        Marionette._triggerMethod(this, 'remove:region', arguments);
+      });
+    },
+  
+    // Internal method to setup the Wreqr.radio channel
+    _initChannel: function() {
+      this.channelName = _.result(this, 'channelName') || 'global';
+      this.channel = _.result(this, 'channel') || Backbone.Wreqr.radio.channel(this.channelName);
+      this.vent = _.result(this, 'vent') || this.channel.vent;
+      this.commands = _.result(this, 'commands') || this.channel.commands;
+      this.reqres = _.result(this, 'reqres') || this.channel.reqres;
+    }
+  });
+  
+  /* jshint maxparams: 9 */
+  
+  // Module
+  // ------
+  
+  // A simple module system, used to create privacy and encapsulation in
+  // Marionette applications
+  Marionette.Module = function(moduleName, app, options) {
+    this.moduleName = moduleName;
+    this.options = _.extend({}, this.options, options);
+    // Allow for a user to overide the initialize
+    // for a given module instance.
+    this.initialize = options.initialize || this.initialize;
+  
+    // Set up an internal store for sub-modules.
+    this.submodules = {};
+  
+    this._setupInitializersAndFinalizers();
+  
+    // Set an internal reference to the app
+    // within a module.
+    this.app = app;
+  
+    if (_.isFunction(this.initialize)) {
+      this.initialize(moduleName, app, this.options);
+    }
+  };
+  
+  Marionette.Module.extend = Marionette.extend;
+  
+  // Extend the Module prototype with events / listenTo, so that the module
+  // can be used as an event aggregator or pub/sub.
+  _.extend(Marionette.Module.prototype, Backbone.Events, {
+  
+    // By default modules start with their parents.
+    startWithParent: true,
+  
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic when extending Marionette.Module.
+    initialize: function() {},
+  
+    // Initializer for a specific module. Initializers are run when the
+    // module's `start` method is called.
+    addInitializer: function(callback) {
+      this._initializerCallbacks.add(callback);
+    },
+  
+    // Finalizers are run when a module is stopped. They are used to teardown
+    // and finalize any variables, references, events and other code that the
+    // module had set up.
+    addFinalizer: function(callback) {
+      this._finalizerCallbacks.add(callback);
+    },
+  
+    // Start the module, and run all of its initializers
+    start: function(options) {
+      // Prevent re-starting a module that is already started
+      if (this._isInitialized) { return; }
+  
+      // start the sub-modules (depth-first hierarchy)
+      _.each(this.submodules, function(mod) {
+        // check to see if we should start the sub-module with this parent
+        if (mod.startWithParent) {
+          mod.start(options);
+        }
+      });
+  
+      // run the callbacks to "start" the current module
+      this.triggerMethod('before:start', options);
+  
+      this._initializerCallbacks.run(options, this);
+      this._isInitialized = true;
+  
+      this.triggerMethod('start', options);
+    },
+  
+    // Stop this module by running its finalizers and then stop all of
+    // the sub-modules for this module
+    stop: function() {
+      // if we are not initialized, don't bother finalizing
+      if (!this._isInitialized) { return; }
+      this._isInitialized = false;
+  
+      this.triggerMethod('before:stop');
+  
+      // stop the sub-modules; depth-first, to make sure the
+      // sub-modules are stopped / finalized before parents
+      _.invoke(this.submodules, 'stop');
+  
+      // run the finalizers
+      this._finalizerCallbacks.run(undefined, this);
+  
+      // reset the initializers and finalizers
+      this._initializerCallbacks.reset();
+      this._finalizerCallbacks.reset();
+  
+      this.triggerMethod('stop');
+    },
+  
+    // Configure the module with a definition function and any custom args
+    // that are to be passed in to the definition function
+    addDefinition: function(moduleDefinition, customArgs) {
+      this._runModuleDefinition(moduleDefinition, customArgs);
+    },
+  
+    // Internal method: run the module definition function with the correct
+    // arguments
+    _runModuleDefinition: function(definition, customArgs) {
+      // If there is no definition short circut the method.
+      if (!definition) { return; }
+  
+      // build the correct list of arguments for the module definition
+      var args = _.flatten([
+        this,
+        this.app,
+        Backbone,
+        Marionette,
+        Backbone.$, _,
+        customArgs
+      ]);
+  
+      definition.apply(this, args);
+    },
+  
+    // Internal method: set up new copies of initializers and finalizers.
+    // Calling this method will wipe out all existing initializers and
+    // finalizers.
+    _setupInitializersAndFinalizers: function() {
+      this._initializerCallbacks = new Marionette.Callbacks();
+      this._finalizerCallbacks = new Marionette.Callbacks();
+    },
+  
+    // import the `triggerMethod` to trigger events with corresponding
+    // methods if the method exists
+    triggerMethod: Marionette.triggerMethod
+  });
+  
+  // Class methods to create modules
+  _.extend(Marionette.Module, {
+  
+    // Create a module, hanging off the app parameter as the parent object.
+    create: function(app, moduleNames, moduleDefinition) {
+      var module = app;
+  
+      // get the custom args passed in after the module definition and
+      // get rid of the module name and definition function
+      var customArgs = _.drop(arguments, 3);
+  
+      // Split the module names and get the number of submodules.
+      // i.e. an example module name of `Doge.Wow.Amaze` would
+      // then have the potential for 3 module definitions.
+      moduleNames = moduleNames.split('.');
+      var length = moduleNames.length;
+  
+      // store the module definition for the last module in the chain
+      var moduleDefinitions = [];
+      moduleDefinitions[length - 1] = moduleDefinition;
+  
+      // Loop through all the parts of the module definition
+      _.each(moduleNames, function(moduleName, i) {
+        var parentModule = module;
+        module = this._getModule(parentModule, moduleName, app, moduleDefinition);
+        this._addModuleDefinition(parentModule, module, moduleDefinitions[i], customArgs);
+      }, this);
+  
+      // Return the last module in the definition chain
+      return module;
+    },
+  
+    _getModule: function(parentModule, moduleName, app, def, args) {
+      var options = _.extend({}, def);
+      var ModuleClass = this.getClass(def);
+  
+      // Get an existing module of this name if we have one
+      var module = parentModule[moduleName];
+  
+      if (!module) {
+        // Create a new module if we don't have one
+        module = new ModuleClass(moduleName, app, options);
+        parentModule[moduleName] = module;
+        // store the module on the parent
+        parentModule.submodules[moduleName] = module;
+      }
+  
+      return module;
+    },
+  
+    // ## Module Classes
+    //
+    // Module classes can be used as an alternative to the define pattern.
+    // The extend function of a Module is identical to the extend functions
+    // on other Backbone and Marionette classes.
+    // This allows module lifecyle events like `onStart` and `onStop` to be called directly.
+    getClass: function(moduleDefinition) {
+      var ModuleClass = Marionette.Module;
+  
+      if (!moduleDefinition) {
+        return ModuleClass;
+      }
+  
+      // If all of the module's functionality is defined inside its class,
+      // then the class can be passed in directly. `MyApp.module("Foo", FooModule)`.
+      if (moduleDefinition.prototype instanceof ModuleClass) {
+        return moduleDefinition;
+      }
+  
+      return moduleDefinition.moduleClass || ModuleClass;
+    },
+  
+    // Add the module definition and add a startWithParent initializer function.
+    // This is complicated because module definitions are heavily overloaded
+    // and support an anonymous function, module class, or options object
+    _addModuleDefinition: function(parentModule, module, def, args) {
+      var fn = this._getDefine(def);
+      var startWithParent = this._getStartWithParent(def, module);
+  
+      if (fn) {
+        module.addDefinition(fn, args);
+      }
+  
+      this._addStartWithParent(parentModule, module, startWithParent);
+    },
+  
+    _getStartWithParent: function(def, module) {
+      var swp;
+  
+      if (_.isFunction(def) && (def.prototype instanceof Marionette.Module)) {
+        swp = module.constructor.prototype.startWithParent;
+        return _.isUndefined(swp) ? true : swp;
+      }
+  
+      if (_.isObject(def)) {
+        swp = def.startWithParent;
+        return _.isUndefined(swp) ? true : swp;
+      }
+  
+      return true;
+    },
+  
+    _getDefine: function(def) {
+      if (_.isFunction(def) && !(def.prototype instanceof Marionette.Module)) {
+        return def;
+      }
+  
+      if (_.isObject(def)) {
+        return def.define;
+      }
+  
+      return null;
+    },
+  
+    _addStartWithParent: function(parentModule, module, startWithParent) {
+      module.startWithParent = module.startWithParent && startWithParent;
+  
+      if (!module.startWithParent || !!module.startWithParentIsConfigured) {
+        return;
+      }
+  
+      module.startWithParentIsConfigured = true;
+  
+      parentModule.addInitializer(function(options) {
+        if (module.startWithParent) {
+          module.start(options);
+        }
+      });
+    }
+  });
+  
+
+  return Marionette;
+}));
+
+; browserify_shim__define__module__export__(typeof Marionette != "undefined" ? Marionette : window.Marionette);
+
+}).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],7:[function(require,module,exports){
+(function (global){
+;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
+// Backbone.Radio v0.9.1
+(function (global, factory) {
+  typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory(__browserify_shim_require__("underscore"), __browserify_shim_require__("backbone")) : typeof define === "function" && define.amd ? define(["underscore", "backbone"], factory) : global.Backbone.Radio = factory(global._, global.Backbone);
+})(this, function (_, Backbone) {
+  "use strict";
+
   var previousRadio = Backbone.Radio;
-  
+
   var Radio = Backbone.Radio = {};
-  
-  Radio.VERSION = '0.9.0';
-  
+
+  Radio.VERSION = "0.9.1";
+
   // This allows you to run multiple instances of Radio on the same
   // webapp. After loading the new version, call `noConflict()` to
   // get a reference to it. At the same time the old version will be
@@ -25545,49 +29494,48 @@ return jQuery;
     Backbone.Radio = previousRadio;
     return this;
   };
-  
+
   // Whether or not we're in DEBUG mode or not. DEBUG mode helps you
   // get around the issues of lack of warnings when events are mis-typed.
   Radio.DEBUG = false;
-  
+
   // Format debug text.
-  Radio._debugText = function(warning, eventName, channelName) {
-    return warning + (channelName ? ' on the ' + channelName + ' channel' : '') +
-      ': "' + eventName + '"';
+  Radio._debugText = function (warning, eventName, channelName) {
+    return warning + (channelName ? " on the " + channelName + " channel" : "") + ": \"" + eventName + "\"";
   };
-  
+
   // This is the method that's called when an unregistered event was called.
   // By default, it logs warning to the console. By overriding this you could
   // make it throw an Error, for instance. This would make firing a nonexistent event
   // have the same consequence as firing a nonexistent method on an Object.
-  Radio.debugLog = function(warning, eventName, channelName) {
+  Radio.debugLog = function (warning, eventName, channelName) {
     if (Radio.DEBUG && console && console.warn) {
       console.warn(Radio._debugText(warning, eventName, channelName));
     }
   };
-  
+
   var eventSplitter = /\s+/;
-  
+
   // An internal method used to handle Radio's method overloading for Requests and
   // Commands. It's borrowed from Backbone.Events. It differs from Backbone's overload
   // API (which is used in Backbone.Events) in that it doesn't support space-separated
   // event names.
-  Radio._eventsApi = function(obj, action, name, rest) {
+  Radio._eventsApi = function (obj, action, name, rest) {
     if (!name) {
       return false;
     }
-  
+
     var results = {};
-  
+
     // Handle event maps.
-    if (typeof name === 'object') {
+    if (typeof name === "object") {
       for (var key in name) {
         var result = obj[action].apply(obj, [key, name[key]].concat(rest));
         eventSplitter.test(key) ? _.extend(results, result) : results[key] = result;
       }
       return results;
     }
-  
+
     // Handle space separated event names.
     if (eventSplitter.test(name)) {
       var names = name.split(eventSplitter);
@@ -25596,297 +29544,303 @@ return jQuery;
       }
       return results;
     }
-  
+
     return false;
   };
-  
+
   // An optimized way to execute callbacks.
-  Radio._callHandler = function(callback, context, args) {
-    var a1 = args[0], a2 = args[1], a3 = args[2];
-    switch(args.length) {
-      case 0: return callback.call(context);
-      case 1: return callback.call(context, a1);
-      case 2: return callback.call(context, a1, a2);
-      case 3: return callback.call(context, a1, a2, a3);
-      default: return callback.apply(context, args);
+  Radio._callHandler = function (callback, context, args) {
+    var a1 = args[0],
+        a2 = args[1],
+        a3 = args[2];
+    switch (args.length) {
+      case 0:
+        return callback.call(context);
+      case 1:
+        return callback.call(context, a1);
+      case 2:
+        return callback.call(context, a1, a2);
+      case 3:
+        return callback.call(context, a1, a2, a3);
+      default:
+        return callback.apply(context, args);
     }
   };
-  
+
   // A helper used by `off` methods to the handler from the store
   function removeHandler(store, name, callback, context) {
     var event = store[name];
-    if (
-       (!callback || (callback === event.callback || callback === event.callback._callback)) &&
-       (!context || (context === event.context))
-    ) {
+    if ((!callback || (callback === event.callback || callback === event.callback._callback)) && (!context || context === event.context)) {
       delete store[name];
       return true;
     }
   }
-  
+
   function removeHandlers(store, name, callback, context) {
     store || (store = {});
     var names = name ? [name] : _.keys(store);
     var matched = false;
-  
+
     for (var i = 0, length = names.length; i < length; i++) {
       name = names[i];
-  
+
       // If there's no event by this name, log it and continue
       // with the loop
       if (!store[name]) {
         continue;
       }
-  
+
       if (removeHandler(store, name, callback, context)) {
         matched = true;
       }
     }
-  
+
     return matched;
   }
-  
+
   /*
    * tune-in
    * -------
    * Get console logs of a channel's activity
    *
    */
-  
+
   var _logs = {};
-  
+
   // This is to produce an identical function in both tuneIn and tuneOut,
   // so that Backbone.Events unregisters it.
   function _partial(channelName) {
     return _logs[channelName] || (_logs[channelName] = _.partial(Radio.log, channelName));
   }
-  
+
   _.extend(Radio, {
-  
+
     // Log information about the channel and event
-    log: function(channelName, eventName) {
+    log: function log(channelName, eventName) {
       var args = _.rest(arguments, 2);
-      console.log('[' + channelName + '] "' + eventName + '"', args);
+      console.log("[" + channelName + "] \"" + eventName + "\"", args);
     },
-  
+
     // Logs all events on this channel to the console. It sets an
     // internal value on the channel telling it we're listening,
     // then sets a listener on the Backbone.Events
-    tuneIn: function(channelName) {
+    tuneIn: function tuneIn(channelName) {
       var channel = Radio.channel(channelName);
       channel._tunedIn = true;
-      channel.on('all', _partial(channelName));
+      channel.on("all", _partial(channelName));
       return this;
     },
-  
+
     // Stop logging all of the activities on this channel to the console
-    tuneOut: function(channelName) {
+    tuneOut: function tuneOut(channelName) {
       var channel = Radio.channel(channelName);
       channel._tunedIn = false;
-      channel.off('all', _partial(channelName));
+      channel.off("all", _partial(channelName));
       delete _logs[channelName];
       return this;
     }
   });
-  
+
   /*
    * Backbone.Radio.Commands
    * -----------------------
    * A messaging system for sending orders.
    *
    */
-  
+
   Radio.Commands = {
-  
+
     // Issue a command
-    command: function(name) {
+    command: function command(name) {
       var args = _.rest(arguments);
-      if (Radio._eventsApi(this, 'command', name, args)) {
+      if (Radio._eventsApi(this, "command", name, args)) {
         return this;
       }
       var channelName = this.channelName;
       var commands = this._commands;
-  
+
       // Check if we should log the command, and if so, do it
       if (channelName && this._tunedIn) {
         Radio.log.apply(this, [channelName, name].concat(args));
       }
-  
+
       // If the command isn't handled, log it in DEBUG mode and exit
-      if (commands && (commands[name] || commands['default'])) {
-        var handler = commands[name] || commands['default'];
+      if (commands && (commands[name] || commands["default"])) {
+        var handler = commands[name] || commands["default"];
         args = commands[name] ? args : arguments;
         Radio._callHandler(handler.callback, handler.context, args);
       } else {
-        Radio.debugLog('An unhandled command was fired', name, channelName);
+        Radio.debugLog("An unhandled command was fired", name, channelName);
       }
-  
+
       return this;
     },
-  
+
     // Register a handler for a command.
-    comply: function(name, callback, context) {
-      if (Radio._eventsApi(this, 'comply', name, [callback, context])) {
+    comply: function comply(name, callback, context) {
+      if (Radio._eventsApi(this, "comply", name, [callback, context])) {
         return this;
       }
       this._commands || (this._commands = {});
-  
+
       if (this._commands[name]) {
-        Radio.debugLog('A command was overwritten', name, this.channelName);
+        Radio.debugLog("A command was overwritten", name, this.channelName);
       }
-  
+
       this._commands[name] = {
         callback: callback,
         context: context || this
       };
-  
+
       return this;
     },
-  
+
     // Register a handler for a command that happens just once.
-    complyOnce: function(name, callback, context) {
-      if (Radio._eventsApi(this, 'complyOnce', name, [callback, context])) {
+    complyOnce: function complyOnce(name, callback, context) {
+      if (Radio._eventsApi(this, "complyOnce", name, [callback, context])) {
         return this;
       }
       var self = this;
-  
-      var once = _.once(function() {
+
+      var once = _.once(function () {
         self.stopComplying(name);
         return callback.apply(this, arguments);
       });
-  
+
       return this.comply(name, once, context);
     },
-  
+
     // Remove handler(s)
-    stopComplying: function(name, callback, context) {
-      if (Radio._eventsApi(this, 'stopComplying', name)) {
+    stopComplying: function stopComplying(name, callback, context) {
+      if (Radio._eventsApi(this, "stopComplying", name)) {
         return this;
       }
-  
+
       // Remove everything if there are no arguments passed
       if (!name && !callback && !context) {
         delete this._commands;
       } else if (!removeHandlers(this._commands, name, callback, context)) {
-        Radio.debugLog('Attempted to remove the unregistered command', name, this.channelName);
+        Radio.debugLog("Attempted to remove the unregistered command", name, this.channelName);
       }
-  
+
       return this;
     }
   };
-  
+
   /*
    * Backbone.Radio.Requests
    * -----------------------
    * A messaging system for requesting data.
    *
    */
-  
+
   function makeCallback(callback) {
-    return _.isFunction(callback) ? callback : function () { return callback; };
+    return _.isFunction(callback) ? callback : function () {
+      return callback;
+    };
   }
-  
+
   Radio.Requests = {
-  
+
     // Make a request
-    request: function(name) {
+    request: function request(name) {
       var args = _.rest(arguments);
-      var results = Radio._eventsApi(this, 'request', name, args);
+      var results = Radio._eventsApi(this, "request", name, args);
       if (results) {
         return results;
       }
       var channelName = this.channelName;
       var requests = this._requests;
-  
+
       // Check if we should log the request, and if so, do it
       if (channelName && this._tunedIn) {
         Radio.log.apply(this, [channelName, name].concat(args));
       }
-  
+
       // If the request isn't handled, log it in DEBUG mode and exit
-      if (requests && (requests[name] || requests['default'])) {
-        var handler = requests[name] || requests['default'];
+      if (requests && (requests[name] || requests["default"])) {
+        var handler = requests[name] || requests["default"];
         args = requests[name] ? args : arguments;
         return Radio._callHandler(handler.callback, handler.context, args);
       } else {
-        Radio.debugLog('An unhandled request was fired', name, channelName);
+        Radio.debugLog("An unhandled request was fired", name, channelName);
       }
     },
-  
+
     // Set up a handler for a request
-    reply: function(name, callback, context) {
-      if (Radio._eventsApi(this, 'reply', name, [callback, context])) {
+    reply: function reply(name, callback, context) {
+      if (Radio._eventsApi(this, "reply", name, [callback, context])) {
         return this;
       }
-  
+
       this._requests || (this._requests = {});
-  
+
       if (this._requests[name]) {
-        Radio.debugLog('A request was overwritten', name, this.channelName);
+        Radio.debugLog("A request was overwritten", name, this.channelName);
       }
-  
+
       this._requests[name] = {
         callback: makeCallback(callback),
         context: context || this
       };
-  
+
       return this;
     },
-  
+
     // Set up a handler that can only be requested once
-    replyOnce: function(name, callback, context) {
-      if (Radio._eventsApi(this, 'replyOnce', name, [callback, context])) {
+    replyOnce: function replyOnce(name, callback, context) {
+      if (Radio._eventsApi(this, "replyOnce", name, [callback, context])) {
         return this;
       }
-  
+
       var self = this;
-  
-      var once = _.once(function() {
+
+      var once = _.once(function () {
         self.stopReplying(name);
         return makeCallback(callback).apply(this, arguments);
       });
-  
+
       return this.reply(name, once, context);
     },
-  
+
     // Remove handler(s)
-    stopReplying: function(name, callback, context) {
-      if (Radio._eventsApi(this, 'stopReplying', name)) {
+    stopReplying: function stopReplying(name, callback, context) {
+      if (Radio._eventsApi(this, "stopReplying", name)) {
         return this;
       }
-  
+
       // Remove everything if there are no arguments passed
       if (!name && !callback && !context) {
         delete this._requests;
       } else if (!removeHandlers(this._requests, name, callback, context)) {
-        Radio.debugLog('Attempted to remove the unregistered request', name, this.channelName);
+        Radio.debugLog("Attempted to remove the unregistered request", name, this.channelName);
       }
-  
+
       return this;
     }
   };
-  
+
   /*
    * Backbone.Radio.channel
    * ----------------------
    * Get a reference to a channel by name.
    *
    */
-  
+
   Radio._channels = {};
-  
-  Radio.channel = function(channelName) {
+
+  Radio.channel = function (channelName) {
     if (!channelName) {
-      throw new Error('You must provide a name for the channel.');
+      throw new Error("You must provide a name for the channel.");
     }
-  
+
     if (Radio._channels[channelName]) {
       return Radio._channels[channelName];
     } else {
-      return (Radio._channels[channelName] = new Radio.Channel(channelName));
+      return Radio._channels[channelName] = new Radio.Channel(channelName);
     }
   };
-  
+
   /*
    * Backbone.Radio.Channel
    * ----------------------
@@ -25894,15 +29848,15 @@ return jQuery;
    * Radio.Commands, and Radio.Requests.
    *
    */
-  
-  Radio.Channel = function(channelName) {
+
+  Radio.Channel = function (channelName) {
     this.channelName = channelName;
   };
-  
+
   _.extend(Radio.Channel.prototype, Backbone.Events, Radio.Commands, Radio.Requests, {
-  
+
     // Remove all handlers from the messaging systems of this channel
-    reset: function() {
+    reset: function reset() {
       this.off();
       this.stopListening();
       this.stopComplying();
@@ -25910,7 +29864,7 @@ return jQuery;
       return this;
     }
   });
-  
+
   /*
    * Top-level API
    * -------------
@@ -25918,48 +29872,56 @@ return jQuery;
    * from Backbone.Radio.
    *
    */
-  
-  var channel, args, systems = [Backbone.Events, Radio.Commands, Radio.Requests];
-  
-  _.each(systems, function(system) {
-    _.each(system, function(method, methodName) {
-      Radio[methodName] = function(channelName) {
+
+  var channel,
+      args,
+      systems = [Backbone.Events, Radio.Commands, Radio.Requests];
+
+  _.each(systems, function (system) {
+    _.each(system, function (method, methodName) {
+      Radio[methodName] = function (channelName) {
         args = _.rest(arguments);
         channel = this.channel(channelName);
         return channel[methodName].apply(channel, args);
       };
     });
   });
-  
-  Radio.reset = function(channelName) {
+
+  Radio.reset = function (channelName) {
     var channels = !channelName ? this._channels : [this._channels[channelName]];
-    _.invoke(channels, 'reset');
+    _.invoke(channels, "reset");
   };
-  
 
-  return Radio;
-}));
+  var backbone_radio = Radio;
 
+  return backbone_radio;
+});
+//# sourceMappingURL=./backbone.radio.js.map
 ; browserify_shim__define__module__export__(typeof Backbone.Radio != "undefined" ? Backbone.Radio : window.Backbone.Radio);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
-//     Backbone.js 1.1.2
+//     Backbone.js 1.2.3
 
-//     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+//     (c) 2010-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Backbone may be freely distributed under the MIT license.
 //     For all details and documentation:
 //     http://backbonejs.org
 
-(function(root, factory) {
+(function(factory) {
+
+  // Establish the root object, `window` (`self`) in the browser, or `global` on the server.
+  // We use `self` instead of `window` for `WebWorker` support.
+  var root = (typeof self == 'object' && self.self == self && self) ||
+            (typeof global == 'object' && global.global == global && global);
 
   // Set up Backbone appropriately for the environment. Start with AMD.
   if (typeof define === 'function' && define.amd) {
-    define(['../underscore/underscore', 'jquery', 'exports'], function(_, $, exports) {
+    define(['underscore', 'jquery', 'exports'], function(_, $, exports) {
       // Export global even in AMD case in case this script is loaded with
       // others that may still expect a global Backbone.
       root.Backbone = factory(root, exports, _, $);
@@ -25967,15 +29929,16 @@ return jQuery;
 
   // Next for Node.js or CommonJS. jQuery may not be needed as a module.
   } else if (typeof exports !== 'undefined') {
-    var _ = __browserify_shim_require__('underscore');
-    factory(root, exports, _);
+    var _ = __browserify_shim_require__('underscore'), $;
+    try { $ = __browserify_shim_require__('jquery'); } catch(e) {}
+    factory(root, exports, _, $);
 
   // Finally, as a browser global.
   } else {
     root.Backbone = factory(root, {}, root._, (root.jQuery || root.Zepto || root.ender || root.$));
   }
 
-}(this, function(root, Backbone, _, $) {
+}(function(root, Backbone, _, $) {
 
   // Initial Setup
   // -------------
@@ -25984,14 +29947,11 @@ return jQuery;
   // restored later on, if `noConflict` is used.
   var previousBackbone = root.Backbone;
 
-  // Create local references to array methods we'll want to use later.
-  var array = [];
-  var push = array.push;
-  var slice = array.slice;
-  var splice = array.splice;
+  // Create a local reference to a common array method we'll want to use later.
+  var slice = Array.prototype.slice;
 
   // Current version of the library. Keep in sync with `package.json`.
-  Backbone.VERSION = '1.1.2';
+  Backbone.VERSION = '1.2.3';
 
   // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns
   // the `$` variable.
@@ -26010,17 +29970,65 @@ return jQuery;
   Backbone.emulateHTTP = false;
 
   // Turn on `emulateJSON` to support legacy servers that can't deal with direct
-  // `application/json` requests ... will encode the body as
+  // `application/json` requests ... this will encode the body as
   // `application/x-www-form-urlencoded` instead and will send the model in a
   // form param named `model`.
   Backbone.emulateJSON = false;
+
+  // Proxy Backbone class methods to Underscore functions, wrapping the model's
+  // `attributes` object or collection's `models` array behind the scenes.
+  //
+  // collection.filter(function(model) { return model.get('age') > 10 });
+  // collection.each(this.addView);
+  //
+  // `Function#apply` can be slow so we use the method's arg count, if we know it.
+  var addMethod = function(length, method, attribute) {
+    switch (length) {
+      case 1: return function() {
+        return _[method](this[attribute]);
+      };
+      case 2: return function(value) {
+        return _[method](this[attribute], value);
+      };
+      case 3: return function(iteratee, context) {
+        return _[method](this[attribute], cb(iteratee, this), context);
+      };
+      case 4: return function(iteratee, defaultVal, context) {
+        return _[method](this[attribute], cb(iteratee, this), defaultVal, context);
+      };
+      default: return function() {
+        var args = slice.call(arguments);
+        args.unshift(this[attribute]);
+        return _[method].apply(_, args);
+      };
+    }
+  };
+  var addUnderscoreMethods = function(Class, methods, attribute) {
+    _.each(methods, function(length, method) {
+      if (_[method]) Class.prototype[method] = addMethod(length, method, attribute);
+    });
+  };
+
+  // Support `collection.sortBy('attr')` and `collection.findWhere({id: 1})`.
+  var cb = function(iteratee, instance) {
+    if (_.isFunction(iteratee)) return iteratee;
+    if (_.isObject(iteratee) && !instance._isModel(iteratee)) return modelMatcher(iteratee);
+    if (_.isString(iteratee)) return function(model) { return model.get(iteratee); };
+    return iteratee;
+  };
+  var modelMatcher = function(attrs) {
+    var matcher = _.matches(attrs);
+    return function(model) {
+      return matcher(model.attributes);
+    };
+  };
 
   // Backbone.Events
   // ---------------
 
   // A module that can be mixed in to *any object* in order to provide it with
-  // custom events. You may bind with `on` or remove with `off` callback
-  // functions to an event; `trigger`-ing an event fires all callbacks in
+  // a custom event channel. You may bind a callback to an event with `on` or
+  // remove with `off`; `trigger`-ing an event fires all callbacks in
   // succession.
   //
   //     var object = {};
@@ -26028,123 +30036,234 @@ return jQuery;
   //     object.on('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
-  var Events = Backbone.Events = {
-
-    // Bind an event to a `callback` function. Passing `"all"` will bind
-    // the callback to all events fired.
-    on: function(name, callback, context) {
-      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
-      this._events || (this._events = {});
-      var events = this._events[name] || (this._events[name] = []);
-      events.push({callback: callback, context: context, ctx: context || this});
-      return this;
-    },
-
-    // Bind an event to only be triggered a single time. After the first time
-    // the callback is invoked, it will be removed.
-    once: function(name, callback, context) {
-      if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
-      var self = this;
-      var once = _.once(function() {
-        self.off(name, once);
-        callback.apply(this, arguments);
-      });
-      once._callback = callback;
-      return this.on(name, once, context);
-    },
-
-    // Remove one or many callbacks. If `context` is null, removes all
-    // callbacks with that function. If `callback` is null, removes all
-    // callbacks for the event. If `name` is null, removes all bound
-    // callbacks for all events.
-    off: function(name, callback, context) {
-      var retain, ev, events, names, i, l, j, k;
-      if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
-      if (!name && !callback && !context) {
-        this._events = void 0;
-        return this;
-      }
-      names = name ? [name] : _.keys(this._events);
-      for (i = 0, l = names.length; i < l; i++) {
-        name = names[i];
-        if (events = this._events[name]) {
-          this._events[name] = retain = [];
-          if (callback || context) {
-            for (j = 0, k = events.length; j < k; j++) {
-              ev = events[j];
-              if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
-                  (context && context !== ev.context)) {
-                retain.push(ev);
-              }
-            }
-          }
-          if (!retain.length) delete this._events[name];
-        }
-      }
-
-      return this;
-    },
-
-    // Trigger one or many events, firing all bound callbacks. Callbacks are
-    // passed the same arguments as `trigger` is, apart from the event name
-    // (unless you're listening on `"all"`, which will cause your callback to
-    // receive the true name of the event as the first argument).
-    trigger: function(name) {
-      if (!this._events) return this;
-      var args = slice.call(arguments, 1);
-      if (!eventsApi(this, 'trigger', name, args)) return this;
-      var events = this._events[name];
-      var allEvents = this._events.all;
-      if (events) triggerEvents(events, args);
-      if (allEvents) triggerEvents(allEvents, arguments);
-      return this;
-    },
-
-    // Tell this object to stop listening to either specific events ... or
-    // to every object it's currently listening to.
-    stopListening: function(obj, name, callback) {
-      var listeningTo = this._listeningTo;
-      if (!listeningTo) return this;
-      var remove = !name && !callback;
-      if (!callback && typeof name === 'object') callback = this;
-      if (obj) (listeningTo = {})[obj._listenId] = obj;
-      for (var id in listeningTo) {
-        obj = listeningTo[id];
-        obj.off(name, callback, this);
-        if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
-      }
-      return this;
-    }
-
-  };
+  var Events = Backbone.Events = {};
 
   // Regular expression used to split event strings.
   var eventSplitter = /\s+/;
 
-  // Implement fancy features of the Events API such as multiple event
-  // names `"change blur"` and jQuery-style event maps `{change: action}`
-  // in terms of the existing API.
-  var eventsApi = function(obj, action, name, rest) {
-    if (!name) return true;
-
-    // Handle event maps.
-    if (typeof name === 'object') {
-      for (var key in name) {
-        obj[action].apply(obj, [key, name[key]].concat(rest));
+  // Iterates over the standard `event, callback` (as well as the fancy multiple
+  // space-separated events `"change blur", callback` and jQuery-style event
+  // maps `{event: callback}`).
+  var eventsApi = function(iteratee, events, name, callback, opts) {
+    var i = 0, names;
+    if (name && typeof name === 'object') {
+      // Handle event maps.
+      if (callback !== void 0 && 'context' in opts && opts.context === void 0) opts.context = callback;
+      for (names = _.keys(name); i < names.length ; i++) {
+        events = eventsApi(iteratee, events, names[i], name[names[i]], opts);
       }
-      return false;
+    } else if (name && eventSplitter.test(name)) {
+      // Handle space separated event names by delegating them individually.
+      for (names = name.split(eventSplitter); i < names.length; i++) {
+        events = iteratee(events, names[i], callback, opts);
+      }
+    } else {
+      // Finally, standard events.
+      events = iteratee(events, name, callback, opts);
+    }
+    return events;
+  };
+
+  // Bind an event to a `callback` function. Passing `"all"` will bind
+  // the callback to all events fired.
+  Events.on = function(name, callback, context) {
+    return internalOn(this, name, callback, context);
+  };
+
+  // Guard the `listening` argument from the public API.
+  var internalOn = function(obj, name, callback, context, listening) {
+    obj._events = eventsApi(onApi, obj._events || {}, name, callback, {
+        context: context,
+        ctx: obj,
+        listening: listening
+    });
+
+    if (listening) {
+      var listeners = obj._listeners || (obj._listeners = {});
+      listeners[listening.id] = listening;
     }
 
-    // Handle space separated event names.
-    if (eventSplitter.test(name)) {
-      var names = name.split(eventSplitter);
-      for (var i = 0, l = names.length; i < l; i++) {
-        obj[action].apply(obj, [names[i]].concat(rest));
-      }
-      return false;
+    return obj;
+  };
+
+  // Inversion-of-control versions of `on`. Tell *this* object to listen to
+  // an event in another object... keeping track of what it's listening to
+  // for easier unbinding later.
+  Events.listenTo =  function(obj, name, callback) {
+    if (!obj) return this;
+    var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    var listeningTo = this._listeningTo || (this._listeningTo = {});
+    var listening = listeningTo[id];
+
+    // This object is not listening to any other events on `obj` yet.
+    // Setup the necessary references to track the listening callbacks.
+    if (!listening) {
+      var thisId = this._listenId || (this._listenId = _.uniqueId('l'));
+      listening = listeningTo[id] = {obj: obj, objId: id, id: thisId, listeningTo: listeningTo, count: 0};
     }
 
-    return true;
+    // Bind callbacks on obj, and keep track of them on listening.
+    internalOn(obj, name, callback, this, listening);
+    return this;
+  };
+
+  // The reducing API that adds a callback to the `events` object.
+  var onApi = function(events, name, callback, options) {
+    if (callback) {
+      var handlers = events[name] || (events[name] = []);
+      var context = options.context, ctx = options.ctx, listening = options.listening;
+      if (listening) listening.count++;
+
+      handlers.push({ callback: callback, context: context, ctx: context || ctx, listening: listening });
+    }
+    return events;
+  };
+
+  // Remove one or many callbacks. If `context` is null, removes all
+  // callbacks with that function. If `callback` is null, removes all
+  // callbacks for the event. If `name` is null, removes all bound
+  // callbacks for all events.
+  Events.off =  function(name, callback, context) {
+    if (!this._events) return this;
+    this._events = eventsApi(offApi, this._events, name, callback, {
+        context: context,
+        listeners: this._listeners
+    });
+    return this;
+  };
+
+  // Tell this object to stop listening to either specific events ... or
+  // to every object it's currently listening to.
+  Events.stopListening =  function(obj, name, callback) {
+    var listeningTo = this._listeningTo;
+    if (!listeningTo) return this;
+
+    var ids = obj ? [obj._listenId] : _.keys(listeningTo);
+
+    for (var i = 0; i < ids.length; i++) {
+      var listening = listeningTo[ids[i]];
+
+      // If listening doesn't exist, this object is not currently
+      // listening to obj. Break out early.
+      if (!listening) break;
+
+      listening.obj.off(name, callback, this);
+    }
+    if (_.isEmpty(listeningTo)) this._listeningTo = void 0;
+
+    return this;
+  };
+
+  // The reducing API that removes a callback from the `events` object.
+  var offApi = function(events, name, callback, options) {
+    if (!events) return;
+
+    var i = 0, listening;
+    var context = options.context, listeners = options.listeners;
+
+    // Delete all events listeners and "drop" events.
+    if (!name && !callback && !context) {
+      var ids = _.keys(listeners);
+      for (; i < ids.length; i++) {
+        listening = listeners[ids[i]];
+        delete listeners[listening.id];
+        delete listening.listeningTo[listening.objId];
+      }
+      return;
+    }
+
+    var names = name ? [name] : _.keys(events);
+    for (; i < names.length; i++) {
+      name = names[i];
+      var handlers = events[name];
+
+      // Bail out if there are no events stored.
+      if (!handlers) break;
+
+      // Replace events if there are any remaining.  Otherwise, clean up.
+      var remaining = [];
+      for (var j = 0; j < handlers.length; j++) {
+        var handler = handlers[j];
+        if (
+          callback && callback !== handler.callback &&
+            callback !== handler.callback._callback ||
+              context && context !== handler.context
+        ) {
+          remaining.push(handler);
+        } else {
+          listening = handler.listening;
+          if (listening && --listening.count === 0) {
+            delete listeners[listening.id];
+            delete listening.listeningTo[listening.objId];
+          }
+        }
+      }
+
+      // Update tail event if the list has any events.  Otherwise, clean up.
+      if (remaining.length) {
+        events[name] = remaining;
+      } else {
+        delete events[name];
+      }
+    }
+    if (_.size(events)) return events;
+  };
+
+  // Bind an event to only be triggered a single time. After the first time
+  // the callback is invoked, its listener will be removed. If multiple events
+  // are passed in using the space-separated syntax, the handler will fire
+  // once for each event, not once for a combination of all events.
+  Events.once =  function(name, callback, context) {
+    // Map the event into a `{event: once}` object.
+    var events = eventsApi(onceMap, {}, name, callback, _.bind(this.off, this));
+    return this.on(events, void 0, context);
+  };
+
+  // Inversion-of-control versions of `once`.
+  Events.listenToOnce =  function(obj, name, callback) {
+    // Map the event into a `{event: once}` object.
+    var events = eventsApi(onceMap, {}, name, callback, _.bind(this.stopListening, this, obj));
+    return this.listenTo(obj, events);
+  };
+
+  // Reduces the event callbacks into a map of `{event: onceWrapper}`.
+  // `offer` unbinds the `onceWrapper` after it has been called.
+  var onceMap = function(map, name, callback, offer) {
+    if (callback) {
+      var once = map[name] = _.once(function() {
+        offer(name, once);
+        callback.apply(this, arguments);
+      });
+      once._callback = callback;
+    }
+    return map;
+  };
+
+  // Trigger one or many events, firing all bound callbacks. Callbacks are
+  // passed the same arguments as `trigger` is, apart from the event name
+  // (unless you're listening on `"all"`, which will cause your callback to
+  // receive the true name of the event as the first argument).
+  Events.trigger =  function(name) {
+    if (!this._events) return this;
+
+    var length = Math.max(0, arguments.length - 1);
+    var args = Array(length);
+    for (var i = 0; i < length; i++) args[i] = arguments[i + 1];
+
+    eventsApi(triggerApi, this._events, name, void 0, args);
+    return this;
+  };
+
+  // Handles triggering the appropriate event callbacks.
+  var triggerApi = function(objEvents, name, cb, args) {
+    if (objEvents) {
+      var events = objEvents[name];
+      var allEvents = objEvents.all;
+      if (events && allEvents) allEvents = allEvents.slice();
+      if (events) triggerEvents(events, args);
+      if (allEvents) triggerEvents(allEvents, [name].concat(args));
+    }
+    return objEvents;
   };
 
   // A difficult-to-believe, but optimized internal dispatch function for
@@ -26161,22 +30280,6 @@ return jQuery;
     }
   };
 
-  var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
-
-  // Inversion-of-control versions of `on` and `once`. Tell *this* object to
-  // listen to an event in another object ... keeping track of what it's
-  // listening to.
-  _.each(listenMethods, function(implementation, method) {
-    Events[method] = function(obj, name, callback) {
-      var listeningTo = this._listeningTo || (this._listeningTo = {});
-      var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
-      listeningTo[id] = obj;
-      if (!callback && typeof name === 'object') callback = this;
-      obj[implementation](name, callback, this);
-      return this;
-    };
-  });
-
   // Aliases for backwards compatibility.
   Events.bind   = Events.on;
   Events.unbind = Events.off;
@@ -26189,7 +30292,7 @@ return jQuery;
   // --------------
 
   // Backbone **Models** are the basic data object in the framework --
-  // frequently representing a row in a table in a database on your oe_server.
+  // frequently representing a row in a table in a database on your server.
   // A discrete chunk of data and a bunch of useful, related methods for
   // performing computations and transformations on that data.
 
@@ -26198,7 +30301,7 @@ return jQuery;
   var Model = Backbone.Model = function(attributes, options) {
     var attrs = attributes || {};
     options || (options = {});
-    this.cid = _.uniqueId('c');
+    this.cid = _.uniqueId(this.cidPrefix);
     this.attributes = {};
     if (options.collection) this.collection = options.collection;
     if (options.parse) attrs = this.parse(attrs, options) || {};
@@ -26220,6 +30323,10 @@ return jQuery;
     // The default name for the JSON `id` attribute is `"id"`. MongoDB and
     // CouchDB users may want to set this to `"_id"`.
     idAttribute: 'id',
+
+    // The prefix is used to create the client id which is used to identify models locally.
+    // You may want to override this if you're experiencing name clashes with model ids.
+    cidPrefix: 'c',
 
     // Initialize is an empty function by default. Override it with your own
     // initialization logic.
@@ -26252,14 +30359,19 @@ return jQuery;
       return this.get(attr) != null;
     },
 
+    // Special-cased proxy to underscore's `_.matches` method.
+    matches: function(attrs) {
+      return !!_.iteratee(attrs, this)(this.attributes);
+    },
+
     // Set a hash of model attributes on the object, firing `"change"`. This is
     // the core primitive operation of a model, updating the data and notifying
     // anyone who needs to know about the change in state. The heart of the beast.
     set: function(key, val, options) {
-      var attr, attrs, unset, changes, silent, changing, prev, current;
       if (key == null) return this;
 
       // Handle both `"key", value` and `{key: value}` -style arguments.
+      var attrs;
       if (typeof key === 'object') {
         attrs = key;
         options = val;
@@ -26273,37 +30385,40 @@ return jQuery;
       if (!this._validate(attrs, options)) return false;
 
       // Extract attributes and options.
-      unset           = options.unset;
-      silent          = options.silent;
-      changes         = [];
-      changing        = this._changing;
-      this._changing  = true;
+      var unset      = options.unset;
+      var silent     = options.silent;
+      var changes    = [];
+      var changing   = this._changing;
+      this._changing = true;
 
       if (!changing) {
         this._previousAttributes = _.clone(this.attributes);
         this.changed = {};
       }
-      current = this.attributes, prev = this._previousAttributes;
 
-      // Check for changes of `id`.
-      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
+      var current = this.attributes;
+      var changed = this.changed;
+      var prev    = this._previousAttributes;
 
       // For each `set` attribute, update or delete the current value.
-      for (attr in attrs) {
+      for (var attr in attrs) {
         val = attrs[attr];
         if (!_.isEqual(current[attr], val)) changes.push(attr);
         if (!_.isEqual(prev[attr], val)) {
-          this.changed[attr] = val;
+          changed[attr] = val;
         } else {
-          delete this.changed[attr];
+          delete changed[attr];
         }
         unset ? delete current[attr] : current[attr] = val;
       }
 
+      // Update the `id`.
+      this.id = this.get(this.idAttribute);
+
       // Trigger all relevant attribute changes.
       if (!silent) {
         if (changes.length) this._pending = options;
-        for (var i = 0, l = changes.length; i < l; i++) {
+        for (var i = 0; i < changes.length; i++) {
           this.trigger('change:' + changes[i], this, current[changes[i]], options);
         }
       }
@@ -26346,18 +30461,19 @@ return jQuery;
     // Return an object containing all the attributes that have changed, or
     // false if there are no changed attributes. Useful for determining what
     // parts of a view need to be updated and/or what attributes need to be
-    // persisted to the oe_server. Unset attributes will be set to undefined.
+    // persisted to the server. Unset attributes will be set to undefined.
     // You can also pass an attributes object to diff against the model,
     // determining if there *would be* a change.
     changedAttributes: function(diff) {
       if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
-      var val, changed = false;
       var old = this._changing ? this._previousAttributes : this.attributes;
+      var changed = {};
       for (var attr in diff) {
-        if (_.isEqual(old[attr], (val = diff[attr]))) continue;
-        (changed || (changed = {}))[attr] = val;
+        var val = diff[attr];
+        if (_.isEqual(old[attr], val)) continue;
+        changed[attr] = val;
       }
-      return changed;
+      return _.size(changed) ? changed : false;
     },
 
     // Get the previous value of an attribute, recorded at the time the last
@@ -26373,30 +30489,28 @@ return jQuery;
       return _.clone(this._previousAttributes);
     },
 
-    // Fetch the model from the oe_server. If the oe_server's representation of the
-    // model differs from its current attributes, they will be overridden,
-    // triggering a `"change"` event.
+    // Fetch the model from the server, merging the response with the model's
+    // local attributes. Any changed attributes will trigger a "change" event.
     fetch: function(options) {
-      options = options ? _.clone(options) : {};
-      if (options.parse === void 0) options.parse = true;
+      options = _.extend({parse: true}, options);
       var model = this;
       var success = options.success;
       options.success = function(resp) {
-        if (!model.set(model.parse(resp, options), options)) return false;
-        if (success) success(model, resp, options);
+        var serverAttrs = options.parse ? model.parse(resp, options) : resp;
+        if (!model.set(serverAttrs, options)) return false;
+        if (success) success.call(options.context, model, resp, options);
         model.trigger('sync', model, resp, options);
       };
       wrapError(this, options);
       return this.sync('read', this, options);
     },
 
-    // Set a hash of model attributes, and sync the model to the oe_server.
-    // If the oe_server returns an attributes hash that differs, the model's
+    // Set a hash of model attributes, and sync the model to the server.
+    // If the server returns an attributes hash that differs, the model's
     // state will be `set` again.
     save: function(key, val, options) {
-      var attrs, method, xhr, attributes = this.attributes;
-
       // Handle both `"key", value` and `{key: value}` -style arguments.
+      var attrs;
       if (key == null || typeof key === 'object') {
         attrs = key;
         options = val;
@@ -26404,80 +30518,79 @@ return jQuery;
         (attrs = {})[key] = val;
       }
 
-      options = _.extend({validate: true}, options);
+      options = _.extend({validate: true, parse: true}, options);
+      var wait = options.wait;
 
       // If we're not waiting and attributes exist, save acts as
       // `set(attr).save(null, opts)` with validation. Otherwise, check if
       // the model will be valid when the attributes, if any, are set.
-      if (attrs && !options.wait) {
+      if (attrs && !wait) {
         if (!this.set(attrs, options)) return false;
       } else {
         if (!this._validate(attrs, options)) return false;
       }
 
-      // Set temporary attributes if `{wait: true}`.
-      if (attrs && options.wait) {
-        this.attributes = _.extend({}, attributes, attrs);
-      }
-
-      // After a successful oe_server-side save, the client is (optionally)
-      // updated with the oe_server-side state.
-      if (options.parse === void 0) options.parse = true;
+      // After a successful server-side save, the client is (optionally)
+      // updated with the server-side state.
       var model = this;
       var success = options.success;
+      var attributes = this.attributes;
       options.success = function(resp) {
         // Ensure attributes are restored during synchronous saves.
         model.attributes = attributes;
-        var serverAttrs = model.parse(resp, options);
-        if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);
-        if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
-          return false;
-        }
-        if (success) success(model, resp, options);
+        var serverAttrs = options.parse ? model.parse(resp, options) : resp;
+        if (wait) serverAttrs = _.extend({}, attrs, serverAttrs);
+        if (serverAttrs && !model.set(serverAttrs, options)) return false;
+        if (success) success.call(options.context, model, resp, options);
         model.trigger('sync', model, resp, options);
       };
       wrapError(this, options);
 
-      method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
-      if (method === 'patch') options.attrs = attrs;
-      xhr = this.sync(method, this, options);
+      // Set temporary attributes if `{wait: true}` to properly find new ids.
+      if (attrs && wait) this.attributes = _.extend({}, attributes, attrs);
+
+      var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
+      if (method === 'patch' && !options.attrs) options.attrs = attrs;
+      var xhr = this.sync(method, this, options);
 
       // Restore attributes.
-      if (attrs && options.wait) this.attributes = attributes;
+      this.attributes = attributes;
 
       return xhr;
     },
 
-    // Destroy this model on the oe_server if it was already persisted.
+    // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
-    // If `wait: true` is passed, waits for the oe_server to respond before removal.
+    // If `wait: true` is passed, waits for the server to respond before removal.
     destroy: function(options) {
       options = options ? _.clone(options) : {};
       var model = this;
       var success = options.success;
+      var wait = options.wait;
 
       var destroy = function() {
+        model.stopListening();
         model.trigger('destroy', model, model.collection, options);
       };
 
       options.success = function(resp) {
-        if (options.wait || model.isNew()) destroy();
-        if (success) success(model, resp, options);
+        if (wait) destroy();
+        if (success) success.call(options.context, model, resp, options);
         if (!model.isNew()) model.trigger('sync', model, resp, options);
       };
 
+      var xhr = false;
       if (this.isNew()) {
-        options.success();
-        return false;
+        _.defer(options.success);
+      } else {
+        wrapError(this, options);
+        xhr = this.sync('delete', this, options);
       }
-      wrapError(this, options);
-
-      var xhr = this.sync('delete', this, options);
-      if (!options.wait) destroy();
+      if (!wait) destroy();
       return xhr;
     },
 
-    // Default URL for the model's representation on the oe_server -- if you're
+    // Default URL for the model's representation on the server -- if you're
     // using Backbone's restful methods, override this to change the endpoint
     // that will be called.
     url: function() {
@@ -26486,7 +30599,8 @@ return jQuery;
         _.result(this.collection, 'url') ||
         urlError();
       if (this.isNew()) return base;
-      return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
+      var id = this.get(this.idAttribute);
+      return base.replace(/[^\/]$/, '$&/') + encodeURIComponent(id);
     },
 
     // **parse** converts a response into the hash of attributes to be `set` on
@@ -26500,14 +30614,14 @@ return jQuery;
       return new this.constructor(this.attributes);
     },
 
-    // A model is new if it has never been saved to the oe_server, and lacks an id.
+    // A model is new if it has never been saved to the server, and lacks an id.
     isNew: function() {
       return !this.has(this.idAttribute);
     },
 
     // Check if the model is currently in a valid state.
     isValid: function(options) {
-      return this._validate({}, _.extend(options || {}, { validate: true }));
+      return this._validate({}, _.defaults({validate: true}, options));
     },
 
     // Run validation against the next complete set of model attributes,
@@ -26523,23 +30637,19 @@ return jQuery;
 
   });
 
-  // Underscore methods that we want to implement on the Model.
-  var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit'];
+  // Underscore methods that we want to implement on the Model, mapped to the
+  // number of arguments they take.
+  var modelMethods = { keys: 1, values: 1, pairs: 1, invert: 1, pick: 0,
+      omit: 0, chain: 1, isEmpty: 1 };
 
   // Mix in each Underscore method as a proxy to `Model#attributes`.
-  _.each(modelMethods, function(method) {
-    Model.prototype[method] = function() {
-      var args = slice.call(arguments);
-      args.unshift(this.attributes);
-      return _[method].apply(_, args);
-    };
-  });
+  addUnderscoreMethods(Model, modelMethods, 'attributes');
 
   // Backbone.Collection
   // -------------------
 
   // If models tend to represent a single row of data, a Backbone Collection is
-  // more analagous to a table full of data ... or a small slice or page of that
+  // more analogous to a table full of data ... or a small slice or page of that
   // table, or a collection of rows that belong together for a particular reason
   // -- all of the messages in this particular folder, all of the documents
   // belonging to this particular author, and so on. Collections maintain
@@ -26561,6 +30671,16 @@ return jQuery;
   var setOptions = {add: true, remove: true, merge: true};
   var addOptions = {add: true, remove: false};
 
+  // Splices `insert` into `array` at index `at`.
+  var splice = function(array, insert, at) {
+    at = Math.min(Math.max(at, 0), array.length);
+    var tail = Array(array.length - at);
+    var length = insert.length;
+    for (var i = 0; i < tail.length; i++) tail[i] = array[i + at];
+    for (i = 0; i < length; i++) array[i + at] = insert[i];
+    for (i = 0; i < tail.length; i++) array[i + length + at] = tail[i];
+  };
+
   // Define the Collection's inheritable methods.
   _.extend(Collection.prototype, Events, {
 
@@ -26575,7 +30695,7 @@ return jQuery;
     // The JSON representation of a Collection is an array of the
     // models' attributes.
     toJSON: function(options) {
-      return this.map(function(model){ return model.toJSON(options); });
+      return this.map(function(model) { return model.toJSON(options); });
     },
 
     // Proxy `Backbone.sync` by default.
@@ -26583,32 +30703,21 @@ return jQuery;
       return Backbone.sync.apply(this, arguments);
     },
 
-    // Add a model, or list of models to the set.
+    // Add a model, or list of models to the set. `models` may be Backbone
+    // Models or raw JavaScript objects to be converted to Models, or any
+    // combination of the two.
     add: function(models, options) {
       return this.set(models, _.extend({merge: false}, options, addOptions));
     },
 
     // Remove a model, or a list of models from the set.
     remove: function(models, options) {
+      options = _.extend({}, options);
       var singular = !_.isArray(models);
       models = singular ? [models] : _.clone(models);
-      options || (options = {});
-      var i, l, index, model;
-      for (i = 0, l = models.length; i < l; i++) {
-        model = models[i] = this.get(models[i]);
-        if (!model) continue;
-        delete this._byId[model.id];
-        delete this._byId[model.cid];
-        index = this.indexOf(model);
-        this.models.splice(index, 1);
-        this.length--;
-        if (!options.silent) {
-          options.index = index;
-          model.trigger('remove', model, this, options);
-        }
-        this._removeReference(model, options);
-      }
-      return singular ? models[0] : models;
+      var removed = this._removeModels(models, options);
+      if (!options.silent && removed) this.trigger('update', this, options);
+      return singular ? removed[0] : removed;
     },
 
     // Update a collection by `set`-ing a new list of models, adding new ones,
@@ -26616,78 +30725,88 @@ return jQuery;
     // already exist in the collection, as necessary. Similar to **Model#set**,
     // the core operation for updating the data contained by the collection.
     set: function(models, options) {
+      if (models == null) return;
+
       options = _.defaults({}, options, setOptions);
-      if (options.parse) models = this.parse(models, options);
+      if (options.parse && !this._isModel(models)) models = this.parse(models, options);
+
       var singular = !_.isArray(models);
-      models = singular ? (models ? [models] : []) : _.clone(models);
-      var i, l, id, model, attrs, existing, sort;
+      models = singular ? [models] : models.slice();
+
       var at = options.at;
-      var targetModel = this.model;
+      if (at != null) at = +at;
+      if (at < 0) at += this.length + 1;
+
+      var set = [];
+      var toAdd = [];
+      var toRemove = [];
+      var modelMap = {};
+
+      var add = options.add;
+      var merge = options.merge;
+      var remove = options.remove;
+
+      var sort = false;
       var sortable = this.comparator && (at == null) && options.sort !== false;
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
-      var toAdd = [], toRemove = [], modelMap = {};
-      var add = options.add, merge = options.merge, remove = options.remove;
-      var order = !sortable && add && remove ? [] : false;
 
       // Turn bare objects into model references, and prevent invalid models
       // from being added.
-      for (i = 0, l = models.length; i < l; i++) {
-        attrs = models[i] || {};
-        if (attrs instanceof Model) {
-          id = model = attrs;
-        } else {
-          id = attrs[targetModel.prototype.idAttribute || 'id'];
-        }
+      var model;
+      for (var i = 0; i < models.length; i++) {
+        model = models[i];
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
-        if (existing = this.get(id)) {
-          if (remove) modelMap[existing.cid] = true;
-          if (merge) {
-            attrs = attrs === model ? model.attributes : attrs;
+        var existing = this.get(model);
+        if (existing) {
+          if (merge && model !== existing) {
+            var attrs = this._isModel(model) ? model.attributes : model;
             if (options.parse) attrs = existing.parse(attrs, options);
             existing.set(attrs, options);
-            if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
+            if (sortable && !sort) sort = existing.hasChanged(sortAttr);
+          }
+          if (!modelMap[existing.cid]) {
+            modelMap[existing.cid] = true;
+            set.push(existing);
           }
           models[i] = existing;
 
         // If this is a new, valid model, push it to the `toAdd` list.
         } else if (add) {
-          model = models[i] = this._prepareModel(attrs, options);
-          if (!model) continue;
-          toAdd.push(model);
-          this._addReference(model, options);
+          model = models[i] = this._prepareModel(model, options);
+          if (model) {
+            toAdd.push(model);
+            this._addReference(model, options);
+            modelMap[model.cid] = true;
+            set.push(model);
+          }
         }
-
-        // Do not add multiple models with the same `id`.
-        model = existing || model;
-        if (order && (model.isNew() || !modelMap[model.id])) order.push(model);
-        modelMap[model.id] = true;
       }
 
-      // Remove nonexistent models if appropriate.
+      // Remove stale models.
       if (remove) {
-        for (i = 0, l = this.length; i < l; ++i) {
-          if (!modelMap[(model = this.models[i]).cid]) toRemove.push(model);
+        for (i = 0; i < this.length; i++) {
+          model = this.models[i];
+          if (!modelMap[model.cid]) toRemove.push(model);
         }
-        if (toRemove.length) this.remove(toRemove, options);
+        if (toRemove.length) this._removeModels(toRemove, options);
       }
 
       // See if sorting is needed, update `length` and splice in new models.
-      if (toAdd.length || (order && order.length)) {
+      var orderChanged = false;
+      var replace = !sortable && add && remove;
+      if (set.length && replace) {
+        orderChanged = this.length != set.length || _.some(this.models, function(model, index) {
+          return model !== set[index];
+        });
+        this.models.length = 0;
+        splice(this.models, set, 0);
+        this.length = this.models.length;
+      } else if (toAdd.length) {
         if (sortable) sort = true;
-        this.length += toAdd.length;
-        if (at != null) {
-          for (i = 0, l = toAdd.length; i < l; i++) {
-            this.models.splice(at + i, 0, toAdd[i]);
-          }
-        } else {
-          if (order) this.models.length = 0;
-          var orderedModels = order || toAdd;
-          for (i = 0, l = orderedModels.length; i < l; i++) {
-            this.models.push(orderedModels[i]);
-          }
-        }
+        splice(this.models, toAdd, at == null ? this.length : at);
+        this.length = this.models.length;
       }
 
       // Silently sort the collection if appropriate.
@@ -26695,10 +30814,13 @@ return jQuery;
 
       // Unless silenced, it's time to fire all appropriate add/sort events.
       if (!options.silent) {
-        for (i = 0, l = toAdd.length; i < l; i++) {
-          (model = toAdd[i]).trigger('add', model, this, options);
+        for (i = 0; i < toAdd.length; i++) {
+          if (at != null) options.index = at + i;
+          model = toAdd[i];
+          model.trigger('add', model, this, options);
         }
-        if (sort || (order && order.length)) this.trigger('sort', this, options);
+        if (sort || orderChanged) this.trigger('sort', this, options);
+        if (toAdd.length || toRemove.length) this.trigger('update', this, options);
       }
 
       // Return the added (or merged) model (or models).
@@ -26710,8 +30832,8 @@ return jQuery;
     // any granular `add` or `remove` events. Fires `reset` when finished.
     // Useful for bulk operations and optimizations.
     reset: function(models, options) {
-      options || (options = {});
-      for (var i = 0, l = this.models.length; i < l; i++) {
+      options = options ? _.clone(options) : {};
+      for (var i = 0; i < this.models.length; i++) {
         this._removeReference(this.models[i], options);
       }
       options.previousModels = this.models;
@@ -26729,8 +30851,7 @@ return jQuery;
     // Remove a model from the end of the collection.
     pop: function(options) {
       var model = this.at(this.length - 1);
-      this.remove(model, options);
-      return model;
+      return this.remove(model, options);
     },
 
     // Add a model to the beginning of the collection.
@@ -26741,8 +30862,7 @@ return jQuery;
     // Remove a model from the beginning of the collection.
     shift: function(options) {
       var model = this.at(0);
-      this.remove(model, options);
-      return model;
+      return this.remove(model, options);
     },
 
     // Slice out a sub-array of models from the collection.
@@ -26753,24 +30873,20 @@ return jQuery;
     // Get a model from the set by id.
     get: function(obj) {
       if (obj == null) return void 0;
-      return this._byId[obj] || this._byId[obj.id] || this._byId[obj.cid];
+      var id = this.modelId(this._isModel(obj) ? obj.attributes : obj);
+      return this._byId[obj] || this._byId[id] || this._byId[obj.cid];
     },
 
     // Get the model at the given index.
     at: function(index) {
+      if (index < 0) index += this.length;
       return this.models[index];
     },
 
     // Return models with matching attributes. Useful for simple cases of
     // `filter`.
     where: function(attrs, first) {
-      if (_.isEmpty(attrs)) return first ? void 0 : [];
-      return this[first ? 'find' : 'filter'](function(model) {
-        for (var key in attrs) {
-          if (attrs[key] !== model.get(key)) return false;
-        }
-        return true;
-      });
+      return this[first ? 'find' : 'filter'](attrs);
     },
 
     // Return the first model with matching attributes. Useful for simple cases
@@ -26783,16 +30899,19 @@ return jQuery;
     // normal circumstances, as the set will maintain sort order as each item
     // is added.
     sort: function(options) {
-      if (!this.comparator) throw new Error('Cannot sort a set without a comparator');
+      var comparator = this.comparator;
+      if (!comparator) throw new Error('Cannot sort a set without a comparator');
       options || (options = {});
 
-      // Run sort based on type of `comparator`.
-      if (_.isString(this.comparator) || this.comparator.length === 1) {
-        this.models = this.sortBy(this.comparator, this);
-      } else {
-        this.models.sort(_.bind(this.comparator, this));
-      }
+      var length = comparator.length;
+      if (_.isFunction(comparator)) comparator = _.bind(comparator, this);
 
+      // Run sort based on type of `comparator`.
+      if (length === 1 || _.isString(comparator)) {
+        this.models = this.sortBy(comparator);
+      } else {
+        this.models.sort(comparator);
+      }
       if (!options.silent) this.trigger('sort', this, options);
       return this;
     },
@@ -26806,14 +30925,13 @@ return jQuery;
     // collection when they arrive. If `reset: true` is passed, the response
     // data will be passed through the `reset` method instead of `set`.
     fetch: function(options) {
-      options = options ? _.clone(options) : {};
-      if (options.parse === void 0) options.parse = true;
+      options = _.extend({parse: true}, options);
       var success = options.success;
       var collection = this;
       options.success = function(resp) {
         var method = options.reset ? 'reset' : 'set';
         collection[method](resp, options);
-        if (success) success(collection, resp, options);
+        if (success) success.call(options.context, collection, resp, options);
         collection.trigger('sync', collection, resp, options);
       };
       wrapError(this, options);
@@ -26822,16 +30940,18 @@ return jQuery;
 
     // Create a new instance of a model in this collection. Add the model to the
     // collection immediately, unless `wait: true` is passed, in which case we
-    // wait for the oe_server to agree.
+    // wait for the server to agree.
     create: function(model, options) {
       options = options ? _.clone(options) : {};
-      if (!(model = this._prepareModel(model, options))) return false;
-      if (!options.wait) this.add(model, options);
+      var wait = options.wait;
+      model = this._prepareModel(model, options);
+      if (!model) return false;
+      if (!wait) this.add(model, options);
       var collection = this;
       var success = options.success;
-      options.success = function(model, resp) {
-        if (options.wait) collection.add(model, options);
-        if (success) success(model, resp, options);
+      options.success = function(model, resp, callbackOpts) {
+        if (wait) collection.add(model, callbackOpts);
+        if (success) success.call(callbackOpts.context, model, resp, callbackOpts);
       };
       model.save(null, options);
       return model;
@@ -26845,7 +30965,15 @@ return jQuery;
 
     // Create a new collection with an identical list of models as this one.
     clone: function() {
-      return new this.constructor(this.models);
+      return new this.constructor(this.models, {
+        model: this.model,
+        comparator: this.comparator
+      });
+    },
+
+    // Define how to uniquely identify models in the collection.
+    modelId: function (attrs) {
+      return attrs[this.model.prototype.idAttribute || 'id'];
     },
 
     // Private method to reset all internal state. Called when the collection
@@ -26859,7 +30987,10 @@ return jQuery;
     // Prepare a hash of attributes (or other model) to be added to this
     // collection.
     _prepareModel: function(attrs, options) {
-      if (attrs instanceof Model) return attrs;
+      if (this._isModel(attrs)) {
+        if (!attrs.collection) attrs.collection = this;
+        return attrs;
+      }
       options = options ? _.clone(options) : {};
       options.collection = this;
       var model = new this.model(attrs, options);
@@ -26868,16 +30999,47 @@ return jQuery;
       return false;
     },
 
+    // Internal method called by both remove and set.
+    _removeModels: function(models, options) {
+      var removed = [];
+      for (var i = 0; i < models.length; i++) {
+        var model = this.get(models[i]);
+        if (!model) continue;
+
+        var index = this.indexOf(model);
+        this.models.splice(index, 1);
+        this.length--;
+
+        if (!options.silent) {
+          options.index = index;
+          model.trigger('remove', model, this, options);
+        }
+
+        removed.push(model);
+        this._removeReference(model, options);
+      }
+      return removed.length ? removed : false;
+    },
+
+    // Method for checking whether an object should be considered a model for
+    // the purposes of adding to the collection.
+    _isModel: function (model) {
+      return model instanceof Model;
+    },
+
     // Internal method to create a model's ties to a collection.
     _addReference: function(model, options) {
       this._byId[model.cid] = model;
-      if (model.id != null) this._byId[model.id] = model;
-      if (!model.collection) model.collection = this;
+      var id = this.modelId(model.attributes);
+      if (id != null) this._byId[id] = model;
       model.on('all', this._onModelEvent, this);
     },
 
     // Internal method to sever a model's ties to a collection.
     _removeReference: function(model, options) {
+      delete this._byId[model.cid];
+      var id = this.modelId(model.attributes);
+      if (id != null) delete this._byId[id];
       if (this === model.collection) delete model.collection;
       model.off('all', this._onModelEvent, this);
     },
@@ -26889,9 +31051,13 @@ return jQuery;
     _onModelEvent: function(event, model, collection, options) {
       if ((event === 'add' || event === 'remove') && collection !== this) return;
       if (event === 'destroy') this.remove(model, options);
-      if (model && event === 'change:' + model.idAttribute) {
-        delete this._byId[model.previous(model.idAttribute)];
-        if (model.id != null) this._byId[model.id] = model;
+      if (event === 'change') {
+        var prevId = this.modelId(model.previousAttributes());
+        var id = this.modelId(model.attributes);
+        if (prevId !== id) {
+          if (prevId != null) delete this._byId[prevId];
+          if (id != null) this._byId[id] = model;
+        }
       }
       this.trigger.apply(this, arguments);
     }
@@ -26901,34 +31067,17 @@ return jQuery;
   // Underscore methods that we want to implement on the Collection.
   // 90% of the core usefulness of Backbone Collections is actually implemented
   // right here:
-  var methods = ['forEach', 'each', 'map', 'collect', 'reduce', 'foldl',
-    'inject', 'reduceRight', 'foldr', 'find', 'detect', 'filter', 'select',
-    'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke',
-    'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',
-    'tail', 'drop', 'last', 'without', 'difference', 'indexOf', 'shuffle',
-    'lastIndexOf', 'isEmpty', 'chain', 'sample'];
+  var collectionMethods = { forEach: 3, each: 3, map: 3, collect: 3, reduce: 4,
+      foldl: 4, inject: 4, reduceRight: 4, foldr: 4, find: 3, detect: 3, filter: 3,
+      select: 3, reject: 3, every: 3, all: 3, some: 3, any: 3, include: 3, includes: 3,
+      contains: 3, invoke: 0, max: 3, min: 3, toArray: 1, size: 1, first: 3,
+      head: 3, take: 3, initial: 3, rest: 3, tail: 3, drop: 3, last: 3,
+      without: 0, difference: 0, indexOf: 3, shuffle: 1, lastIndexOf: 3,
+      isEmpty: 1, chain: 1, sample: 3, partition: 3, groupBy: 3, countBy: 3,
+      sortBy: 3, indexBy: 3};
 
   // Mix in each Underscore method as a proxy to `Collection#models`.
-  _.each(methods, function(method) {
-    Collection.prototype[method] = function() {
-      var args = slice.call(arguments);
-      args.unshift(this.models);
-      return _[method].apply(_, args);
-    };
-  });
-
-  // Underscore methods that take a property name as an argument.
-  var attributeMethods = ['groupBy', 'countBy', 'sortBy', 'indexBy'];
-
-  // Use attributes instead of properties.
-  _.each(attributeMethods, function(method) {
-    Collection.prototype[method] = function(value, context) {
-      var iterator = _.isFunction(value) ? value : function(model) {
-        return model.get(value);
-      };
-      return _[method](this.models, iterator, context);
-    };
-  });
+  addUnderscoreMethods(Collection, collectionMethods, 'models');
 
   // Backbone.View
   // -------------
@@ -26945,17 +31094,15 @@ return jQuery;
   // if an existing element is not provided...
   var View = Backbone.View = function(options) {
     this.cid = _.uniqueId('view');
-    options || (options = {});
     _.extend(this, _.pick(options, viewOptions));
     this._ensureElement();
     this.initialize.apply(this, arguments);
-    this.delegateEvents();
   };
 
   // Cached regex to split keys for `delegate`.
   var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
-  // List of view options to be merged as properties.
+  // List of view options to be set as properties.
   var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
 
   // Set up all inheritable **Backbone.View** properties and methods.
@@ -26984,19 +31131,35 @@ return jQuery;
     // Remove this view by taking the element out of the DOM, and removing any
     // applicable Backbone.Events listeners.
     remove: function() {
-      this.$el.remove();
+      this._removeElement();
       this.stopListening();
       return this;
     },
 
-    // Change the view's element (`this.el` property), including event
-    // re-delegation.
-    setElement: function(element, delegate) {
-      if (this.$el) this.undelegateEvents();
-      this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
-      this.el = this.$el[0];
-      if (delegate !== false) this.delegateEvents();
+    // Remove this view's element from the document and all event listeners
+    // attached to it. Exposed for subclasses using an alternative DOM
+    // manipulation API.
+    _removeElement: function() {
+      this.$el.remove();
+    },
+
+    // Change the view's element (`this.el` property) and re-delegate the
+    // view's events on the new element.
+    setElement: function(element) {
+      this.undelegateEvents();
+      this._setElement(element);
+      this.delegateEvents();
       return this;
+    },
+
+    // Creates the `this.el` and `this.$el` references for this view using the
+    // given `el`. `el` can be a CSS selector or an HTML string, a jQuery
+    // context or an element. Subclasses can override this to utilize an
+    // alternative DOM manipulation API and are only required to set the
+    // `this.el` property.
+    _setElement: function(el) {
+      this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
+      this.el = this.$el[0];
     },
 
     // Set callbacks, where `this.events` is a hash of
@@ -27012,35 +31175,47 @@ return jQuery;
     // pairs. Callbacks will be bound to the view, with `this` set properly.
     // Uses event delegation for efficiency.
     // Omitting the selector binds the event to `this.el`.
-    // This only works for delegate-able events: not `focus`, `blur`, and
-    // not `change`, `submit`, and `reset` in Internet Explorer.
     delegateEvents: function(events) {
-      if (!(events || (events = _.result(this, 'events')))) return this;
+      events || (events = _.result(this, 'events'));
+      if (!events) return this;
       this.undelegateEvents();
       for (var key in events) {
         var method = events[key];
-        if (!_.isFunction(method)) method = this[events[key]];
+        if (!_.isFunction(method)) method = this[method];
         if (!method) continue;
-
         var match = key.match(delegateEventSplitter);
-        var eventName = match[1], selector = match[2];
-        method = _.bind(method, this);
-        eventName += '.delegateEvents' + this.cid;
-        if (selector === '') {
-          this.$el.on(eventName, method);
-        } else {
-          this.$el.on(eventName, selector, method);
-        }
+        this.delegate(match[1], match[2], _.bind(method, this));
       }
       return this;
     },
 
-    // Clears all callbacks previously bound to the view with `delegateEvents`.
+    // Add a single event listener to the view's element (or a child element
+    // using `selector`). This only works for delegate-able events: not `focus`,
+    // `blur`, and not `change`, `submit`, and `reset` in Internet Explorer.
+    delegate: function(eventName, selector, listener) {
+      this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+      return this;
+    },
+
+    // Clears all callbacks previously bound to the view by `delegateEvents`.
     // You usually don't need to use this, but may wish to if you have multiple
     // Backbone views attached to the same DOM element.
     undelegateEvents: function() {
-      this.$el.off('.delegateEvents' + this.cid);
+      if (this.$el) this.$el.off('.delegateEvents' + this.cid);
       return this;
+    },
+
+    // A finer-grained `undelegateEvents` for removing a single delegated event.
+    // `selector` and `listener` are both optional.
+    undelegate: function(eventName, selector, listener) {
+      this.$el.off(eventName + '.delegateEvents' + this.cid, selector, listener);
+      return this;
+    },
+
+    // Produces a DOM element to be assigned to your view. Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _createElement: function(tagName) {
+      return document.createElement(tagName);
     },
 
     // Ensure that the View has a DOM element to render into.
@@ -27052,11 +31227,17 @@ return jQuery;
         var attrs = _.extend({}, _.result(this, 'attributes'));
         if (this.id) attrs.id = _.result(this, 'id');
         if (this.className) attrs['class'] = _.result(this, 'className');
-        var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
-        this.setElement($el, false);
+        this.setElement(this._createElement(_.result(this, 'tagName')));
+        this._setAttributes(attrs);
       } else {
-        this.setElement(_.result(this, 'el'), false);
+        this.setElement(_.result(this, 'el'));
       }
+    },
+
+    // Set attributes from a hash on this view's element.  Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _setAttributes: function(attributes) {
+      this.$el.attr(attributes);
     }
 
   });
@@ -27065,7 +31246,7 @@ return jQuery;
   // -------------
 
   // Override this function to change the manner in which Backbone persists
-  // models to the oe_server. You will be passed the type of request, and the
+  // models to the server. You will be passed the type of request, and the
   // model in question. By default, makes a RESTful Ajax request
   // to the model's `url()`. Some possible customizations could be:
   //
@@ -27077,7 +31258,7 @@ return jQuery;
   // as `POST`, with a `_method` parameter containing the true HTTP method,
   // as well as all requests with the body as `application/x-www-form-urlencoded`
   // instead of `application/json` with the model in a param named `model`.
-  // Useful when interfacing with oe_server-side languages like **PHP** that make
+  // Useful when interfacing with server-side languages like **PHP** that make
   // it difficult to read the body of `PUT` requests.
   Backbone.sync = function(method, model, options) {
     var type = methodMap[method];
@@ -27125,24 +31306,19 @@ return jQuery;
       params.processData = false;
     }
 
-    // If we're sending a `PATCH` request, and we're in an old Internet Explorer
-    // that still has ActiveX enabled by default, override jQuery to use that
-    // for XHR instead. Remove this line when jQuery supports `PATCH` on IE8.
-    if (params.type === 'PATCH' && noXhrPatch) {
-      params.xhr = function() {
-        return new ActiveXObject("Microsoft.XMLHTTP");
-      };
-    }
+    // Pass along `textStatus` and `errorThrown` from jQuery.
+    var error = options.error;
+    options.error = function(xhr, textStatus, errorThrown) {
+      options.textStatus = textStatus;
+      options.errorThrown = errorThrown;
+      if (error) error.call(options.context, xhr, textStatus, errorThrown);
+    };
 
     // Make the request, allowing the user to override any Ajax options.
     var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
     return xhr;
   };
-
-  var noXhrPatch =
-    typeof window !== 'undefined' && !!window.ActiveXObject &&
-      !(window.XMLHttpRequest && (new XMLHttpRequest).dispatchEvent);
 
   // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
   var methodMap = {
@@ -27201,17 +31377,18 @@ return jQuery;
       var router = this;
       Backbone.history.route(route, function(fragment) {
         var args = router._extractParameters(route, fragment);
-        router.execute(callback, args);
-        router.trigger.apply(router, ['route:' + name].concat(args));
-        router.trigger('route', name, args);
-        Backbone.history.trigger('route', router, name, args);
+        if (router.execute(callback, args, name) !== false) {
+          router.trigger.apply(router, ['route:' + name].concat(args));
+          router.trigger('route', name, args);
+          Backbone.history.trigger('route', router, name, args);
+        }
       });
       return this;
     },
 
     // Execute a route handler with the provided parameters.  This is an
     // excellent place to do pre-route setup or post-route cleanup.
-    execute: function(callback, args) {
+    execute: function(callback, args, name) {
       if (callback) callback.apply(this, args);
     },
 
@@ -27269,7 +31446,7 @@ return jQuery;
   // falls back to polling.
   var History = Backbone.History = function() {
     this.handlers = [];
-    _.bindAll(this, 'checkUrl');
+    this.checkUrl = _.bind(this.checkUrl, this);
 
     // Ensure that `History` can be used outside of the browser.
     if (typeof window !== 'undefined') {
@@ -27283,12 +31460,6 @@ return jQuery;
 
   // Cached regex for stripping leading and trailing slashes.
   var rootStripper = /^\/+|\/+$/g;
-
-  // Cached regex for detecting MSIE.
-  var isExplorer = /msie [\w.]+/;
-
-  // Cached regex for removing a trailing slash.
-  var trailingSlash = /\/$/;
 
   // Cached regex for stripping urls of hash.
   var pathStripper = /#.*$/;
@@ -27305,7 +31476,29 @@ return jQuery;
 
     // Are we at the app root?
     atRoot: function() {
-      return this.location.pathname.replace(/[^\/]$/, '$&/') === this.root;
+      var path = this.location.pathname.replace(/[^\/]$/, '$&/');
+      return path === this.root && !this.getSearch();
+    },
+
+    // Does the pathname match the root?
+    matchRoot: function() {
+      var path = this.decodeFragment(this.location.pathname);
+      var root = path.slice(0, this.root.length - 1) + '/';
+      return root === this.root;
+    },
+
+    // Unicode characters in `location.pathname` are percent encoded so they're
+    // decoded for comparison. `%25` should not be decoded since it may be part
+    // of an encoded parameter.
+    decodeFragment: function(fragment) {
+      return decodeURI(fragment.replace(/%25/g, '%2525'));
+    },
+
+    // In IE6, the hash fragment and search params are incorrect if the
+    // fragment contains `?`.
+    getSearch: function() {
+      var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
+      return match ? match[0] : '';
     },
 
     // Gets the true hash value. Cannot use location.hash directly due to bug
@@ -27315,14 +31508,19 @@ return jQuery;
       return match ? match[1] : '';
     },
 
-    // Get the cross-browser normalized URL fragment, either from the URL,
-    // the hash, or the override.
-    getFragment: function(fragment, forcePushState) {
+    // Get the pathname and search params, without the root.
+    getPath: function() {
+      var path = this.decodeFragment(
+        this.location.pathname + this.getSearch()
+      ).slice(this.root.length - 1);
+      return path.charAt(0) === '/' ? path.slice(1) : path;
+    },
+
+    // Get the cross-browser normalized URL fragment from the path or hash.
+    getFragment: function(fragment) {
       if (fragment == null) {
-        if (this._hasPushState || !this._wantsHashChange || forcePushState) {
-          fragment = decodeURI(this.location.pathname + this.location.search);
-          var root = this.root.replace(trailingSlash, '');
-          if (!fragment.indexOf(root)) fragment = fragment.slice(root.length);
+        if (this._usePushState || !this._wantsHashChange) {
+          fragment = this.getPath();
         } else {
           fragment = this.getHash();
         }
@@ -27333,7 +31531,7 @@ return jQuery;
     // Start the hash change handling, returning `true` if the current URL matches
     // an existing route, and `false` otherwise.
     start: function(options) {
-      if (History.started) throw new Error("Backbone.history has already been started");
+      if (History.started) throw new Error('Backbone.history has already been started');
       History.started = true;
 
       // Figure out the initial configuration. Do we need an iframe?
@@ -27341,35 +31539,15 @@ return jQuery;
       this.options          = _.extend({root: '/'}, this.options, options);
       this.root             = this.options.root;
       this._wantsHashChange = this.options.hashChange !== false;
+      this._hasHashChange   = 'onhashchange' in window && (document.documentMode === void 0 || document.documentMode > 7);
+      this._useHashChange   = this._wantsHashChange && this._hasHashChange;
       this._wantsPushState  = !!this.options.pushState;
-      this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);
-      var fragment          = this.getFragment();
-      var docMode           = document.documentMode;
-      var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
+      this._hasPushState    = !!(this.history && this.history.pushState);
+      this._usePushState    = this._wantsPushState && this._hasPushState;
+      this.fragment         = this.getFragment();
 
       // Normalize root to always include a leading and trailing slash.
       this.root = ('/' + this.root + '/').replace(rootStripper, '/');
-
-      if (oldIE && this._wantsHashChange) {
-        var frame = Backbone.$('<iframe src="javascript:0" tabindex="-1">');
-        this.iframe = frame.hide().appendTo('body')[0].contentWindow;
-        this.navigate(fragment);
-      }
-
-      // Depending on whether we're using pushState or hashes, and whether
-      // 'onhashchange' is supported, determine how we check the URL state.
-      if (this._hasPushState) {
-        Backbone.$(window).on('popstate', this.checkUrl);
-      } else if (this._wantsHashChange && ('onhashchange' in window) && !oldIE) {
-        Backbone.$(window).on('hashchange', this.checkUrl);
-      } else if (this._wantsHashChange) {
-        this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
-      }
-
-      // Determine if we need to change the base url, for a pushState link
-      // opened by a non-pushState browser.
-      this.fragment = fragment;
-      var loc = this.location;
 
       // Transition from hashChange to pushState or vice versa if both are
       // requested.
@@ -27378,18 +31556,48 @@ return jQuery;
         // If we've started off with a route from a `pushState`-enabled
         // browser, but we're currently in a browser that doesn't support it...
         if (!this._hasPushState && !this.atRoot()) {
-          this.fragment = this.getFragment(null, true);
-          this.location.replace(this.root + '#' + this.fragment);
+          var root = this.root.slice(0, -1) || '/';
+          this.location.replace(root + '#' + this.getPath());
           // Return immediately as browser will do redirect to new url
           return true;
 
         // Or if we've started out with a hash-based route, but we're currently
         // in a browser where it could be `pushState`-based instead...
-        } else if (this._hasPushState && this.atRoot() && loc.hash) {
-          this.fragment = this.getHash().replace(routeStripper, '');
-          this.history.replaceState({}, document.title, this.root + this.fragment);
+        } else if (this._hasPushState && this.atRoot()) {
+          this.navigate(this.getHash(), {replace: true});
         }
 
+      }
+
+      // Proxy an iframe to handle location events if the browser doesn't
+      // support the `hashchange` event, HTML5 history, or the user wants
+      // `hashChange` but not `pushState`.
+      if (!this._hasHashChange && this._wantsHashChange && !this._usePushState) {
+        this.iframe = document.createElement('iframe');
+        this.iframe.src = 'javascript:0';
+        this.iframe.style.display = 'none';
+        this.iframe.tabIndex = -1;
+        var body = document.body;
+        // Using `appendChild` will throw on IE < 9 if the document is not ready.
+        var iWindow = body.insertBefore(this.iframe, body.firstChild).contentWindow;
+        iWindow.document.open();
+        iWindow.document.close();
+        iWindow.location.hash = '#' + this.fragment;
+      }
+
+      // Add a cross-platform `addEventListener` shim for older browsers.
+      var addEventListener = window.addEventListener || function (eventName, listener) {
+        return attachEvent('on' + eventName, listener);
+      };
+
+      // Depending on whether we're using pushState or hashes, and whether
+      // 'onhashchange' is supported, determine how we check the URL state.
+      if (this._usePushState) {
+        addEventListener('popstate', this.checkUrl, false);
+      } else if (this._useHashChange && !this.iframe) {
+        addEventListener('hashchange', this.checkUrl, false);
+      } else if (this._wantsHashChange) {
+        this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
       }
 
       if (!this.options.silent) return this.loadUrl();
@@ -27398,7 +31606,25 @@ return jQuery;
     // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
     // but possibly useful for unit testing Routers.
     stop: function() {
-      Backbone.$(window).off('popstate', this.checkUrl).off('hashchange', this.checkUrl);
+      // Add a cross-platform `removeEventListener` shim for older browsers.
+      var removeEventListener = window.removeEventListener || function (eventName, listener) {
+        return detachEvent('on' + eventName, listener);
+      };
+
+      // Remove window listeners.
+      if (this._usePushState) {
+        removeEventListener('popstate', this.checkUrl, false);
+      } else if (this._useHashChange && !this.iframe) {
+        removeEventListener('hashchange', this.checkUrl, false);
+      }
+
+      // Clean up the iframe if necessary.
+      if (this.iframe) {
+        document.body.removeChild(this.iframe);
+        this.iframe = null;
+      }
+
+      // Some environments will throw when clearing an undefined interval.
       if (this._checkUrlInterval) clearInterval(this._checkUrlInterval);
       History.started = false;
     },
@@ -27413,9 +31639,13 @@ return jQuery;
     // calls `loadUrl`, normalizing across the hidden iframe.
     checkUrl: function(e) {
       var current = this.getFragment();
+
+      // If the user pressed the back button, the iframe's hash will have
+      // changed and we should use that for comparison.
       if (current === this.fragment && this.iframe) {
-        current = this.getFragment(this.getHash(this.iframe));
+        current = this.getHash(this.iframe.contentWindow);
       }
+
       if (current === this.fragment) return false;
       if (this.iframe) this.navigate(current);
       this.loadUrl();
@@ -27425,8 +31655,10 @@ return jQuery;
     // match, returns `true`. If no defined routes matches the fragment,
     // returns `false`.
     loadUrl: function(fragment) {
+      // If the root doesn't match, no routes can match either.
+      if (!this.matchRoot()) return false;
       fragment = this.fragment = this.getFragment(fragment);
-      return _.any(this.handlers, function(handler) {
+      return _.some(this.handlers, function(handler) {
         if (handler.route.test(fragment)) {
           handler.callback(fragment);
           return true;
@@ -27445,31 +31677,42 @@ return jQuery;
       if (!History.started) return false;
       if (!options || options === true) options = {trigger: !!options};
 
-      var url = this.root + (fragment = this.getFragment(fragment || ''));
+      // Normalize the fragment.
+      fragment = this.getFragment(fragment || '');
 
-      // Strip the hash for matching.
-      fragment = fragment.replace(pathStripper, '');
+      // Don't include a trailing slash on the root.
+      var root = this.root;
+      if (fragment === '' || fragment.charAt(0) === '?') {
+        root = root.slice(0, -1) || '/';
+      }
+      var url = root + fragment;
+
+      // Strip the hash and decode for matching.
+      fragment = this.decodeFragment(fragment.replace(pathStripper, ''));
 
       if (this.fragment === fragment) return;
       this.fragment = fragment;
 
-      // Don't include a trailing slash on the root.
-      if (fragment === '' && url !== '/') url = url.slice(0, -1);
-
       // If pushState is available, we use it to set the fragment as a real URL.
-      if (this._hasPushState) {
+      if (this._usePushState) {
         this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
 
       // If hash changes haven't been explicitly disabled, update the hash
       // fragment to store history.
       } else if (this._wantsHashChange) {
         this._updateHash(this.location, fragment, options.replace);
-        if (this.iframe && (fragment !== this.getFragment(this.getHash(this.iframe)))) {
+        if (this.iframe && (fragment !== this.getHash(this.iframe.contentWindow))) {
+          var iWindow = this.iframe.contentWindow;
+
           // Opening and closing the iframe tricks IE7 and earlier to push a
           // history entry on hash-tag change.  When replace is true, we don't
           // want this.
-          if(!options.replace) this.iframe.document.open().close();
-          this._updateHash(this.iframe.location, fragment, options.replace);
+          if (!options.replace) {
+            iWindow.document.open();
+            iWindow.document.close();
+          }
+
+          this._updateHash(iWindow.location, fragment, options.replace);
         }
 
       // If you've told us that you explicitly don't want fallback hashchange-
@@ -27500,7 +31743,7 @@ return jQuery;
   // Helpers
   // -------
 
-  // Helper function to correctly set up the prototype chain, for subclasses.
+  // Helper function to correctly set up the prototype chain for subclasses.
   // Similar to `goog.inherits`, but uses a hash of prototype properties and
   // class properties to be extended.
   var extend = function(protoProps, staticProps) {
@@ -27509,7 +31752,7 @@ return jQuery;
 
     // The constructor function for the new subclass is either defined by you
     // (the "constructor" property in your `extend` definition), or defaulted
-    // by us to simply call the parent's constructor.
+    // by us to simply call the parent constructor.
     if (protoProps && _.has(protoProps, 'constructor')) {
       child = protoProps.constructor;
     } else {
@@ -27520,7 +31763,7 @@ return jQuery;
     _.extend(child, parent, staticProps);
 
     // Set the prototype chain to inherit from `parent`, without calling
-    // `parent`'s constructor function.
+    // `parent` constructor function.
     var Surrogate = function(){ this.constructor = child; };
     Surrogate.prototype = parent.prototype;
     child.prototype = new Surrogate;
@@ -27548,7 +31791,7 @@ return jQuery;
   var wrapError = function(model, options) {
     var error = options.error;
     options.error = function(resp) {
-      if (error) error(model, resp, options);
+      if (error) error.call(options.context, model, resp, options);
       model.trigger('error', model, resp, options);
     };
   };
@@ -27562,11 +31805,11 @@ return jQuery;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /*!
- * jQuery JavaScript Library v2.1.3
+ * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -27576,7 +31819,7 @@ return jQuery;
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-12-18T15:11Z
+ * Date: 2015-04-28T16:01Z
  */
 
 (function( global, factory ) {
@@ -27634,7 +31877,7 @@ var
 	// Use the correct document accordingly with window argument (sandbox)
 	document = window.document,
 
-	version = "2.1.3",
+	version = "2.1.4",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -28098,7 +32341,12 @@ jQuery.each("Boolean Number String Function Array Date RegExp Object Error".spli
 });
 
 function isArraylike( obj ) {
-	var length = obj.length,
+
+	// Support: iOS 8.2 (not reproducible in simulator)
+	// `in` check used to prevent JIT error (gh-2145)
+	// hasOwn isn't used here due to false negatives
+	// regarding Nodelist length in IE
+	var length = "length" in obj && obj.length,
 		type = jQuery.type( obj );
 
 	if ( type === "function" || jQuery.isWindow( obj ) ) {
@@ -35676,7 +39924,7 @@ jQuery.extend({
 			jqXHR.setRequestHeader( "Content-Type", s.contentType );
 		}
 
-		// Set the Accepts header for the oe_server, depending on the dataType
+		// Set the Accepts header for the server, depending on the dataType
 		jqXHR.setRequestHeader(
 			"Accept",
 			s.dataTypes[ 0 ] && s.accepts[ s.dataTypes[0] ] ?
@@ -36776,15 +41024,15 @@ return jQuery;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /**
  * @license
- * lodash 3.4.0 (Custom Build) <https://lodash.com/>
+ * lodash 3.10.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern -o ./lodash.js`
  * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
- * Based on Underscore.js 1.8.2 <http://underscorejs.org/LICENSE>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
  * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  * Available under MIT license <https://lodash.com/license>
  */
@@ -36794,7 +41042,7 @@ return jQuery;
   var undefined;
 
   /** Used as the semantic version number. */
-  var VERSION = '3.4.0';
+  var VERSION = '3.10.1';
 
   /** Used to compose bitmasks for wrapper metadata. */
   var BIND_FLAG = 1,
@@ -36804,8 +41052,8 @@ return jQuery;
       CURRY_RIGHT_FLAG = 16,
       PARTIAL_FLAG = 32,
       PARTIAL_RIGHT_FLAG = 64,
-      REARG_FLAG = 128,
-      ARY_FLAG = 256;
+      ARY_FLAG = 128,
+      REARG_FLAG = 256;
 
   /** Used as default options for `_.trunc`. */
   var DEFAULT_TRUNC_LENGTH = 30,
@@ -36815,10 +41063,12 @@ return jQuery;
   var HOT_COUNT = 150,
       HOT_SPAN = 16;
 
+  /** Used as the size to enable large array optimizations. */
+  var LARGE_ARRAY_SIZE = 200;
+
   /** Used to indicate the type of lazy iteratees. */
-  var LAZY_DROP_WHILE_FLAG = 0,
-      LAZY_MAP_FLAG = 2,
-      LAZY_TAKE_WHILE_FLAG = 3;
+  var LAZY_FILTER_FLAG = 1,
+      LAZY_MAP_FLAG = 2;
 
   /** Used as the `TypeError` message for "Functions" methods. */
   var FUNC_ERROR_TEXT = 'Expected a function';
@@ -36868,41 +41118,44 @@ return jQuery;
       reEvaluate = /<%([\s\S]+?)%>/g,
       reInterpolate = /<%=([\s\S]+?)%>/g;
 
+  /** Used to match property names within property paths. */
+  var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\n\\]|\\.)*?\1)\]/,
+      reIsPlainProp = /^\w*$/,
+      rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\n\\]|\\.)*?)\2)\]/g;
+
   /**
-   * Used to match ES template delimiters.
-   * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-template-literal-lexical-components)
-   * for more details.
+   * Used to match `RegExp` [syntax characters](http://ecma-international.org/ecma-262/6.0/#sec-patterns)
+   * and those outlined by [`EscapeRegExpPattern`](http://ecma-international.org/ecma-262/6.0/#sec-escaperegexppattern).
    */
+  var reRegExpChars = /^[:!,]|[\\^$.*+?()[\]{}|\/]|(^[0-9a-fA-Fnrtuvx])|([\n\r\u2028\u2029])/g,
+      reHasRegExpChars = RegExp(reRegExpChars.source);
+
+  /** Used to match [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks). */
+  var reComboMark = /[\u0300-\u036f\ufe20-\ufe23]/g;
+
+  /** Used to match backslashes in property paths. */
+  var reEscapeChar = /\\(\\)?/g;
+
+  /** Used to match [ES template delimiters](http://ecma-international.org/ecma-262/6.0/#sec-template-literal-lexical-components). */
   var reEsTemplate = /\$\{([^\\}]*(?:\\.[^\\}]*)*)\}/g;
 
   /** Used to match `RegExp` flags from their coerced string values. */
   var reFlags = /\w*$/;
 
-  /** Used to detect named functions. */
-  var reFuncName = /^\s*function[ \n\r\t]+\w/;
-
   /** Used to detect hexadecimal string values. */
-  var reHexPrefix = /^0[xX]/;
+  var reHasHexPrefix = /^0[xX]/;
 
   /** Used to detect host constructors (Safari > 5). */
-  var reHostCtor = /^\[object .+?Constructor\]$/;
+  var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+  /** Used to detect unsigned integer values. */
+  var reIsUint = /^\d+$/;
 
   /** Used to match latin-1 supplementary letters (excluding mathematical operators). */
   var reLatin1 = /[\xc0-\xd6\xd8-\xde\xdf-\xf6\xf8-\xff]/g;
 
   /** Used to ensure capturing order of template delimiters. */
   var reNoMatch = /($^)/;
-
-  /**
-   * Used to match `RegExp` special characters.
-   * See this [article on `RegExp` characters](http://www.regular-expressions.info/characters.html#special)
-   * for more details.
-   */
-  var reRegExpChars = /[.*+?^${}()|[\]\/\\]/g,
-      reHasRegExpChars = RegExp(reRegExpChars.source);
-
-  /** Used to detect functions containing a `this` reference. */
-  var reThis = /\bthis\b/;
 
   /** Used to match unescaped characters in compiled string literals. */
   var reUnescapedString = /['\n\r\u2028\u2029\\]/g;
@@ -36915,26 +41168,13 @@ return jQuery;
     return RegExp(upper + '+(?=' + upper + lower + ')|' + upper + '?' + lower + '|' + upper + '+|[0-9]+', 'g');
   }());
 
-  /** Used to detect and test for whitespace. */
-  var whitespace = (
-    // Basic whitespace characters.
-    ' \t\x0b\f\xa0\ufeff' +
-
-    // Line terminators.
-    '\n\r\u2028\u2029' +
-
-    // Unicode category "Zs" space separators.
-    '\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000'
-  );
-
   /** Used to assign default `context` object properties. */
   var contextProps = [
     'Array', 'ArrayBuffer', 'Date', 'Error', 'Float32Array', 'Float64Array',
     'Function', 'Int8Array', 'Int16Array', 'Int32Array', 'Math', 'Number',
-    'Object', 'RegExp', 'Set', 'String', '_', 'clearTimeout', 'document',
-    'isFinite', 'parseInt', 'setTimeout', 'TypeError', 'Uint8Array',
-    'Uint8ClampedArray', 'Uint16Array', 'Uint32Array', 'WeakMap',
-    'window', 'WinRTError'
+    'Object', 'RegExp', 'Set', 'String', '_', 'clearTimeout', 'isFinite',
+    'parseFloat', 'parseInt', 'setTimeout', 'TypeError', 'Uint8Array',
+    'Uint8ClampedArray', 'Uint16Array', 'Uint32Array', 'WeakMap'
   ];
 
   /** Used to make template sourceURLs easier to identify. */
@@ -36969,13 +41209,6 @@ return jQuery;
   cloneableTags[errorTag] = cloneableTags[funcTag] =
   cloneableTags[mapTag] = cloneableTags[setTag] =
   cloneableTags[weakMapTag] = false;
-
-  /** Used as an internal `_.debounce` options object by `_.throttle`. */
-  var debounceOptions = {
-    'leading': false,
-    'maxWait': 0,
-    'trailing': false
-  };
 
   /** Used to map latin-1 supplementary letters to basic latin letters. */
   var deburredLetters = {
@@ -37024,6 +41257,15 @@ return jQuery;
     'object': true
   };
 
+  /** Used to escape characters for inclusion in compiled regexes. */
+  var regexpEscapes = {
+    '0': 'x30', '1': 'x31', '2': 'x32', '3': 'x33', '4': 'x34',
+    '5': 'x35', '6': 'x36', '7': 'x37', '8': 'x38', '9': 'x39',
+    'A': 'x41', 'B': 'x42', 'C': 'x43', 'D': 'x44', 'E': 'x45', 'F': 'x46',
+    'a': 'x61', 'b': 'x62', 'c': 'x63', 'd': 'x64', 'e': 'x65', 'f': 'x66',
+    'n': 'x6e', 'r': 'x72', 't': 'x74', 'u': 'x75', 'v': 'x76', 'x': 'x78'
+  };
+
   /** Used to escape characters for inclusion in compiled string literals. */
   var stringEscapes = {
     '\\': '\\',
@@ -37041,10 +41283,13 @@ return jQuery;
   var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
 
   /** Detect free variable `global` from Node.js. */
-  var freeGlobal = freeExports && freeModule && typeof global == 'object' && global;
+  var freeGlobal = freeExports && freeModule && typeof global == 'object' && global && global.Object && global;
+
+  /** Detect free variable `self`. */
+  var freeSelf = objectTypes[typeof self] && self && self.Object && self;
 
   /** Detect free variable `window`. */
-  var freeWindow = objectTypes[typeof window] && window;
+  var freeWindow = objectTypes[typeof window] && window && window.Object && window;
 
   /** Detect the popular CommonJS extension `module.exports`. */
   var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
@@ -37052,10 +41297,10 @@ return jQuery;
   /**
    * Used as a reference to the global object.
    *
-   * The `this` value is used if it is the global object to avoid Greasemonkey's
+   * The `this` value is used if it's the global object to avoid Greasemonkey's
    * restricted `window` object, otherwise the `window` object is used.
    */
-  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || this;
+  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || freeSelf || this;
 
   /*--------------------------------------------------------------------------*/
 
@@ -37064,23 +41309,54 @@ return jQuery;
    * sorts them in ascending order without guaranteeing a stable sort.
    *
    * @private
-   * @param {*} value The value to compare to `other`.
-   * @param {*} other The value to compare to `value`.
+   * @param {*} value The value to compare.
+   * @param {*} other The other value to compare.
    * @returns {number} Returns the sort order indicator for `value`.
    */
   function baseCompareAscending(value, other) {
     if (value !== other) {
-      var valIsReflexive = value === value,
+      var valIsNull = value === null,
+          valIsUndef = value === undefined,
+          valIsReflexive = value === value;
+
+      var othIsNull = other === null,
+          othIsUndef = other === undefined,
           othIsReflexive = other === other;
 
-      if (value > other || !valIsReflexive || (typeof value == 'undefined' && othIsReflexive)) {
+      if ((value > other && !othIsNull) || !valIsReflexive ||
+          (valIsNull && !othIsUndef && othIsReflexive) ||
+          (valIsUndef && othIsReflexive)) {
         return 1;
       }
-      if (value < other || !othIsReflexive || (typeof other == 'undefined' && valIsReflexive)) {
+      if ((value < other && !valIsNull) || !othIsReflexive ||
+          (othIsNull && !valIsUndef && valIsReflexive) ||
+          (othIsUndef && valIsReflexive)) {
         return -1;
       }
     }
     return 0;
+  }
+
+  /**
+   * The base implementation of `_.findIndex` and `_.findLastIndex` without
+   * support for callback shorthands and `this` binding.
+   *
+   * @private
+   * @param {Array} array The array to search.
+   * @param {Function} predicate The function invoked per iteration.
+   * @param {boolean} [fromRight] Specify iterating from right to left.
+   * @returns {number} Returns the index of the matched value, else `-1`.
+   */
+  function baseFindIndex(array, predicate, fromRight) {
+    var length = array.length,
+        index = fromRight ? length : -1;
+
+    while ((fromRight ? index-- : ++index < length)) {
+      if (predicate(array[index], index, array)) {
+        return index;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -37122,7 +41398,7 @@ return jQuery;
   }
 
   /**
-   * Converts `value` to a string if it is not one. An empty string is returned
+   * Converts `value` to a string if it's not one. An empty string is returned
    * for `null` or `undefined` values.
    *
    * @private
@@ -37130,21 +41406,7 @@ return jQuery;
    * @returns {string} Returns the string.
    */
   function baseToString(value) {
-    if (typeof value == 'string') {
-      return value;
-    }
     return value == null ? '' : (value + '');
-  }
-
-  /**
-   * Used by `_.max` and `_.min` as the default callback for string values.
-   *
-   * @private
-   * @param {string} string The string to inspect.
-   * @returns {number} Returns the code unit of the first character of the string.
-   */
-  function charAtCallback(string) {
-    return string.charCodeAt(0);
   }
 
   /**
@@ -37185,8 +41447,8 @@ return jQuery;
    * sort them in ascending order.
    *
    * @private
-   * @param {Object} object The object to compare to `other`.
-   * @param {Object} other The object to compare to `object`.
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
    * @returns {number} Returns the sort order indicator for `object`.
    */
   function compareAscending(object, other) {
@@ -37194,16 +41456,16 @@ return jQuery;
   }
 
   /**
-   * Used by `_.sortByOrder` to compare multiple properties of each element
-   * in a collection and stable sort them in the following order:
+   * Used by `_.sortByOrder` to compare multiple properties of a value to another
+   * and stable sort them.
    *
-   * If orders is unspecified, sort in ascending order for all properties.
-   * Otherwise, for each property, sort in ascending order if its corresponding value in
-   * orders is true, and descending order if false.
+   * If `orders` is unspecified, all valuess are sorted in ascending order. Otherwise,
+   * a value is sorted in ascending order if its corresponding order is "asc", and
+   * descending if "desc".
    *
    * @private
-   * @param {Object} object The object to compare to `other`.
-   * @param {Object} other The object to compare to `object`.
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
    * @param {boolean[]} orders The order to sort by for each property.
    * @returns {number} Returns the sort order indicator for `object`.
    */
@@ -37219,9 +41481,9 @@ return jQuery;
       if (result) {
         if (index >= ordersLength) {
           return result;
-        } else {
-          return orders[index] ? result : result * -1;
         }
+        var order = orders[index];
+        return result * ((order === 'asc' || order === true) ? 1 : -1);
       }
     }
     // Fixes an `Array#sort` bug in the JS engine embedded in Adobe applications
@@ -37257,8 +41519,25 @@ return jQuery;
   }
 
   /**
-   * Used by `_.template` to escape characters for inclusion in compiled
-   * string literals.
+   * Used by `_.escapeRegExp` to escape characters for inclusion in compiled regexes.
+   *
+   * @private
+   * @param {string} chr The matched character to escape.
+   * @param {string} leadingChar The capture group for a leading character.
+   * @param {string} whitespaceChar The capture group for a whitespace character.
+   * @returns {string} Returns the escaped character.
+   */
+  function escapeRegExpChar(chr, leadingChar, whitespaceChar) {
+    if (leadingChar) {
+      chr = regexpEscapes[chr];
+    } else if (whitespaceChar) {
+      chr = stringEscapes[chr];
+    }
+    return '\\' + chr;
+  }
+
+  /**
+   * Used by `_.template` to escape characters for inclusion in compiled string literals.
    *
    * @private
    * @param {string} chr The matched character to escape.
@@ -37270,7 +41549,6 @@ return jQuery;
 
   /**
    * Gets the index at which the first occurrence of `NaN` is found in `array`.
-   * If `fromRight` is provided elements of `array` are iterated from right to left.
    *
    * @private
    * @param {Array} array The array to search.
@@ -37299,7 +41577,7 @@ return jQuery;
    * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
    */
   function isObjectLike(value) {
-    return (value && typeof value == 'object') || false;
+    return !!value && typeof value == 'object';
   }
 
   /**
@@ -37346,7 +41624,7 @@ return jQuery;
    * @private
    * @param {Array} array The array to inspect.
    * @param {Function} [iteratee] The function invoked per iteration.
-   * @returns {Array} Returns the new duplicate-value-free array.
+   * @returns {Array} Returns the new duplicate free array.
    */
   function sortedUniq(array, iteratee) {
     var seen,
@@ -37421,19 +41699,19 @@ return jQuery;
    * @returns {Function} Returns a new `lodash` function.
    * @example
    *
-   * _.mixin({ 'add': function(a, b) { return a + b; } });
+   * _.mixin({ 'foo': _.constant('foo') });
    *
    * var lodash = _.runInContext();
-   * lodash.mixin({ 'sub': function(a, b) { return a - b; } });
+   * lodash.mixin({ 'bar': lodash.constant('bar') });
    *
-   * _.isFunction(_.add);
+   * _.isFunction(_.foo);
    * // => true
-   * _.isFunction(_.sub);
+   * _.isFunction(_.bar);
    * // => false
    *
-   * lodash.isFunction(lodash.add);
+   * lodash.isFunction(lodash.foo);
    * // => false
-   * lodash.isFunction(lodash.sub);
+   * lodash.isFunction(lodash.bar);
    * // => true
    *
    * // using `context` to mock `Date#getTime` use in `_.now`
@@ -37467,16 +41745,11 @@ return jQuery;
 
     /** Used for native method references. */
     var arrayProto = Array.prototype,
-        objectProto = Object.prototype;
-
-    /** Used to detect DOM support. */
-    var document = (document = context.window) && document.document;
+        objectProto = Object.prototype,
+        stringProto = String.prototype;
 
     /** Used to resolve the decompiled source of functions. */
     var fnToString = Function.prototype.toString;
-
-    /** Used to the length of n-tuples for `_.unzip`. */
-    var getLength = baseProperty('length');
 
     /** Used to check objects for own properties. */
     var hasOwnProperty = objectProto.hasOwnProperty;
@@ -37485,57 +41758,42 @@ return jQuery;
     var idCounter = 0;
 
     /**
-     * Used to resolve the `toStringTag` of values.
-     * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
-     * for more details.
+     * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+     * of values.
      */
     var objToString = objectProto.toString;
 
     /** Used to restore the original `_` reference in `_.noConflict`. */
-    var oldDash = context._;
+    var oldDash = root._;
 
     /** Used to detect if a method is native. */
-    var reNative = RegExp('^' +
-      escapeRegExp(objToString)
-      .replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+    var reIsNative = RegExp('^' +
+      fnToString.call(hasOwnProperty).replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')
+      .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
     );
 
     /** Native method references. */
-    var ArrayBuffer = isNative(ArrayBuffer = context.ArrayBuffer) && ArrayBuffer,
-        bufferSlice = isNative(bufferSlice = ArrayBuffer && new ArrayBuffer(0).slice) && bufferSlice,
-        ceil = Math.ceil,
+    var ArrayBuffer = context.ArrayBuffer,
         clearTimeout = context.clearTimeout,
-        floor = Math.floor,
-        getPrototypeOf = isNative(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
-        push = arrayProto.push,
+        parseFloat = context.parseFloat,
+        pow = Math.pow,
         propertyIsEnumerable = objectProto.propertyIsEnumerable,
-        Set = isNative(Set = context.Set) && Set,
+        Set = getNative(context, 'Set'),
         setTimeout = context.setTimeout,
         splice = arrayProto.splice,
-        Uint8Array = isNative(Uint8Array = context.Uint8Array) && Uint8Array,
-        WeakMap = isNative(WeakMap = context.WeakMap) && WeakMap;
-
-    /** Used to clone array buffers. */
-    var Float64Array = (function() {
-      // Safari 5 errors when using an array buffer to initialize a typed array
-      // where the array buffer's `byteLength` is not a multiple of the typed
-      // array's `BYTES_PER_ELEMENT`.
-      try {
-        var func = isNative(func = context.Float64Array) && func,
-            result = new func(new ArrayBuffer(10), 0, 1) && func;
-      } catch(e) {}
-      return result;
-    }());
+        Uint8Array = context.Uint8Array,
+        WeakMap = getNative(context, 'WeakMap');
 
     /* Native method references for those with the same name as other `lodash` methods. */
-    var nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray,
-        nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate,
+    var nativeCeil = Math.ceil,
+        nativeCreate = getNative(Object, 'create'),
+        nativeFloor = Math.floor,
+        nativeIsArray = getNative(Array, 'isArray'),
         nativeIsFinite = context.isFinite,
-        nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys,
+        nativeKeys = getNative(Object, 'keys'),
         nativeMax = Math.max,
         nativeMin = Math.min,
-        nativeNow = isNative(nativeNow = Date.now) && nativeNow,
-        nativeNumIsFinite = isNative(nativeNumIsFinite = Number.isFinite) && nativeNumIsFinite,
+        nativeNow = getNative(Date, 'now'),
         nativeParseInt = context.parseInt,
         nativeRandom = Math.random;
 
@@ -37544,44 +41802,49 @@ return jQuery;
         POSITIVE_INFINITY = Number.POSITIVE_INFINITY;
 
     /** Used as references for the maximum length and index of an array. */
-    var MAX_ARRAY_LENGTH = Math.pow(2, 32) - 1,
-        MAX_ARRAY_INDEX =  MAX_ARRAY_LENGTH - 1,
+    var MAX_ARRAY_LENGTH = 4294967295,
+        MAX_ARRAY_INDEX = MAX_ARRAY_LENGTH - 1,
         HALF_MAX_ARRAY_LENGTH = MAX_ARRAY_LENGTH >>> 1;
 
-    /** Used as the size, in bytes, of each `Float64Array` element. */
-    var FLOAT64_BYTES_PER_ELEMENT = Float64Array ? Float64Array.BYTES_PER_ELEMENT : 0;
-
     /**
-     * Used as the maximum length of an array-like value.
-     * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
-     * for more details.
+     * Used as the [maximum length](http://ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer)
+     * of an array-like value.
      */
-    var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+    var MAX_SAFE_INTEGER = 9007199254740991;
 
     /** Used to store function metadata. */
     var metaMap = WeakMap && new WeakMap;
+
+    /** Used to lookup unminified function names. */
+    var realNames = {};
 
     /*------------------------------------------------------------------------*/
 
     /**
      * Creates a `lodash` object which wraps `value` to enable implicit chaining.
      * Methods that operate on and return arrays, collections, and functions can
-     * be chained together. Methods that return a boolean or single value will
-     * automatically end the chain returning the unwrapped value. Explicit chaining
-     * may be enabled using `_.chain`. The execution of chained methods is lazy,
-     * that is, execution is deferred until `_#value` is implicitly or explicitly
-     * called.
+     * be chained together. Methods that retrieve a single value or may return a
+     * primitive value will automatically end the chain returning the unwrapped
+     * value. Explicit chaining may be enabled using `_.chain`. The execution of
+     * chained methods is lazy, that is, execution is deferred until `_#value`
+     * is implicitly or explicitly called.
      *
      * Lazy evaluation allows several methods to support shortcut fusion. Shortcut
-     * fusion is an optimization that merges iteratees to avoid creating intermediate
-     * arrays and reduce the number of iteratee executions.
+     * fusion is an optimization strategy which merge iteratee calls; this can help
+     * to avoid the creation of intermediate data structures and greatly reduce the
+     * number of iteratee executions.
      *
      * Chaining is supported in custom builds as long as the `_#value` method is
      * directly or indirectly included in the build.
      *
-     * In addition to lodash methods, wrappers also have the following `Array` methods:
-     * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`, `splice`,
-     * and `unshift`
+     * In addition to lodash methods, wrappers have `Array` and `String` methods.
+     *
+     * The wrapper `Array` methods are:
+     * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`,
+     * `splice`, and `unshift`
+     *
+     * The wrapper `String` methods are:
+     * `replace` and `split`
      *
      * The wrapper methods that support shortcut fusion are:
      * `compact`, `drop`, `dropRight`, `dropRightWhile`, `dropWhile`, `filter`,
@@ -37592,35 +41855,37 @@ return jQuery;
      * The chainable wrapper methods are:
      * `after`, `ary`, `assign`, `at`, `before`, `bind`, `bindAll`, `bindKey`,
      * `callback`, `chain`, `chunk`, `commit`, `compact`, `concat`, `constant`,
-     * `countBy`, `create`, `curry`, `debounce`, `defaults`, `defer`, `delay`,
-     * `difference`, `drop`, `dropRight`, `dropRightWhile`, `dropWhile`, `fill`,
-     * `filter`, `flatten`, `flattenDeep`, `flow`, `flowRight`, `forEach`,
-     * `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`, `functions`,
-     * `groupBy`, `indexBy`, `initial`, `intersection`, `invert`, `invoke`, `keys`,
-     * `keysIn`, `map`, `mapValues`, `matches`, `matchesProperty`, `memoize`, `merge`,
-     * `mixin`, `negate`, `noop`, `omit`, `once`, `pairs`, `partial`, `partialRight`,
+     * `countBy`, `create`, `curry`, `debounce`, `defaults`, `defaultsDeep`,
+     * `defer`, `delay`, `difference`, `drop`, `dropRight`, `dropRightWhile`,
+     * `dropWhile`, `fill`, `filter`, `flatten`, `flattenDeep`, `flow`, `flowRight`,
+     * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
+     * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
+     * `invoke`, `keys`, `keysIn`, `map`, `mapKeys`, `mapValues`, `matches`,
+     * `matchesProperty`, `memoize`, `merge`, `method`, `methodOf`, `mixin`,
+     * `modArgs`, `negate`, `omit`, `once`, `pairs`, `partial`, `partialRight`,
      * `partition`, `pick`, `plant`, `pluck`, `property`, `propertyOf`, `pull`,
-     * `pullAt`, `push`, `range`, `rearg`, `reject`, `remove`, `rest`, `reverse`,
-     * `shuffle`, `slice`, `sort`, `sortBy`, `sortByAll`, `sortByOrder`, `splice`,
-     * `spread`, `take`, `takeRight`, `takeRightWhile`, `takeWhile`, `tap`,
-     * `throttle`, `thru`, `times`, `toArray`, `toPlainObject`, `transform`,
-     * `union`, `uniq`, `unshift`, `unzip`, `values`, `valuesIn`, `where`,
-     * `without`, `wrap`, `xor`, `zip`, and `zipObject`
+     * `pullAt`, `push`, `range`, `rearg`, `reject`, `remove`, `rest`, `restParam`,
+     * `reverse`, `set`, `shuffle`, `slice`, `sort`, `sortBy`, `sortByAll`,
+     * `sortByOrder`, `splice`, `spread`, `take`, `takeRight`, `takeRightWhile`,
+     * `takeWhile`, `tap`, `throttle`, `thru`, `times`, `toArray`, `toPlainObject`,
+     * `transform`, `union`, `uniq`, `unshift`, `unzip`, `unzipWith`, `values`,
+     * `valuesIn`, `where`, `without`, `wrap`, `xor`, `zip`, `zipObject`, `zipWith`
      *
      * The wrapper methods that are **not** chainable by default are:
-     * `add`, `attempt`, `camelCase`, `capitalize`, `clone`, `cloneDeep`, `deburr`,
-     * `endsWith`, `escape`, `escapeRegExp`, `every`, `find`, `findIndex`, `findKey`,
-     * `findLast`, `findLastIndex`, `findLastKey`, `findWhere`, `first`, `has`,
-     * `identity`, `includes`, `indexOf`, `inRange`, `isArguments`, `isArray`,
-     * `isBoolean`, `isDate`, `isElement`, `isEmpty`, `isEqual`, `isError`,
-     * `isFinite`,`isFunction`, `isMatch`, `isNative`, `isNaN`, `isNull`, `isNumber`,
-     * `isObject`, `isPlainObject`, `isRegExp`, `isString`, `isUndefined`,
-     * `isTypedArray`, `join`, `kebabCase`, `last`, `lastIndexOf`, `max`, `min`,
-     * `noConflict`, `now`, `pad`, `padLeft`, `padRight`, `parseInt`, `pop`,
-     * `random`, `reduce`, `reduceRight`, `repeat`, `result`, `runInContext`,
-     * `shift`, `size`, `snakeCase`, `some`, `sortedIndex`, `sortedLastIndex`,
-     * `startCase`, `startsWith`, `sum`, `template`, `trim`, `trimLeft`,
-     * `trimRight`, `trunc`, `unescape`, `uniqueId`, `value`, and `words`
+     * `add`, `attempt`, `camelCase`, `capitalize`, `ceil`, `clone`, `cloneDeep`,
+     * `deburr`, `endsWith`, `escape`, `escapeRegExp`, `every`, `find`, `findIndex`,
+     * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `findWhere`, `first`,
+     * `floor`, `get`, `gt`, `gte`, `has`, `identity`, `includes`, `indexOf`,
+     * `inRange`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
+     * `isEmpty`, `isEqual`, `isError`, `isFinite` `isFunction`, `isMatch`,
+     * `isNative`, `isNaN`, `isNull`, `isNumber`, `isObject`, `isPlainObject`,
+     * `isRegExp`, `isString`, `isUndefined`, `isTypedArray`, `join`, `kebabCase`,
+     * `last`, `lastIndexOf`, `lt`, `lte`, `max`, `min`, `noConflict`, `noop`,
+     * `now`, `pad`, `padLeft`, `padRight`, `parseInt`, `pop`, `random`, `reduce`,
+     * `reduceRight`, `repeat`, `result`, `round`, `runInContext`, `shift`, `size`,
+     * `snakeCase`, `some`, `sortedIndex`, `sortedLastIndex`, `startCase`,
+     * `startsWith`, `sum`, `template`, `trim`, `trimLeft`, `trimRight`, `trunc`,
+     * `unescape`, `uniqueId`, `value`, and `words`
      *
      * The wrapper method `sample` will return a wrapped value when `n` is provided,
      * otherwise an unwrapped value is returned.
@@ -37635,8 +41900,8 @@ return jQuery;
      * var wrapped = _([1, 2, 3]);
      *
      * // returns an unwrapped value
-     * wrapped.reduce(function(sum, n) {
-     *   return sum + n;
+     * wrapped.reduce(function(total, n) {
+     *   return total + n;
      * });
      * // => 6
      *
@@ -37694,57 +41959,6 @@ return jQuery;
      * @type Object
      */
     var support = lodash.support = {};
-
-    (function(x) {
-
-      /**
-       * Detect if functions can be decompiled by `Function#toString`
-       * (all but Firefox OS certified apps, older Opera mobile browsers, and
-       * the PlayStation 3; forced `false` for Windows 8 apps).
-       *
-       * @memberOf _.support
-       * @type boolean
-       */
-      support.funcDecomp = !isNative(context.WinRTError) && reThis.test(runInContext);
-
-      /**
-       * Detect if `Function#name` is supported (all but IE).
-       *
-       * @memberOf _.support
-       * @type boolean
-       */
-      support.funcNames = typeof Function.name == 'string';
-
-      /**
-       * Detect if the DOM is supported.
-       *
-       * @memberOf _.support
-       * @type boolean
-       */
-      try {
-        support.dom = document.createDocumentFragment().nodeType === 11;
-      } catch(e) {
-        support.dom = false;
-      }
-
-      /**
-       * Detect if `arguments` object indexes are non-enumerable.
-       *
-       * In Firefox < 4, IE < 9, PhantomJS, and Safari < 5.1 `arguments` object
-       * indexes are non-enumerable. Chrome < 25 and Node.js < 0.11.0 treat
-       * `arguments` object indexes as non-enumerable and fail `hasOwnProperty`
-       * checks for indexes that exceed their function's formal parameters with
-       * associated values of `0`.
-       *
-       * @memberOf _.support
-       * @type boolean
-       */
-      try {
-        support.nonEnumArgs = !propertyIsEnumerable.call(arguments, 1);
-      } catch(e) {
-        support.nonEnumArgs = true;
-      }
-    }(0, 0));
 
     /**
      * By default, the template delimiters used by lodash are like those in
@@ -37817,13 +42031,12 @@ return jQuery;
      */
     function LazyWrapper(value) {
       this.__wrapped__ = value;
-      this.__actions__ = null;
+      this.__actions__ = [];
       this.__dir__ = 1;
-      this.__dropCount__ = 0;
       this.__filtered__ = false;
-      this.__iteratees__ = null;
+      this.__iteratees__ = [];
       this.__takeCount__ = POSITIVE_INFINITY;
-      this.__views__ = null;
+      this.__views__ = [];
     }
 
     /**
@@ -37835,18 +42048,13 @@ return jQuery;
      * @returns {Object} Returns the cloned `LazyWrapper` object.
      */
     function lazyClone() {
-      var actions = this.__actions__,
-          iteratees = this.__iteratees__,
-          views = this.__views__,
-          result = new LazyWrapper(this.__wrapped__);
-
-      result.__actions__ = actions ? arrayCopy(actions) : null;
+      var result = new LazyWrapper(this.__wrapped__);
+      result.__actions__ = arrayCopy(this.__actions__);
       result.__dir__ = this.__dir__;
-      result.__dropCount__ = this.__dropCount__;
       result.__filtered__ = this.__filtered__;
-      result.__iteratees__ = iteratees ? arrayCopy(iteratees) : null;
+      result.__iteratees__ = arrayCopy(this.__iteratees__);
       result.__takeCount__ = this.__takeCount__;
-      result.__views__ = views ? arrayCopy(views) : null;
+      result.__views__ = arrayCopy(this.__views__);
       return result;
     }
 
@@ -37879,23 +42087,25 @@ return jQuery;
      * @returns {*} Returns the unwrapped value.
      */
     function lazyValue() {
-      var array = this.__wrapped__.value();
-      if (!isArray(array)) {
-        return baseWrapperValue(array, this.__actions__);
-      }
-      var dir = this.__dir__,
+      var array = this.__wrapped__.value(),
+          dir = this.__dir__,
+          isArr = isArray(array),
           isRight = dir < 0,
-          view = getView(0, array.length, this.__views__),
+          arrLength = isArr ? array.length : 0,
+          view = getView(0, arrLength, this.__views__),
           start = view.start,
           end = view.end,
           length = end - start,
-          dropCount = this.__dropCount__,
-          takeCount = nativeMin(length, this.__takeCount__),
-          index = isRight ? end : start - 1,
+          index = isRight ? end : (start - 1),
           iteratees = this.__iteratees__,
-          iterLength = iteratees ? iteratees.length : 0,
+          iterLength = iteratees.length,
           resIndex = 0,
-          result = [];
+          takeCount = nativeMin(length, this.__takeCount__);
+
+      if (!isArr || arrLength < LARGE_ARRAY_SIZE || (arrLength == length && takeCount == length)) {
+        return baseWrapperValue(array, this.__actions__);
+      }
+      var result = [];
 
       outer:
       while (length-- && resIndex < takeCount) {
@@ -37907,30 +42117,20 @@ return jQuery;
         while (++iterIndex < iterLength) {
           var data = iteratees[iterIndex],
               iteratee = data.iteratee,
-              type = data.type;
+              type = data.type,
+              computed = iteratee(value);
 
-          if (type != LAZY_DROP_WHILE_FLAG) {
-            var computed = iteratee(value);
-          } else {
-            data.done = data.done && (isRight ? index < data.index : index > data.index);
-            data.index = index;
-            computed = data.done || (data.done = !iteratee(value));
-          }
           if (type == LAZY_MAP_FLAG) {
             value = computed;
           } else if (!computed) {
-            if (type == LAZY_TAKE_WHILE_FLAG) {
-              break outer;
-            } else {
+            if (type == LAZY_FILTER_FLAG) {
               continue outer;
+            } else {
+              break outer;
             }
           }
         }
-        if (dropCount) {
-          dropCount--;
-        } else {
-          result[resIndex++] = value;
-        }
+        result[resIndex++] = value;
       }
       return result;
     }
@@ -37989,7 +42189,7 @@ return jQuery;
     }
 
     /**
-     * Adds `value` to `key` of the cache.
+     * Sets `value` to `key` of the cache.
      *
      * @private
      * @name set
@@ -38059,6 +42259,30 @@ return jQuery;
     /*------------------------------------------------------------------------*/
 
     /**
+     * Creates a new array joining `array` with `other`.
+     *
+     * @private
+     * @param {Array} array The array to join.
+     * @param {Array} other The other array to join.
+     * @returns {Array} Returns the new concatenated array.
+     */
+    function arrayConcat(array, other) {
+      var index = -1,
+          length = array.length,
+          othIndex = -1,
+          othLength = other.length,
+          result = Array(length + othLength);
+
+      while (++index < length) {
+        result[index] = array[index];
+      }
+      while (++othIndex < othLength) {
+        result[index++] = other[othIndex];
+      }
+      return result;
+    }
+
+    /**
      * Copies the values of `source` to `array`.
      *
      * @private
@@ -38079,7 +42303,7 @@ return jQuery;
 
     /**
      * A specialized version of `_.forEach` for arrays without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38100,7 +42324,7 @@ return jQuery;
 
     /**
      * A specialized version of `_.forEachRight` for arrays without support for
-     * callback shorthands or `this` binding.
+     * callback shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38120,7 +42344,7 @@ return jQuery;
 
     /**
      * A specialized version of `_.every` for arrays without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38141,8 +42365,37 @@ return jQuery;
     }
 
     /**
+     * A specialized version of `baseExtremum` for arrays which invokes `iteratee`
+     * with one argument: (value).
+     *
+     * @private
+     * @param {Array} array The array to iterate over.
+     * @param {Function} iteratee The function invoked per iteration.
+     * @param {Function} comparator The function used to compare values.
+     * @param {*} exValue The initial extremum value.
+     * @returns {*} Returns the extremum value.
+     */
+    function arrayExtremum(array, iteratee, comparator, exValue) {
+      var index = -1,
+          length = array.length,
+          computed = exValue,
+          result = computed;
+
+      while (++index < length) {
+        var value = array[index],
+            current = +iteratee(value);
+
+        if (comparator(current, computed)) {
+          computed = current;
+          result = value;
+        }
+      }
+      return result;
+    }
+
+    /**
      * A specialized version of `_.filter` for arrays without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38166,7 +42419,7 @@ return jQuery;
 
     /**
      * A specialized version of `_.map` for arrays without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38185,50 +42438,27 @@ return jQuery;
     }
 
     /**
-     * A specialized version of `_.max` for arrays without support for iteratees.
+     * Appends the elements of `values` to `array`.
      *
      * @private
-     * @param {Array} array The array to iterate over.
-     * @returns {*} Returns the maximum value.
+     * @param {Array} array The array to modify.
+     * @param {Array} values The values to append.
+     * @returns {Array} Returns `array`.
      */
-    function arrayMax(array) {
+    function arrayPush(array, values) {
       var index = -1,
-          length = array.length,
-          result = NEGATIVE_INFINITY;
+          length = values.length,
+          offset = array.length;
 
       while (++index < length) {
-        var value = array[index];
-        if (value > result) {
-          result = value;
-        }
+        array[offset + index] = values[index];
       }
-      return result;
-    }
-
-    /**
-     * A specialized version of `_.min` for arrays without support for iteratees.
-     *
-     * @private
-     * @param {Array} array The array to iterate over.
-     * @returns {*} Returns the minimum value.
-     */
-    function arrayMin(array) {
-      var index = -1,
-          length = array.length,
-          result = POSITIVE_INFINITY;
-
-      while (++index < length) {
-        var value = array[index];
-        if (value < result) {
-          result = value;
-        }
-      }
-      return result;
+      return array;
     }
 
     /**
      * A specialized version of `_.reduce` for arrays without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38253,7 +42483,7 @@ return jQuery;
 
     /**
      * A specialized version of `_.reduceRight` for arrays without support for
-     * callback shorthands or `this` binding.
+     * callback shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38276,7 +42506,7 @@ return jQuery;
 
     /**
      * A specialized version of `_.some` for arrays without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array} array The array to iterate over.
@@ -38297,6 +42527,25 @@ return jQuery;
     }
 
     /**
+     * A specialized version of `_.sum` for arrays without support for callback
+     * shorthands and `this` binding..
+     *
+     * @private
+     * @param {Array} array The array to iterate over.
+     * @param {Function} iteratee The function invoked per iteration.
+     * @returns {number} Returns the sum.
+     */
+    function arraySum(array, iteratee) {
+      var length = array.length,
+          result = 0;
+
+      while (length--) {
+        result += +iteratee(array[length]) || 0;
+      }
+      return result;
+    }
+
+    /**
      * Used by `_.defaults` to customize its `_.assign` use.
      *
      * @private
@@ -38305,13 +42554,13 @@ return jQuery;
      * @returns {*} Returns the value to assign to the destination object.
      */
     function assignDefaults(objectValue, sourceValue) {
-      return typeof objectValue == 'undefined' ? sourceValue : objectValue;
+      return objectValue === undefined ? sourceValue : objectValue;
     }
 
     /**
      * Used by `_.template` to customize its `_.assign` use.
      *
-     * **Note:** This method is like `assignDefaults` except that it ignores
+     * **Note:** This function is like `assignDefaults` except that it ignores
      * inherited property values when checking if a property is `undefined`.
      *
      * @private
@@ -38322,27 +42571,25 @@ return jQuery;
      * @returns {*} Returns the value to assign to the destination object.
      */
     function assignOwnDefaults(objectValue, sourceValue, key, object) {
-      return (typeof objectValue == 'undefined' || !hasOwnProperty.call(object, key))
+      return (objectValue === undefined || !hasOwnProperty.call(object, key))
         ? sourceValue
         : objectValue;
     }
 
     /**
-     * The base implementation of `_.assign` without support for argument juggling,
-     * multiple sources, and `this` binding `customizer` functions.
+     * A specialized version of `_.assign` for customizing assigned values without
+     * support for argument juggling, multiple sources, and `this` binding `customizer`
+     * functions.
      *
      * @private
      * @param {Object} object The destination object.
      * @param {Object} source The source object.
-     * @param {Function} [customizer] The function to customize assigning values.
-     * @returns {Object} Returns the destination object.
+     * @param {Function} customizer The function to customize assigned values.
+     * @returns {Object} Returns `object`.
      */
-    function baseAssign(object, source, customizer) {
-      var props = keys(source);
-      if (!customizer) {
-        return baseCopy(source, object, props);
-      }
+    function assignWith(object, source, customizer) {
       var index = -1,
+          props = keys(source),
           length = props.length;
 
       while (++index < length) {
@@ -38350,8 +42597,8 @@ return jQuery;
             value = object[key],
             result = customizer(value, source[key], key, object, source);
 
-        if ((result === result ? result !== value : value === value) ||
-            (typeof value == 'undefined' && !(key in object))) {
+        if ((result === result ? (result !== value) : (value === value)) ||
+            (value === undefined && !(key in object))) {
           object[key] = result;
         }
       }
@@ -38359,73 +42606,66 @@ return jQuery;
     }
 
     /**
-     * The base implementation of `_.at` without support for strings and individual
-     * key arguments.
+     * The base implementation of `_.assign` without support for argument juggling,
+     * multiple sources, and `customizer` functions.
+     *
+     * @private
+     * @param {Object} object The destination object.
+     * @param {Object} source The source object.
+     * @returns {Object} Returns `object`.
+     */
+    function baseAssign(object, source) {
+      return source == null
+        ? object
+        : baseCopy(source, keys(source), object);
+    }
+
+    /**
+     * The base implementation of `_.at` without support for string collections
+     * and individual key arguments.
      *
      * @private
      * @param {Array|Object} collection The collection to iterate over.
-     * @param {number[]|string[]} [props] The property names or indexes of elements to pick.
+     * @param {number[]|string[]} props The property names or indexes of elements to pick.
      * @returns {Array} Returns the new array of picked elements.
      */
     function baseAt(collection, props) {
       var index = -1,
-          length = collection.length,
-          isArr = isLength(length),
+          isNil = collection == null,
+          isArr = !isNil && isArrayLike(collection),
+          length = isArr ? collection.length : 0,
           propsLength = props.length,
           result = Array(propsLength);
 
       while(++index < propsLength) {
         var key = props[index];
         if (isArr) {
-          key = parseFloat(key);
           result[index] = isIndex(key, length) ? collection[key] : undefined;
         } else {
-          result[index] = collection[key];
+          result[index] = isNil ? undefined : collection[key];
         }
       }
       return result;
     }
 
     /**
-     * Copies the properties of `source` to `object`.
+     * Copies properties of `source` to `object`.
      *
      * @private
      * @param {Object} source The object to copy properties from.
-     * @param {Object} [object={}] The object to copy properties to.
      * @param {Array} props The property names to copy.
+     * @param {Object} [object={}] The object to copy properties to.
      * @returns {Object} Returns `object`.
      */
-    function baseCopy(source, object, props) {
-      if (!props) {
-        props = object;
-        object = {};
-      }
+    function baseCopy(source, props, object) {
+      object || (object = {});
+
       var index = -1,
           length = props.length;
 
       while (++index < length) {
         var key = props[index];
         object[key] = source[key];
-      }
-      return object;
-    }
-
-    /**
-     * The base implementation of `_.bindAll` without support for individual
-     * method name arguments.
-     *
-     * @private
-     * @param {Object} object The object to bind and assign the bound methods to.
-     * @param {string[]} methodNames The object method names to bind.
-     * @returns {Object} Returns `object`.
-     */
-    function baseBindAll(object, methodNames) {
-      var index = -1,
-          length = methodNames.length;
-
-      while (++index < length) {
-        var key = methodNames[index];
-        object[key] = createWrapper(object[key], BIND_FLAG, object);
       }
       return object;
     }
@@ -38443,9 +42683,9 @@ return jQuery;
     function baseCallback(func, thisArg, argCount) {
       var type = typeof func;
       if (type == 'function') {
-        return (typeof thisArg != 'undefined' && isBindable(func))
-          ? bindCallback(func, thisArg, argCount)
-          : func;
+        return thisArg === undefined
+          ? func
+          : bindCallback(func, thisArg, argCount);
       }
       if (func == null) {
         return identity;
@@ -38453,9 +42693,9 @@ return jQuery;
       if (type == 'object') {
         return baseMatches(func);
       }
-      return typeof thisArg == 'undefined'
-        ? baseProperty(func + '')
-        : baseMatchesProperty(func + '', thisArg);
+      return thisArg === undefined
+        ? property(func)
+        : baseMatchesProperty(func, thisArg);
     }
 
     /**
@@ -38477,7 +42717,7 @@ return jQuery;
       if (customizer) {
         result = object ? customizer(value, key, object) : customizer(value);
       }
-      if (typeof result != 'undefined') {
+      if (result !== undefined) {
         return result;
       }
       if (!isObject(value)) {
@@ -38496,7 +42736,7 @@ return jQuery;
         if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
           result = initCloneObject(isFunc ? {} : value);
           if (!isDeep) {
-            return baseCopy(value, result, keys(value));
+            return baseAssign(result, value);
           }
         } else {
           return cloneableTags[tag]
@@ -38504,7 +42744,7 @@ return jQuery;
             : (object ? value : {});
         }
       }
-      // Check for circular references and return corresponding clone.
+      // Check for circular references and return its corresponding clone.
       stackA || (stackA = []);
       stackB || (stackB = []);
 
@@ -38534,14 +42774,14 @@ return jQuery;
      * @returns {Object} Returns the new object.
      */
     var baseCreate = (function() {
-      function Object() {}
+      function object() {}
       return function(prototype) {
         if (isObject(prototype)) {
-          Object.prototype = prototype;
-          var result = new Object;
-          Object.prototype = null;
+          object.prototype = prototype;
+          var result = new object;
+          object.prototype = undefined;
         }
-        return result || context.Object();
+        return result || {};
       };
     }());
 
@@ -38552,14 +42792,14 @@ return jQuery;
      * @private
      * @param {Function} func The function to delay.
      * @param {number} wait The number of milliseconds to delay invocation.
-     * @param {Object} args The `arguments` object to slice and provide to `func`.
+     * @param {Object} args The arguments provide to `func`.
      * @returns {number} Returns the timer id.
      */
-    function baseDelay(func, wait, args, fromIndex) {
+    function baseDelay(func, wait, args) {
       if (typeof func != 'function') {
         throw new TypeError(FUNC_ERROR_TEXT);
       }
-      return setTimeout(function() { func.apply(undefined, baseSlice(args, fromIndex)); }, wait);
+      return setTimeout(function() { func.apply(undefined, args); }, wait);
     }
 
     /**
@@ -38580,8 +42820,8 @@ return jQuery;
       }
       var index = -1,
           indexOf = getIndexOf(),
-          isCommon = indexOf == baseIndexOf,
-          cache = (isCommon && values.length >= 200) ? createCache(values) : null,
+          isCommon = indexOf === baseIndexOf,
+          cache = (isCommon && values.length >= LARGE_ARRAY_SIZE) ? createCache(values) : null,
           valuesLength = values.length;
 
       if (cache) {
@@ -38618,21 +42858,7 @@ return jQuery;
      * @param {Function} iteratee The function invoked per iteration.
      * @returns {Array|Object|string} Returns `collection`.
      */
-    function baseEach(collection, iteratee) {
-      var length = collection ? collection.length : 0;
-      if (!isLength(length)) {
-        return baseForOwn(collection, iteratee);
-      }
-      var index = -1,
-          iterable = toObject(collection);
-
-      while (++index < length) {
-        if (iteratee(iterable[index], index, iterable) === false) {
-          break;
-        }
-      }
-      return collection;
-    }
+    var baseEach = createBaseEach(baseForOwn);
 
     /**
      * The base implementation of `_.forEachRight` without support for callback
@@ -38643,23 +42869,11 @@ return jQuery;
      * @param {Function} iteratee The function invoked per iteration.
      * @returns {Array|Object|string} Returns `collection`.
      */
-    function baseEachRight(collection, iteratee) {
-      var length = collection ? collection.length : 0;
-      if (!isLength(length)) {
-        return baseForOwnRight(collection, iteratee);
-      }
-      var iterable = toObject(collection);
-      while (length--) {
-        if (iteratee(iterable[length], length, iterable) === false) {
-          break;
-        }
-      }
-      return collection;
-    }
+    var baseEachRight = createBaseEach(baseForOwnRight, true);
 
     /**
      * The base implementation of `_.every` without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array|Object|string} collection The collection to iterate over.
@@ -38672,6 +42886,32 @@ return jQuery;
       baseEach(collection, function(value, index, collection) {
         result = !!predicate(value, index, collection);
         return result;
+      });
+      return result;
+    }
+
+    /**
+     * Gets the extremum value of `collection` invoking `iteratee` for each value
+     * in `collection` to generate the criterion by which the value is ranked.
+     * The `iteratee` is invoked with three arguments: (value, index|key, collection).
+     *
+     * @private
+     * @param {Array|Object|string} collection The collection to iterate over.
+     * @param {Function} iteratee The function invoked per iteration.
+     * @param {Function} comparator The function used to compare values.
+     * @param {*} exValue The initial extremum value.
+     * @returns {*} Returns the extremum value.
+     */
+    function baseExtremum(collection, iteratee, comparator, exValue) {
+      var computed = exValue,
+          result = computed;
+
+      baseEach(collection, function(value, index, collection) {
+        var current = +iteratee(value, index, collection);
+        if (comparator(current, computed) || (current === exValue && current === result)) {
+          computed = current;
+          result = value;
+        }
       });
       return result;
     }
@@ -38693,11 +42933,11 @@ return jQuery;
       if (start < 0) {
         start = -start > length ? 0 : (length + start);
       }
-      end = (typeof end == 'undefined' || end > length) ? length : (+end || 0);
+      end = (end === undefined || end > length) ? length : (+end || 0);
       if (end < 0) {
         end += length;
       }
-      length = start > end ? 0 : end >>> 0;
+      length = start > end ? 0 : (end >>> 0);
       start >>>= 0;
 
       while (start < length) {
@@ -38708,7 +42948,7 @@ return jQuery;
 
     /**
      * The base implementation of `_.filter` without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Array|Object|string} collection The collection to iterate over.
@@ -38755,34 +42995,29 @@ return jQuery;
      *
      * @private
      * @param {Array} array The array to flatten.
-     * @param {boolean} isDeep Specify a deep flatten.
-     * @param {boolean} isStrict Restrict flattening to arrays and `arguments` objects.
-     * @param {number} fromIndex The index to start from.
+     * @param {boolean} [isDeep] Specify a deep flatten.
+     * @param {boolean} [isStrict] Restrict flattening to arrays-like objects.
+     * @param {Array} [result=[]] The initial result value.
      * @returns {Array} Returns the new flattened array.
      */
-    function baseFlatten(array, isDeep, isStrict, fromIndex) {
-      var index = fromIndex - 1,
-          length = array.length,
-          resIndex = -1,
-          result = [];
+    function baseFlatten(array, isDeep, isStrict, result) {
+      result || (result = []);
+
+      var index = -1,
+          length = array.length;
 
       while (++index < length) {
         var value = array[index];
-
-        if (isObjectLike(value) && isLength(value.length) && (isArray(value) || isArguments(value))) {
+        if (isObjectLike(value) && isArrayLike(value) &&
+            (isStrict || isArray(value) || isArguments(value))) {
           if (isDeep) {
             // Recursively flatten arrays (susceptible to call stack limits).
-            value = baseFlatten(value, isDeep, isStrict, 0);
-          }
-          var valIndex = -1,
-              valLength = value.length;
-
-          result.length += valLength;
-          while (++valIndex < valLength) {
-            result[++resIndex] = value[valIndex];
+            baseFlatten(value, isDeep, isStrict, result);
+          } else {
+            arrayPush(result, value);
           }
         } else if (!isStrict) {
-          result[++resIndex] = value;
+          result[result.length] = value;
         }
       }
       return result;
@@ -38791,7 +43026,7 @@ return jQuery;
     /**
      * The base implementation of `baseForIn` and `baseForOwn` which iterates
      * over `object` properties returned by `keysFunc` invoking `iteratee` for
-     * each property. Iterator functions may exit iteration early by explicitly
+     * each property. Iteratee functions may exit iteration early by explicitly
      * returning `false`.
      *
      * @private
@@ -38800,20 +43035,7 @@ return jQuery;
      * @param {Function} keysFunc The function to get the keys of `object`.
      * @returns {Object} Returns `object`.
      */
-    function baseFor(object, iteratee, keysFunc) {
-      var index = -1,
-          iterable = toObject(object),
-          props = keysFunc(object),
-          length = props.length;
-
-      while (++index < length) {
-        var key = props[index];
-        if (iteratee(iterable[key], key, iterable) === false) {
-          break;
-        }
-      }
-      return object;
-    }
+    var baseFor = createBaseFor();
 
     /**
      * This function is like `baseFor` except that it iterates over properties
@@ -38825,19 +43047,7 @@ return jQuery;
      * @param {Function} keysFunc The function to get the keys of `object`.
      * @returns {Object} Returns `object`.
      */
-    function baseForRight(object, iteratee, keysFunc) {
-      var iterable = toObject(object),
-          props = keysFunc(object),
-          length = props.length;
-
-      while (length--) {
-        var key = props[length];
-        if (iteratee(iterable[key], key, iterable) === false) {
-          break;
-        }
-      }
-      return object;
-    }
+    var baseForRight = createBaseFor(true);
 
     /**
      * The base implementation of `_.forIn` without support for callback
@@ -38903,27 +43113,29 @@ return jQuery;
     }
 
     /**
-     * The base implementation of `_.invoke` which requires additional arguments
-     * to be provided as an array of arguments rather than individually.
+     * The base implementation of `get` without support for string paths
+     * and default values.
      *
      * @private
-     * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {Function|string} methodName The name of the method to invoke or
-     *  the function invoked per iteration.
-     * @param {Array} [args] The arguments to invoke the method with.
-     * @returns {Array} Returns the array of results.
+     * @param {Object} object The object to query.
+     * @param {Array} path The path of the property to get.
+     * @param {string} [pathKey] The key representation of path.
+     * @returns {*} Returns the resolved value.
      */
-    function baseInvoke(collection, methodName, args) {
-      var index = -1,
-          isFunc = typeof methodName == 'function',
-          length = collection ? collection.length : 0,
-          result = isLength(length) ? Array(length) : [];
+    function baseGet(object, path, pathKey) {
+      if (object == null) {
+        return;
+      }
+      if (pathKey !== undefined && pathKey in toObject(object)) {
+        path = [pathKey];
+      }
+      var index = 0,
+          length = path.length;
 
-      baseEach(collection, function(value) {
-        var func = isFunc ? methodName : (value != null && value[methodName]);
-        result[++index] = func ? func.apply(value, args) : undefined;
-      });
-      return result;
+      while (object != null && index < length) {
+        object = object[path[index++]];
+      }
+      return (index && index == length) ? object : undefined;
     }
 
     /**
@@ -38934,27 +43146,19 @@ return jQuery;
      * @param {*} value The value to compare.
      * @param {*} other The other value to compare.
      * @param {Function} [customizer] The function to customize comparing values.
-     * @param {boolean} [isWhere] Specify performing partial comparisons.
+     * @param {boolean} [isLoose] Specify performing partial comparisons.
      * @param {Array} [stackA] Tracks traversed `value` objects.
      * @param {Array} [stackB] Tracks traversed `other` objects.
      * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
      */
-    function baseIsEqual(value, other, customizer, isWhere, stackA, stackB) {
-      // Exit early for identical values.
+    function baseIsEqual(value, other, customizer, isLoose, stackA, stackB) {
       if (value === other) {
-        // Treat `+0` vs. `-0` as not equal.
-        return value !== 0 || (1 / value == 1 / other);
+        return true;
       }
-      var valType = typeof value,
-          othType = typeof other;
-
-      // Exit early for unlike primitive values.
-      if ((valType != 'function' && valType != 'object' && othType != 'function' && othType != 'object') ||
-          value == null || other == null) {
-        // Return `false` unless both values are `NaN`.
+      if (value == null || other == null || (!isObject(value) && !isObjectLike(other))) {
         return value !== value && other !== other;
       }
-      return baseIsEqualDeep(value, other, baseIsEqual, customizer, isWhere, stackA, stackB);
+      return baseIsEqualDeep(value, other, baseIsEqual, customizer, isLoose, stackA, stackB);
     }
 
     /**
@@ -38967,12 +43171,12 @@ return jQuery;
      * @param {Object} other The other object to compare.
      * @param {Function} equalFunc The function to determine equivalents of values.
      * @param {Function} [customizer] The function to customize comparing objects.
-     * @param {boolean} [isWhere] Specify performing partial comparisons.
+     * @param {boolean} [isLoose] Specify performing partial comparisons.
      * @param {Array} [stackA=[]] Tracks traversed `value` objects.
      * @param {Array} [stackB=[]] Tracks traversed `other` objects.
      * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
      */
-    function baseIsEqualDeep(object, other, equalFunc, customizer, isWhere, stackA, stackB) {
+    function baseIsEqualDeep(object, other, equalFunc, customizer, isLoose, stackA, stackB) {
       var objIsArr = isArray(object),
           othIsArr = isArray(other),
           objTag = arrayTag,
@@ -39001,11 +43205,13 @@ return jQuery;
       if (isSameTag && !(objIsArr || objIsObj)) {
         return equalByTag(object, other, objTag);
       }
-      var valWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
-          othWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+      if (!isLoose) {
+        var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+            othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
 
-      if (valWrapped || othWrapped) {
-        return equalFunc(valWrapped ? object.value() : object, othWrapped ? other.value() : other, customizer, isWhere, stackA, stackB);
+        if (objIsWrapped || othIsWrapped) {
+          return equalFunc(objIsWrapped ? object.value() : object, othIsWrapped ? other.value() : other, customizer, isLoose, stackA, stackB);
+        }
       }
       if (!isSameTag) {
         return false;
@@ -39025,7 +43231,7 @@ return jQuery;
       stackA.push(object);
       stackB.push(other);
 
-      var result = (objIsArr ? equalArrays : equalObjects)(object, other, equalFunc, customizer, isWhere, stackA, stackB);
+      var result = (objIsArr ? equalArrays : equalObjects)(object, other, equalFunc, customizer, isLoose, stackA, stackB);
 
       stackA.pop();
       stackB.pop();
@@ -39035,48 +43241,47 @@ return jQuery;
 
     /**
      * The base implementation of `_.isMatch` without support for callback
-     * shorthands or `this` binding.
+     * shorthands and `this` binding.
      *
      * @private
      * @param {Object} object The object to inspect.
-     * @param {Array} props The source property names to match.
-     * @param {Array} values The source values to match.
-     * @param {Array} strictCompareFlags Strict comparison flags for source values.
+     * @param {Array} matchData The propery names, values, and compare flags to match.
      * @param {Function} [customizer] The function to customize comparing objects.
      * @returns {boolean} Returns `true` if `object` is a match, else `false`.
      */
-    function baseIsMatch(object, props, values, strictCompareFlags, customizer) {
-      var length = props.length;
+    function baseIsMatch(object, matchData, customizer) {
+      var index = matchData.length,
+          length = index,
+          noCustomizer = !customizer;
+
       if (object == null) {
         return !length;
       }
-      var index = -1,
-          noCustomizer = !customizer;
-
-      while (++index < length) {
-        if ((noCustomizer && strictCompareFlags[index])
-              ? values[index] !== object[props[index]]
-              : !hasOwnProperty.call(object, props[index])
+      object = toObject(object);
+      while (index--) {
+        var data = matchData[index];
+        if ((noCustomizer && data[2])
+              ? data[1] !== object[data[0]]
+              : !(data[0] in object)
             ) {
           return false;
         }
       }
-      index = -1;
       while (++index < length) {
-        var key = props[index];
-        if (noCustomizer && strictCompareFlags[index]) {
-          var result = hasOwnProperty.call(object, key);
-        } else {
-          var objValue = object[key],
-              srcValue = values[index];
+        data = matchData[index];
+        var key = data[0],
+            objValue = object[key],
+            srcValue = data[1];
 
-          result = customizer ? customizer(objValue, srcValue, key) : undefined;
-          if (typeof result == 'undefined') {
-            result = baseIsEqual(srcValue, objValue, customizer, true);
+        if (noCustomizer && data[2]) {
+          if (objValue === undefined && !(key in object)) {
+            return false;
           }
-        }
-        if (!result) {
-          return false;
+        } else {
+          var result = customizer ? customizer(objValue, srcValue, key) : undefined;
+          if (!(result === undefined ? baseIsEqual(srcValue, objValue, customizer, true) : result)) {
+            return false;
+          }
         }
       }
       return true;
@@ -39084,7 +43289,7 @@ return jQuery;
 
     /**
      * The base implementation of `_.map` without support for callback shorthands
-     * or `this` binding.
+     * and `this` binding.
      *
      * @private
      * @param {Array|Object|string} collection The collection to iterate over.
@@ -39092,9 +43297,11 @@ return jQuery;
      * @returns {Array} Returns the new mapped array.
      */
     function baseMap(collection, iteratee) {
-      var result = [];
+      var index = -1,
+          result = isArrayLike(collection) ? Array(collection.length) : [];
+
       baseEach(collection, function(value, key, collection) {
-        result.push(iteratee(value, key, collection));
+        result[++index] = iteratee(value, key, collection);
       });
       return result;
     }
@@ -39107,49 +43314,54 @@ return jQuery;
      * @returns {Function} Returns the new function.
      */
     function baseMatches(source) {
-      var props = keys(source),
-          length = props.length;
+      var matchData = getMatchData(source);
+      if (matchData.length == 1 && matchData[0][2]) {
+        var key = matchData[0][0],
+            value = matchData[0][1];
 
-      if (length == 1) {
-        var key = props[0],
-            value = source[key];
-
-        if (isStrictComparable(value)) {
-          return function(object) {
-            return object != null && object[key] === value && hasOwnProperty.call(object, key);
-          };
-        }
-      }
-      var values = Array(length),
-          strictCompareFlags = Array(length);
-
-      while (length--) {
-        value = source[props[length]];
-        values[length] = value;
-        strictCompareFlags[length] = isStrictComparable(value);
+        return function(object) {
+          if (object == null) {
+            return false;
+          }
+          return object[key] === value && (value !== undefined || (key in toObject(object)));
+        };
       }
       return function(object) {
-        return baseIsMatch(object, props, values, strictCompareFlags);
+        return baseIsMatch(object, matchData);
       };
     }
 
     /**
-     * The base implementation of `_.matchesProperty` which does not coerce `key`
-     * to a string.
+     * The base implementation of `_.matchesProperty` which does not clone `srcValue`.
      *
      * @private
-     * @param {string} key The key of the property to get.
-     * @param {*} value The value to compare.
+     * @param {string} path The path of the property to get.
+     * @param {*} srcValue The value to compare.
      * @returns {Function} Returns the new function.
      */
-    function baseMatchesProperty(key, value) {
-      if (isStrictComparable(value)) {
-        return function(object) {
-          return object != null && object[key] === value;
-        };
-      }
+    function baseMatchesProperty(path, srcValue) {
+      var isArr = isArray(path),
+          isCommon = isKey(path) && isStrictComparable(srcValue),
+          pathKey = (path + '');
+
+      path = toPath(path);
       return function(object) {
-        return object != null && baseIsEqual(value, object[key], null, true);
+        if (object == null) {
+          return false;
+        }
+        var key = pathKey;
+        object = toObject(object);
+        if ((isArr || !isCommon) && !(key in object)) {
+          object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+          if (object == null) {
+            return false;
+          }
+          key = last(path);
+          object = toObject(object);
+        }
+        return object[key] === srcValue
+          ? (srcValue !== undefined || (key in object))
+          : baseIsEqual(srcValue, object[key], undefined, true);
       };
     }
 
@@ -39160,32 +43372,40 @@ return jQuery;
      * @private
      * @param {Object} object The destination object.
      * @param {Object} source The source object.
-     * @param {Function} [customizer] The function to customize merging properties.
+     * @param {Function} [customizer] The function to customize merged values.
      * @param {Array} [stackA=[]] Tracks traversed source objects.
      * @param {Array} [stackB=[]] Associates values with source counterparts.
-     * @returns {Object} Returns the destination object.
+     * @returns {Object} Returns `object`.
      */
     function baseMerge(object, source, customizer, stackA, stackB) {
       if (!isObject(object)) {
         return object;
       }
-      var isSrcArr = isLength(source.length) && (isArray(source) || isTypedArray(source));
-      (isSrcArr ? arrayEach : baseForOwn)(source, function(srcValue, key, source) {
+      var isSrcArr = isArrayLike(source) && (isArray(source) || isTypedArray(source)),
+          props = isSrcArr ? undefined : keys(source);
+
+      arrayEach(props || source, function(srcValue, key) {
+        if (props) {
+          key = srcValue;
+          srcValue = source[key];
+        }
         if (isObjectLike(srcValue)) {
           stackA || (stackA = []);
           stackB || (stackB = []);
-          return baseMergeDeep(object, source, key, baseMerge, customizer, stackA, stackB);
+          baseMergeDeep(object, source, key, baseMerge, customizer, stackA, stackB);
         }
-        var value = object[key],
-            result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
-            isCommon = typeof result == 'undefined';
+        else {
+          var value = object[key],
+              result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
+              isCommon = result === undefined;
 
-        if (isCommon) {
-          result = srcValue;
-        }
-        if ((isSrcArr || typeof result != 'undefined') &&
-            (isCommon || (result === result ? result !== value : value === value))) {
-          object[key] = result;
+          if (isCommon) {
+            result = srcValue;
+          }
+          if ((result !== undefined || (isSrcArr && !(key in object))) &&
+              (isCommon || (result === result ? (result !== value) : (value === value)))) {
+            object[key] = result;
+          }
         }
       });
       return object;
@@ -39201,7 +43421,7 @@ return jQuery;
      * @param {Object} source The source object.
      * @param {string} key The key of the value to merge.
      * @param {Function} mergeFunc The function to merge values.
-     * @param {Function} [customizer] The function to customize merging properties.
+     * @param {Function} [customizer] The function to customize merged values.
      * @param {Array} [stackA=[]] Tracks traversed source objects.
      * @param {Array} [stackB=[]] Associates values with source counterparts.
      * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
@@ -39218,14 +43438,14 @@ return jQuery;
       }
       var value = object[key],
           result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
-          isCommon = typeof result == 'undefined';
+          isCommon = result === undefined;
 
       if (isCommon) {
         result = srcValue;
-        if (isLength(srcValue.length) && (isArray(srcValue) || isTypedArray(srcValue))) {
+        if (isArrayLike(srcValue) && (isArray(srcValue) || isTypedArray(srcValue))) {
           result = isArray(value)
             ? value
-            : (value ? arrayCopy(value) : []);
+            : (isArrayLike(value) ? arrayCopy(value) : []);
         }
         else if (isPlainObject(srcValue) || isArguments(srcValue)) {
           result = isArguments(value)
@@ -39244,13 +43464,13 @@ return jQuery;
       if (isCommon) {
         // Recursively merge objects and arrays (susceptible to call stack limits).
         object[key] = mergeFunc(result, srcValue, customizer, stackA, stackB);
-      } else if (result === result ? result !== value : value === value) {
+      } else if (result === result ? (result !== value) : (value === value)) {
         object[key] = result;
       }
     }
 
     /**
-     * The base implementation of `_.property` which does not coerce `key` to a string.
+     * The base implementation of `_.property` without support for deep paths.
      *
      * @private
      * @param {string} key The key of the property to get.
@@ -39263,27 +43483,39 @@ return jQuery;
     }
 
     /**
+     * A specialized version of `baseProperty` which supports deep paths.
+     *
+     * @private
+     * @param {Array|string} path The path of the property to get.
+     * @returns {Function} Returns the new function.
+     */
+    function basePropertyDeep(path) {
+      var pathKey = (path + '');
+      path = toPath(path);
+      return function(object) {
+        return baseGet(object, path, pathKey);
+      };
+    }
+
+    /**
      * The base implementation of `_.pullAt` without support for individual
-     * index arguments.
+     * index arguments and capturing the removed elements.
      *
      * @private
      * @param {Array} array The array to modify.
      * @param {number[]} indexes The indexes of elements to remove.
-     * @returns {Array} Returns the new array of removed elements.
+     * @returns {Array} Returns `array`.
      */
     function basePullAt(array, indexes) {
-      var length = indexes.length,
-          result = baseAt(array, indexes);
-
-      indexes.sort(baseCompareAscending);
+      var length = array ? indexes.length : 0;
       while (length--) {
-        var index = parseFloat(indexes[length]);
+        var index = indexes[length];
         if (index != previous && isIndex(index)) {
           var previous = index;
           splice.call(array, index, 1);
         }
       }
-      return result;
+      return array;
     }
 
     /**
@@ -39296,12 +43528,12 @@ return jQuery;
      * @returns {number} Returns the random number.
      */
     function baseRandom(min, max) {
-      return min + floor(nativeRandom() * (max - min + 1));
+      return min + nativeFloor(nativeRandom() * (max - min + 1));
     }
 
     /**
      * The base implementation of `_.reduce` and `_.reduceRight` without support
-     * for callback shorthands or `this` binding, which iterates over `collection`
+     * for callback shorthands and `this` binding, which iterates over `collection`
      * using the provided `eachFunc`.
      *
      * @private
@@ -39352,11 +43584,11 @@ return jQuery;
       if (start < 0) {
         start = -start > length ? 0 : (length + start);
       }
-      end = (typeof end == 'undefined' || end > length) ? length : (+end || 0);
+      end = (end === undefined || end > length) ? length : (+end || 0);
       if (end < 0) {
         end += length;
       }
-      length = start > end ? 0 : (end - start) >>> 0;
+      length = start > end ? 0 : ((end - start) >>> 0);
       start >>>= 0;
 
       var result = Array(length);
@@ -39368,7 +43600,7 @@ return jQuery;
 
     /**
      * The base implementation of `_.some` without support for callback shorthands
-     * or `this` binding.
+     * and `this` binding.
      *
      * @private
      * @param {Array|Object|string} collection The collection to iterate over.
@@ -39411,28 +43643,41 @@ return jQuery;
      *
      * @private
      * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {string[]} props The property names to sort by.
-     * @param {boolean[]} orders The sort orders of `props`.
+     * @param {Function[]|Object[]|string[]} iteratees The iteratees to sort by.
+     * @param {boolean[]} orders The sort orders of `iteratees`.
      * @returns {Array} Returns the new sorted array.
      */
-    function baseSortByOrder(collection, props, orders) {
-      var index = -1,
-          length = collection.length,
-          result = isLength(length) ? Array(length) : [];
+    function baseSortByOrder(collection, iteratees, orders) {
+      var callback = getCallback(),
+          index = -1;
 
-      baseEach(collection, function(value) {
-        var length = props.length,
-            criteria = Array(length);
+      iteratees = arrayMap(iteratees, function(iteratee) { return callback(iteratee); });
 
-        while (length--) {
-          criteria[length] = value == null ? undefined : value[props[length]];
-        }
-        result[++index] = { 'criteria': criteria, 'index': index, 'value': value };
+      var result = baseMap(collection, function(value) {
+        var criteria = arrayMap(iteratees, function(iteratee) { return iteratee(value); });
+        return { 'criteria': criteria, 'index': ++index, 'value': value };
       });
 
       return baseSortBy(result, function(object, other) {
         return compareMultiple(object, other, orders);
       });
+    }
+
+    /**
+     * The base implementation of `_.sum` without support for callback shorthands
+     * and `this` binding.
+     *
+     * @private
+     * @param {Array|Object|string} collection The collection to iterate over.
+     * @param {Function} iteratee The function invoked per iteration.
+     * @returns {number} Returns the sum.
+     */
+    function baseSum(collection, iteratee) {
+      var result = 0;
+      baseEach(collection, function(value, index, collection) {
+        result += +iteratee(value, index, collection) || 0;
+      });
+      return result;
     }
 
     /**
@@ -39442,14 +43687,14 @@ return jQuery;
      * @private
      * @param {Array} array The array to inspect.
      * @param {Function} [iteratee] The function invoked per iteration.
-     * @returns {Array} Returns the new duplicate-value-free array.
+     * @returns {Array} Returns the new duplicate free array.
      */
     function baseUniq(array, iteratee) {
       var index = -1,
           indexOf = getIndexOf(),
           length = array.length,
-          isCommon = indexOf == baseIndexOf,
-          isLarge = isCommon && length >= 200,
+          isCommon = indexOf === baseIndexOf,
+          isLarge = isCommon && length >= LARGE_ARRAY_SIZE,
           seen = isLarge ? createCache() : null,
           result = [];
 
@@ -39490,7 +43735,7 @@ return jQuery;
     /**
      * The base implementation of `_.values` and `_.valuesIn` which creates an
      * array of `object` property values corresponding to the property names
-     * returned by `keysFunc`.
+     * of `props`.
      *
      * @private
      * @param {Object} object The object to query.
@@ -39509,6 +43754,27 @@ return jQuery;
     }
 
     /**
+     * The base implementation of `_.dropRightWhile`, `_.dropWhile`, `_.takeRightWhile`,
+     * and `_.takeWhile` without support for callback shorthands and `this` binding.
+     *
+     * @private
+     * @param {Array} array The array to query.
+     * @param {Function} predicate The function invoked per iteration.
+     * @param {boolean} [isDrop] Specify dropping elements instead of taking them.
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {Array} Returns the slice of `array`.
+     */
+    function baseWhile(array, predicate, isDrop, fromRight) {
+      var length = array.length,
+          index = fromRight ? length : -1;
+
+      while ((fromRight ? index-- : ++index < length) && predicate(array[index], index, array)) {}
+      return isDrop
+        ? baseSlice(array, (fromRight ? 0 : index), (fromRight ? index + 1 : length))
+        : baseSlice(array, (fromRight ? index + 1 : 0), (fromRight ? length : index));
+    }
+
+    /**
      * The base implementation of `wrapperValue` which returns the result of
      * performing a sequence of actions on the unwrapped `value`, where each
      * successive action is supplied the return value of the previous.
@@ -39516,7 +43782,7 @@ return jQuery;
      * @private
      * @param {*} value The unwrapped value.
      * @param {Array} actions Actions to peform to resolve the unwrapped value.
-     * @returns {*} Returns the resolved unwrapped value.
+     * @returns {*} Returns the resolved value.
      */
     function baseWrapperValue(value, actions) {
       var result = value;
@@ -39527,11 +43793,8 @@ return jQuery;
           length = actions.length;
 
       while (++index < length) {
-        var args = [result],
-            action = actions[index];
-
-        push.apply(args, action.args);
-        result = action.func.apply(action.thisArg, args);
+        var action = actions[index];
+        result = action.func.apply(action.thisArg, arrayPush([result], action.args));
       }
       return result;
     }
@@ -39543,8 +43806,7 @@ return jQuery;
      * @private
      * @param {Array} array The sorted array to inspect.
      * @param {*} value The value to evaluate.
-     * @param {boolean} [retHighest] Specify returning the highest, instead
-     *  of the lowest, index at which a value should be inserted into `array`.
+     * @param {boolean} [retHighest] Specify returning the highest qualified index.
      * @returns {number} Returns the index at which `value` should be inserted
      *  into `array`.
      */
@@ -39557,7 +43819,7 @@ return jQuery;
           var mid = (low + high) >>> 1,
               computed = array[mid];
 
-          if (retHighest ? (computed <= value) : (computed < value)) {
+          if ((retHighest ? (computed <= value) : (computed < value)) && computed !== null) {
             low = mid + 1;
           } else {
             high = mid;
@@ -39577,8 +43839,7 @@ return jQuery;
      * @param {Array} array The sorted array to inspect.
      * @param {*} value The value to evaluate.
      * @param {Function} iteratee The function invoked per iteration.
-     * @param {boolean} [retHighest] Specify returning the highest, instead
-     *  of the lowest, index at which a value should be inserted into `array`.
+     * @param {boolean} [retHighest] Specify returning the highest qualified index.
      * @returns {number} Returns the index at which `value` should be inserted
      *  into `array`.
      */
@@ -39588,17 +43849,23 @@ return jQuery;
       var low = 0,
           high = array ? array.length : 0,
           valIsNaN = value !== value,
-          valIsUndef = typeof value == 'undefined';
+          valIsNull = value === null,
+          valIsUndef = value === undefined;
 
       while (low < high) {
-        var mid = floor((low + high) / 2),
+        var mid = nativeFloor((low + high) / 2),
             computed = iteratee(array[mid]),
+            isDef = computed !== undefined,
             isReflexive = computed === computed;
 
         if (valIsNaN) {
           var setLow = isReflexive || retHighest;
+        } else if (valIsNull) {
+          setLow = isReflexive && isDef && (retHighest || computed != null);
         } else if (valIsUndef) {
-          setLow = isReflexive && (retHighest || typeof computed != 'undefined');
+          setLow = isReflexive && (retHighest || isDef);
+        } else if (computed == null) {
+          setLow = false;
         } else {
           setLow = retHighest ? (computed <= value) : (computed < value);
         }
@@ -39625,7 +43892,7 @@ return jQuery;
       if (typeof func != 'function') {
         return identity;
       }
-      if (typeof thisArg == 'undefined') {
+      if (thisArg === undefined) {
         return func;
       }
       switch (argCount) {
@@ -39655,26 +43922,11 @@ return jQuery;
      * @returns {ArrayBuffer} Returns the cloned array buffer.
      */
     function bufferClone(buffer) {
-      return bufferSlice.call(buffer, 0);
-    }
-    if (!bufferSlice) {
-      // PhantomJS has `ArrayBuffer` and `Uint8Array` but not `Float64Array`.
-      bufferClone = !(ArrayBuffer && Uint8Array) ? constant(null) : function(buffer) {
-        var byteLength = buffer.byteLength,
-            floatLength = Float64Array ? floor(byteLength / FLOAT64_BYTES_PER_ELEMENT) : 0,
-            offset = floatLength * FLOAT64_BYTES_PER_ELEMENT,
-            result = new ArrayBuffer(byteLength);
+      var result = new ArrayBuffer(buffer.byteLength),
+          view = new Uint8Array(result);
 
-        if (floatLength) {
-          var view = new Float64Array(result, 0, floatLength);
-          view.set(new Float64Array(buffer, 0, floatLength));
-        }
-        if (byteLength != offset) {
-          view = new Uint8Array(result, offset);
-          view.set(new Uint8Array(buffer, offset));
-        }
-        return result;
-      };
+      view.set(new Uint8Array(buffer));
+      return result;
     }
 
     /**
@@ -39693,7 +43945,7 @@ return jQuery;
           argsLength = nativeMax(args.length - holdersLength, 0),
           leftIndex = -1,
           leftLength = partials.length,
-          result = Array(argsLength + leftLength);
+          result = Array(leftLength + argsLength);
 
       while (++leftIndex < leftLength) {
         result[leftIndex] = partials[leftIndex];
@@ -39729,20 +43981,18 @@ return jQuery;
       while (++argsIndex < argsLength) {
         result[argsIndex] = args[argsIndex];
       }
-      var pad = argsIndex;
+      var offset = argsIndex;
       while (++rightIndex < rightLength) {
-        result[pad + rightIndex] = partials[rightIndex];
+        result[offset + rightIndex] = partials[rightIndex];
       }
       while (++holdersIndex < holdersLength) {
-        result[pad + holders[holdersIndex]] = args[argsIndex++];
+        result[offset + holders[holdersIndex]] = args[argsIndex++];
       }
       return result;
     }
 
     /**
-     * Creates a function that aggregates a collection, creating an accumulator
-     * object composed from the results of running each element in the collection
-     * through an iteratee.
+     * Creates a `_.countBy`, `_.groupBy`, `_.indexBy`, or `_.partition` function.
      *
      * @private
      * @param {Function} setter The function to set keys and values of the accumulator object.
@@ -39772,42 +44022,85 @@ return jQuery;
     }
 
     /**
-     * Creates a function that assigns properties of source object(s) to a given
-     * destination object.
+     * Creates a `_.assign`, `_.defaults`, or `_.merge` function.
      *
      * @private
      * @param {Function} assigner The function to assign values.
      * @returns {Function} Returns the new assigner function.
      */
     function createAssigner(assigner) {
-      return function() {
-        var args = arguments,
-            length = args.length,
-            object = args[0];
+      return restParam(function(object, sources) {
+        var index = -1,
+            length = object == null ? 0 : sources.length,
+            customizer = length > 2 ? sources[length - 2] : undefined,
+            guard = length > 2 ? sources[2] : undefined,
+            thisArg = length > 1 ? sources[length - 1] : undefined;
 
-        if (length < 2 || object == null) {
-          return object;
-        }
-        var customizer = args[length - 2],
-            thisArg = args[length - 1],
-            guard = args[3];
-
-        if (length > 3 && typeof customizer == 'function') {
+        if (typeof customizer == 'function') {
           customizer = bindCallback(customizer, thisArg, 5);
           length -= 2;
         } else {
-          customizer = (length > 2 && typeof thisArg == 'function') ? thisArg : null;
+          customizer = typeof thisArg == 'function' ? thisArg : undefined;
           length -= (customizer ? 1 : 0);
         }
-        if (guard && isIterateeCall(args[1], args[2], guard)) {
-          customizer = length == 3 ? null : customizer;
-          length = 2;
+        if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+          customizer = length < 3 ? undefined : customizer;
+          length = 1;
         }
-        var index = 0;
         while (++index < length) {
-          var source = args[index];
+          var source = sources[index];
           if (source) {
             assigner(object, source, customizer);
+          }
+        }
+        return object;
+      });
+    }
+
+    /**
+     * Creates a `baseEach` or `baseEachRight` function.
+     *
+     * @private
+     * @param {Function} eachFunc The function to iterate over a collection.
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {Function} Returns the new base function.
+     */
+    function createBaseEach(eachFunc, fromRight) {
+      return function(collection, iteratee) {
+        var length = collection ? getLength(collection) : 0;
+        if (!isLength(length)) {
+          return eachFunc(collection, iteratee);
+        }
+        var index = fromRight ? length : -1,
+            iterable = toObject(collection);
+
+        while ((fromRight ? index-- : ++index < length)) {
+          if (iteratee(iterable[index], index, iterable) === false) {
+            break;
+          }
+        }
+        return collection;
+      };
+    }
+
+    /**
+     * Creates a base function for `_.forIn` or `_.forInRight`.
+     *
+     * @private
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {Function} Returns the new base function.
+     */
+    function createBaseFor(fromRight) {
+      return function(object, iteratee, keysFunc) {
+        var iterable = toObject(object),
+            props = keysFunc(object),
+            length = props.length,
+            index = fromRight ? length : -1;
+
+        while ((fromRight ? index-- : ++index < length)) {
+          var key = props[index];
+          if (iteratee(iterable[key], key, iterable) === false) {
+            break;
           }
         }
         return object;
@@ -39827,7 +44120,8 @@ return jQuery;
       var Ctor = createCtorWrapper(func);
 
       function wrapper() {
-        return (this instanceof wrapper ? Ctor : func).apply(thisArg, arguments);
+        var fn = (this && this !== root && this instanceof wrapper) ? Ctor : func;
+        return fn.apply(thisArg, arguments);
       }
       return wrapper;
     }
@@ -39839,43 +44133,8 @@ return jQuery;
      * @param {Array} [values] The values to cache.
      * @returns {null|Object} Returns the new cache object if `Set` is supported, else `null`.
      */
-    var createCache = !(nativeCreate && Set) ? constant(null) : function(values) {
-      return new SetCache(values);
-    };
-
-    /**
-     * Creates a function to compose other functions into a single function.
-     *
-     * @private
-     * @param {boolean} [fromRight] Specify iterating from right to left.
-     * @returns {Function} Returns the new composer function.
-     */
-    function createComposer(fromRight) {
-      return function() {
-        var length = arguments.length,
-            index = length,
-            fromIndex = fromRight ? length - 1 : 0;
-
-        if (!length) {
-          return function() { return arguments[0]; };
-        }
-        var funcs = Array(length);
-        while (index--) {
-          funcs[index] = arguments[index];
-          if (typeof funcs[index] != 'function') {
-            throw new TypeError(FUNC_ERROR_TEXT);
-          }
-        }
-        return function() {
-          var index = fromIndex,
-              result = funcs[index].apply(this, arguments);
-
-          while ((fromRight ? index-- : ++index < length)) {
-            result = funcs[index].call(this, result);
-          }
-          return result;
-        };
-      };
+    function createCache(values) {
+      return (nativeCreate && Set) ? new SetCache(values) : null;
     }
 
     /**
@@ -39910,8 +44169,22 @@ return jQuery;
      */
     function createCtorWrapper(Ctor) {
       return function() {
+        // Use a `switch` statement to work with class constructors.
+        // See http://ecma-international.org/ecma-262/6.0/#sec-ecmascript-function-objects-call-thisargument-argumentslist
+        // for more details.
+        var args = arguments;
+        switch (args.length) {
+          case 0: return new Ctor;
+          case 1: return new Ctor(args[0]);
+          case 2: return new Ctor(args[0], args[1]);
+          case 3: return new Ctor(args[0], args[1], args[2]);
+          case 4: return new Ctor(args[0], args[1], args[2], args[3]);
+          case 5: return new Ctor(args[0], args[1], args[2], args[3], args[4]);
+          case 6: return new Ctor(args[0], args[1], args[2], args[3], args[4], args[5]);
+          case 7: return new Ctor(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+        }
         var thisBinding = baseCreate(Ctor.prototype),
-            result = Ctor.apply(thisBinding, arguments);
+            result = Ctor.apply(thisBinding, args);
 
         // Mimic the constructor's `return` behavior.
         // See https://es5.github.io/#x13.2.2 for more details.
@@ -39920,35 +44193,286 @@ return jQuery;
     }
 
     /**
-     * Creates a function that gets the extremum value of a collection.
+     * Creates a `_.curry` or `_.curryRight` function.
      *
      * @private
-     * @param {Function} arrayFunc The function to get the extremum value from an array.
-     * @param {boolean} [isMin] Specify returning the minimum, instead of the maximum,
-     *  extremum value.
+     * @param {boolean} flag The curry bit flag.
+     * @returns {Function} Returns the new curry function.
+     */
+    function createCurry(flag) {
+      function curryFunc(func, arity, guard) {
+        if (guard && isIterateeCall(func, arity, guard)) {
+          arity = undefined;
+        }
+        var result = createWrapper(func, flag, undefined, undefined, undefined, undefined, undefined, arity);
+        result.placeholder = curryFunc.placeholder;
+        return result;
+      }
+      return curryFunc;
+    }
+
+    /**
+     * Creates a `_.defaults` or `_.defaultsDeep` function.
+     *
+     * @private
+     * @param {Function} assigner The function to assign values.
+     * @param {Function} customizer The function to customize assigned values.
+     * @returns {Function} Returns the new defaults function.
+     */
+    function createDefaults(assigner, customizer) {
+      return restParam(function(args) {
+        var object = args[0];
+        if (object == null) {
+          return object;
+        }
+        args.push(customizer);
+        return assigner.apply(undefined, args);
+      });
+    }
+
+    /**
+     * Creates a `_.max` or `_.min` function.
+     *
+     * @private
+     * @param {Function} comparator The function used to compare values.
+     * @param {*} exValue The initial extremum value.
      * @returns {Function} Returns the new extremum function.
      */
-    function createExtremum(arrayFunc, isMin) {
+    function createExtremum(comparator, exValue) {
       return function(collection, iteratee, thisArg) {
         if (thisArg && isIterateeCall(collection, iteratee, thisArg)) {
-          iteratee = null;
+          iteratee = undefined;
         }
-        var func = getCallback(),
-            noIteratee = iteratee == null;
-
-        if (!(func === baseCallback && noIteratee)) {
-          noIteratee = false;
-          iteratee = func(iteratee, thisArg, 3);
-        }
-        if (noIteratee) {
-          var isArr = isArray(collection);
-          if (!isArr && isString(collection)) {
-            iteratee = charAtCallback;
-          } else {
-            return arrayFunc(isArr ? collection : toIterable(collection));
+        iteratee = getCallback(iteratee, thisArg, 3);
+        if (iteratee.length == 1) {
+          collection = isArray(collection) ? collection : toIterable(collection);
+          var result = arrayExtremum(collection, iteratee, comparator, exValue);
+          if (!(collection.length && result === exValue)) {
+            return result;
           }
         }
-        return extremumBy(collection, iteratee, isMin);
+        return baseExtremum(collection, iteratee, comparator, exValue);
+      };
+    }
+
+    /**
+     * Creates a `_.find` or `_.findLast` function.
+     *
+     * @private
+     * @param {Function} eachFunc The function to iterate over a collection.
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {Function} Returns the new find function.
+     */
+    function createFind(eachFunc, fromRight) {
+      return function(collection, predicate, thisArg) {
+        predicate = getCallback(predicate, thisArg, 3);
+        if (isArray(collection)) {
+          var index = baseFindIndex(collection, predicate, fromRight);
+          return index > -1 ? collection[index] : undefined;
+        }
+        return baseFind(collection, predicate, eachFunc);
+      };
+    }
+
+    /**
+     * Creates a `_.findIndex` or `_.findLastIndex` function.
+     *
+     * @private
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {Function} Returns the new find function.
+     */
+    function createFindIndex(fromRight) {
+      return function(array, predicate, thisArg) {
+        if (!(array && array.length)) {
+          return -1;
+        }
+        predicate = getCallback(predicate, thisArg, 3);
+        return baseFindIndex(array, predicate, fromRight);
+      };
+    }
+
+    /**
+     * Creates a `_.findKey` or `_.findLastKey` function.
+     *
+     * @private
+     * @param {Function} objectFunc The function to iterate over an object.
+     * @returns {Function} Returns the new find function.
+     */
+    function createFindKey(objectFunc) {
+      return function(object, predicate, thisArg) {
+        predicate = getCallback(predicate, thisArg, 3);
+        return baseFind(object, predicate, objectFunc, true);
+      };
+    }
+
+    /**
+     * Creates a `_.flow` or `_.flowRight` function.
+     *
+     * @private
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {Function} Returns the new flow function.
+     */
+    function createFlow(fromRight) {
+      return function() {
+        var wrapper,
+            length = arguments.length,
+            index = fromRight ? length : -1,
+            leftIndex = 0,
+            funcs = Array(length);
+
+        while ((fromRight ? index-- : ++index < length)) {
+          var func = funcs[leftIndex++] = arguments[index];
+          if (typeof func != 'function') {
+            throw new TypeError(FUNC_ERROR_TEXT);
+          }
+          if (!wrapper && LodashWrapper.prototype.thru && getFuncName(func) == 'wrapper') {
+            wrapper = new LodashWrapper([], true);
+          }
+        }
+        index = wrapper ? -1 : length;
+        while (++index < length) {
+          func = funcs[index];
+
+          var funcName = getFuncName(func),
+              data = funcName == 'wrapper' ? getData(func) : undefined;
+
+          if (data && isLaziable(data[0]) && data[1] == (ARY_FLAG | CURRY_FLAG | PARTIAL_FLAG | REARG_FLAG) && !data[4].length && data[9] == 1) {
+            wrapper = wrapper[getFuncName(data[0])].apply(wrapper, data[3]);
+          } else {
+            wrapper = (func.length == 1 && isLaziable(func)) ? wrapper[funcName]() : wrapper.thru(func);
+          }
+        }
+        return function() {
+          var args = arguments,
+              value = args[0];
+
+          if (wrapper && args.length == 1 && isArray(value) && value.length >= LARGE_ARRAY_SIZE) {
+            return wrapper.plant(value).value();
+          }
+          var index = 0,
+              result = length ? funcs[index].apply(this, args) : value;
+
+          while (++index < length) {
+            result = funcs[index].call(this, result);
+          }
+          return result;
+        };
+      };
+    }
+
+    /**
+     * Creates a function for `_.forEach` or `_.forEachRight`.
+     *
+     * @private
+     * @param {Function} arrayFunc The function to iterate over an array.
+     * @param {Function} eachFunc The function to iterate over a collection.
+     * @returns {Function} Returns the new each function.
+     */
+    function createForEach(arrayFunc, eachFunc) {
+      return function(collection, iteratee, thisArg) {
+        return (typeof iteratee == 'function' && thisArg === undefined && isArray(collection))
+          ? arrayFunc(collection, iteratee)
+          : eachFunc(collection, bindCallback(iteratee, thisArg, 3));
+      };
+    }
+
+    /**
+     * Creates a function for `_.forIn` or `_.forInRight`.
+     *
+     * @private
+     * @param {Function} objectFunc The function to iterate over an object.
+     * @returns {Function} Returns the new each function.
+     */
+    function createForIn(objectFunc) {
+      return function(object, iteratee, thisArg) {
+        if (typeof iteratee != 'function' || thisArg !== undefined) {
+          iteratee = bindCallback(iteratee, thisArg, 3);
+        }
+        return objectFunc(object, iteratee, keysIn);
+      };
+    }
+
+    /**
+     * Creates a function for `_.forOwn` or `_.forOwnRight`.
+     *
+     * @private
+     * @param {Function} objectFunc The function to iterate over an object.
+     * @returns {Function} Returns the new each function.
+     */
+    function createForOwn(objectFunc) {
+      return function(object, iteratee, thisArg) {
+        if (typeof iteratee != 'function' || thisArg !== undefined) {
+          iteratee = bindCallback(iteratee, thisArg, 3);
+        }
+        return objectFunc(object, iteratee);
+      };
+    }
+
+    /**
+     * Creates a function for `_.mapKeys` or `_.mapValues`.
+     *
+     * @private
+     * @param {boolean} [isMapKeys] Specify mapping keys instead of values.
+     * @returns {Function} Returns the new map function.
+     */
+    function createObjectMapper(isMapKeys) {
+      return function(object, iteratee, thisArg) {
+        var result = {};
+        iteratee = getCallback(iteratee, thisArg, 3);
+
+        baseForOwn(object, function(value, key, object) {
+          var mapped = iteratee(value, key, object);
+          key = isMapKeys ? mapped : key;
+          value = isMapKeys ? value : mapped;
+          result[key] = value;
+        });
+        return result;
+      };
+    }
+
+    /**
+     * Creates a function for `_.padLeft` or `_.padRight`.
+     *
+     * @private
+     * @param {boolean} [fromRight] Specify padding from the right.
+     * @returns {Function} Returns the new pad function.
+     */
+    function createPadDir(fromRight) {
+      return function(string, length, chars) {
+        string = baseToString(string);
+        return (fromRight ? string : '') + createPadding(string, length, chars) + (fromRight ? '' : string);
+      };
+    }
+
+    /**
+     * Creates a `_.partial` or `_.partialRight` function.
+     *
+     * @private
+     * @param {boolean} flag The partial bit flag.
+     * @returns {Function} Returns the new partial function.
+     */
+    function createPartial(flag) {
+      var partialFunc = restParam(function(func, partials) {
+        var holders = replaceHolders(partials, partialFunc.placeholder);
+        return createWrapper(func, flag, undefined, partials, holders);
+      });
+      return partialFunc;
+    }
+
+    /**
+     * Creates a function for `_.reduce` or `_.reduceRight`.
+     *
+     * @private
+     * @param {Function} arrayFunc The function to iterate over an array.
+     * @param {Function} eachFunc The function to iterate over a collection.
+     * @returns {Function} Returns the new each function.
+     */
+    function createReduce(arrayFunc, eachFunc) {
+      return function(collection, iteratee, accumulator, thisArg) {
+        var initFromArray = arguments.length < 3;
+        return (typeof iteratee == 'function' && thisArg === undefined && isArray(collection))
+          ? arrayFunc(collection, iteratee, accumulator, initFromArray)
+          : baseReduce(collection, getCallback(iteratee, thisArg, 4), accumulator, initFromArray, eachFunc);
       };
     }
 
@@ -39975,10 +44499,8 @@ return jQuery;
           isBindKey = bitmask & BIND_KEY_FLAG,
           isCurry = bitmask & CURRY_FLAG,
           isCurryBound = bitmask & CURRY_BOUND_FLAG,
-          isCurryRight = bitmask & CURRY_RIGHT_FLAG;
-
-      var Ctor = !isBindKey && createCtorWrapper(func),
-          key = func;
+          isCurryRight = bitmask & CURRY_RIGHT_FLAG,
+          Ctor = isBindKey ? undefined : createCtorWrapper(func);
 
       function wrapper() {
         // Avoid `arguments` object use disqualifying optimizations by
@@ -40002,12 +44524,12 @@ return jQuery;
 
           length -= argsHolders.length;
           if (length < arity) {
-            var newArgPos = argPos ? arrayCopy(argPos) : null,
+            var newArgPos = argPos ? arrayCopy(argPos) : undefined,
                 newArity = nativeMax(arity - length, 0),
-                newsHolders = isCurry ? argsHolders : null,
-                newHoldersRight = isCurry ? null : argsHolders,
-                newPartials = isCurry ? args : null,
-                newPartialsRight = isCurry ? null : args;
+                newsHolders = isCurry ? argsHolders : undefined,
+                newHoldersRight = isCurry ? undefined : argsHolders,
+                newPartials = isCurry ? args : undefined,
+                newPartialsRight = isCurry ? undefined : args;
 
             bitmask |= (isCurry ? PARTIAL_FLAG : PARTIAL_RIGHT_FLAG);
             bitmask &= ~(isCurry ? PARTIAL_RIGHT_FLAG : PARTIAL_FLAG);
@@ -40015,30 +44537,36 @@ return jQuery;
             if (!isCurryBound) {
               bitmask &= ~(BIND_FLAG | BIND_KEY_FLAG);
             }
-            var result = createHybridWrapper(func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity);
+            var newData = [func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity],
+                result = createHybridWrapper.apply(undefined, newData);
+
+            if (isLaziable(func)) {
+              setData(result, newData);
+            }
             result.placeholder = placeholder;
             return result;
           }
         }
-        var thisBinding = isBind ? thisArg : this;
-        if (isBindKey) {
-          func = thisBinding[key];
-        }
+        var thisBinding = isBind ? thisArg : this,
+            fn = isBindKey ? thisBinding[func] : func;
+
         if (argPos) {
           args = reorder(args, argPos);
         }
         if (isAry && ary < args.length) {
           args.length = ary;
         }
-        return (this instanceof wrapper ? (Ctor || createCtorWrapper(func)) : func).apply(thisBinding, args);
+        if (this && this !== root && this instanceof wrapper) {
+          fn = Ctor || createCtorWrapper(func);
+        }
+        return fn.apply(thisBinding, args);
       }
       return wrapper;
     }
 
     /**
-     * Creates the pad required for `string` based on the given padding length.
-     * The `chars` string may be truncated if the number of padding characters
-     * exceeds the padding length.
+     * Creates the padding required for `string` based on the given `length`.
+     * The `chars` string is truncated if the number of characters exceeds `length`.
      *
      * @private
      * @param {string} string The string to create padding for.
@@ -40046,7 +44574,7 @@ return jQuery;
      * @param {string} [chars=' '] The string used as padding.
      * @returns {string} Returns the pad for `string`.
      */
-    function createPad(string, length, chars) {
+    function createPadding(string, length, chars) {
       var strLength = string.length;
       length = +length;
 
@@ -40055,7 +44583,7 @@ return jQuery;
       }
       var padLength = length - strLength;
       chars = chars == null ? ' ' : (chars + '');
-      return repeat(chars, ceil(padLength / chars.length)).slice(0, padLength);
+      return repeat(chars, nativeCeil(padLength / chars.length)).slice(0, padLength);
     }
 
     /**
@@ -40081,7 +44609,7 @@ return jQuery;
             argsLength = arguments.length,
             leftIndex = -1,
             leftLength = partials.length,
-            args = Array(argsLength + leftLength);
+            args = Array(leftLength + argsLength);
 
         while (++leftIndex < leftLength) {
           args[leftIndex] = partials[leftIndex];
@@ -40089,9 +44617,45 @@ return jQuery;
         while (argsLength--) {
           args[leftIndex++] = arguments[++argsIndex];
         }
-        return (this instanceof wrapper ? Ctor : func).apply(isBind ? thisArg : this, args);
+        var fn = (this && this !== root && this instanceof wrapper) ? Ctor : func;
+        return fn.apply(isBind ? thisArg : this, args);
       }
       return wrapper;
+    }
+
+    /**
+     * Creates a `_.ceil`, `_.floor`, or `_.round` function.
+     *
+     * @private
+     * @param {string} methodName The name of the `Math` method to use when rounding.
+     * @returns {Function} Returns the new round function.
+     */
+    function createRound(methodName) {
+      var func = Math[methodName];
+      return function(number, precision) {
+        precision = precision === undefined ? 0 : (+precision || 0);
+        if (precision) {
+          precision = pow(10, precision);
+          return func(number * precision) / precision;
+        }
+        return func(number);
+      };
+    }
+
+    /**
+     * Creates a `_.sortedIndex` or `_.sortedLastIndex` function.
+     *
+     * @private
+     * @param {boolean} [retHighest] Specify returning the highest qualified index.
+     * @returns {Function} Returns the new index function.
+     */
+    function createSortedIndex(retHighest) {
+      return function(array, value, iteratee, thisArg) {
+        var callback = getCallback(iteratee);
+        return (iteratee == null && callback === baseCallback)
+          ? binaryIndex(array, value, retHighest)
+          : binaryIndexBy(array, value, callback(iteratee, thisArg, 1), retHighest);
+      };
     }
 
     /**
@@ -40127,19 +44691,19 @@ return jQuery;
       var length = partials ? partials.length : 0;
       if (!length) {
         bitmask &= ~(PARTIAL_FLAG | PARTIAL_RIGHT_FLAG);
-        partials = holders = null;
+        partials = holders = undefined;
       }
       length -= (holders ? holders.length : 0);
       if (bitmask & PARTIAL_RIGHT_FLAG) {
         var partialsRight = partials,
             holdersRight = holders;
 
-        partials = holders = null;
+        partials = holders = undefined;
       }
-      var data = !isBindKey && getData(func),
+      var data = isBindKey ? undefined : getData(func),
           newData = [func, bitmask, thisArg, partials, holders, partialsRight, holdersRight, argPos, ary, arity];
 
-      if (data && data !== true) {
+      if (data) {
         mergeData(newData, data);
         bitmask = newData[1];
         arity = newData[9];
@@ -40168,48 +44732,43 @@ return jQuery;
      * @param {Array} other The other array to compare.
      * @param {Function} equalFunc The function to determine equivalents of values.
      * @param {Function} [customizer] The function to customize comparing arrays.
-     * @param {boolean} [isWhere] Specify performing partial comparisons.
+     * @param {boolean} [isLoose] Specify performing partial comparisons.
      * @param {Array} [stackA] Tracks traversed `value` objects.
      * @param {Array} [stackB] Tracks traversed `other` objects.
      * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
      */
-    function equalArrays(array, other, equalFunc, customizer, isWhere, stackA, stackB) {
+    function equalArrays(array, other, equalFunc, customizer, isLoose, stackA, stackB) {
       var index = -1,
           arrLength = array.length,
-          othLength = other.length,
-          result = true;
+          othLength = other.length;
 
-      if (arrLength != othLength && !(isWhere && othLength > arrLength)) {
+      if (arrLength != othLength && !(isLoose && othLength > arrLength)) {
         return false;
       }
-      // Deep compare the contents, ignoring non-numeric properties.
-      while (result && ++index < arrLength) {
+      // Ignore non-index properties.
+      while (++index < arrLength) {
         var arrValue = array[index],
-            othValue = other[index];
+            othValue = other[index],
+            result = customizer ? customizer(isLoose ? othValue : arrValue, isLoose ? arrValue : othValue, index) : undefined;
 
-        result = undefined;
-        if (customizer) {
-          result = isWhere
-            ? customizer(othValue, arrValue, index)
-            : customizer(arrValue, othValue, index);
-        }
-        if (typeof result == 'undefined') {
-          // Recursively compare arrays (susceptible to call stack limits).
-          if (isWhere) {
-            var othIndex = othLength;
-            while (othIndex--) {
-              othValue = other[othIndex];
-              result = (arrValue && arrValue === othValue) || equalFunc(arrValue, othValue, customizer, isWhere, stackA, stackB);
-              if (result) {
-                break;
-              }
-            }
-          } else {
-            result = (arrValue && arrValue === othValue) || equalFunc(arrValue, othValue, customizer, isWhere, stackA, stackB);
+        if (result !== undefined) {
+          if (result) {
+            continue;
           }
+          return false;
+        }
+        // Recursively compare arrays (susceptible to call stack limits).
+        if (isLoose) {
+          if (!arraySome(other, function(othValue) {
+                return arrValue === othValue || equalFunc(arrValue, othValue, customizer, isLoose, stackA, stackB);
+              })) {
+            return false;
+          }
+        } else if (!(arrValue === othValue || equalFunc(arrValue, othValue, customizer, isLoose, stackA, stackB))) {
+          return false;
         }
       }
-      return !!result;
+      return true;
     }
 
     /**
@@ -40220,7 +44779,7 @@ return jQuery;
      * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
      *
      * @private
-     * @param {Object} value The object to compare.
+     * @param {Object} object The object to compare.
      * @param {Object} other The other object to compare.
      * @param {string} tag The `toStringTag` of the objects to compare.
      * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
@@ -40240,8 +44799,7 @@ return jQuery;
           // Treat `NaN` vs. `NaN` as equal.
           return (object != +object)
             ? other != +other
-            // But, treat `-0` vs. `+0` as not equal.
-            : (object == 0 ? ((1 / object) == (1 / other)) : object == +other);
+            : object == +other;
 
         case regexpTag:
         case stringTag:
@@ -40261,85 +44819,53 @@ return jQuery;
      * @param {Object} other The other object to compare.
      * @param {Function} equalFunc The function to determine equivalents of values.
      * @param {Function} [customizer] The function to customize comparing values.
-     * @param {boolean} [isWhere] Specify performing partial comparisons.
+     * @param {boolean} [isLoose] Specify performing partial comparisons.
      * @param {Array} [stackA] Tracks traversed `value` objects.
      * @param {Array} [stackB] Tracks traversed `other` objects.
      * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
      */
-    function equalObjects(object, other, equalFunc, customizer, isWhere, stackA, stackB) {
+    function equalObjects(object, other, equalFunc, customizer, isLoose, stackA, stackB) {
       var objProps = keys(object),
           objLength = objProps.length,
           othProps = keys(other),
           othLength = othProps.length;
 
-      if (objLength != othLength && !isWhere) {
+      if (objLength != othLength && !isLoose) {
         return false;
       }
-      var hasCtor,
-          index = -1;
-
-      while (++index < objLength) {
-        var key = objProps[index],
-            result = hasOwnProperty.call(other, key);
-
-        if (result) {
-          var objValue = object[key],
-              othValue = other[key];
-
-          result = undefined;
-          if (customizer) {
-            result = isWhere
-              ? customizer(othValue, objValue, key)
-              : customizer(objValue, othValue, key);
-          }
-          if (typeof result == 'undefined') {
-            // Recursively compare objects (susceptible to call stack limits).
-            result = (objValue && objValue === othValue) || equalFunc(objValue, othValue, customizer, isWhere, stackA, stackB);
-          }
-        }
-        if (!result) {
+      var index = objLength;
+      while (index--) {
+        var key = objProps[index];
+        if (!(isLoose ? key in other : hasOwnProperty.call(other, key))) {
           return false;
         }
-        hasCtor || (hasCtor = key == 'constructor');
       }
-      if (!hasCtor) {
+      var skipCtor = isLoose;
+      while (++index < objLength) {
+        key = objProps[index];
+        var objValue = object[key],
+            othValue = other[key],
+            result = customizer ? customizer(isLoose ? othValue : objValue, isLoose? objValue : othValue, key) : undefined;
+
+        // Recursively compare objects (susceptible to call stack limits).
+        if (!(result === undefined ? equalFunc(objValue, othValue, customizer, isLoose, stackA, stackB) : result)) {
+          return false;
+        }
+        skipCtor || (skipCtor = key == 'constructor');
+      }
+      if (!skipCtor) {
         var objCtor = object.constructor,
             othCtor = other.constructor;
 
         // Non `Object` object instances with different constructors are not equal.
-        if (objCtor != othCtor && ('constructor' in object && 'constructor' in other) &&
-            !(typeof objCtor == 'function' && objCtor instanceof objCtor && typeof othCtor == 'function' && othCtor instanceof othCtor)) {
+        if (objCtor != othCtor &&
+            ('constructor' in object && 'constructor' in other) &&
+            !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
+              typeof othCtor == 'function' && othCtor instanceof othCtor)) {
           return false;
         }
       }
       return true;
-    }
-
-    /**
-     * Gets the extremum value of `collection` invoking `iteratee` for each value
-     * in `collection` to generate the criterion by which the value is ranked.
-     * The `iteratee` is invoked with three arguments; (value, index, collection).
-     *
-     * @private
-     * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {Function} iteratee The function invoked per iteration.
-     * @param {boolean} [isMin] Specify returning the minimum, instead of the
-     *  maximum, extremum value.
-     * @returns {*} Returns the extremum value.
-     */
-    function extremumBy(collection, iteratee, isMin) {
-      var exValue = isMin ? POSITIVE_INFINITY : NEGATIVE_INFINITY,
-          computed = exValue,
-          result = computed;
-
-      baseEach(collection, function(value, index, collection) {
-        var current = iteratee(value, index, collection);
-        if ((isMin ? current < computed : current > computed) || (current === exValue && current === result)) {
-          computed = current;
-          result = value;
-        }
-      });
-      return result;
     }
 
     /**
@@ -40369,6 +44895,28 @@ return jQuery;
     };
 
     /**
+     * Gets the name of `func`.
+     *
+     * @private
+     * @param {Function} func The function to query.
+     * @returns {string} Returns the function name.
+     */
+    function getFuncName(func) {
+      var result = (func.name + ''),
+          array = realNames[result],
+          length = array ? array.length : 0;
+
+      while (length--) {
+        var data = array[length],
+            otherFunc = data.func;
+        if (otherFunc == null || otherFunc == func) {
+          return data.name;
+        }
+      }
+      return result;
+    }
+
+    /**
      * Gets the appropriate "indexOf" function. If the `_.indexOf` method is
      * customized this function returns the custom method, otherwise it returns
      * the `baseIndexOf` function. If arguments are provided the chosen function
@@ -40384,18 +44932,60 @@ return jQuery;
     }
 
     /**
+     * Gets the "length" property value of `object`.
+     *
+     * **Note:** This function is used to avoid a [JIT bug](https://bugs.webkit.org/show_bug.cgi?id=142792)
+     * that affects Safari on at least iOS 8.1-8.3 ARM64.
+     *
+     * @private
+     * @param {Object} object The object to query.
+     * @returns {*} Returns the "length" value.
+     */
+    var getLength = baseProperty('length');
+
+    /**
+     * Gets the propery names, values, and compare flags of `object`.
+     *
+     * @private
+     * @param {Object} object The object to query.
+     * @returns {Array} Returns the match data of `object`.
+     */
+    function getMatchData(object) {
+      var result = pairs(object),
+          length = result.length;
+
+      while (length--) {
+        result[length][2] = isStrictComparable(result[length][1]);
+      }
+      return result;
+    }
+
+    /**
+     * Gets the native function at `key` of `object`.
+     *
+     * @private
+     * @param {Object} object The object to query.
+     * @param {string} key The key of the method to get.
+     * @returns {*} Returns the function if it's native, else `undefined`.
+     */
+    function getNative(object, key) {
+      var value = object == null ? undefined : object[key];
+      return isNative(value) ? value : undefined;
+    }
+
+    /**
      * Gets the view, applying any `transforms` to the `start` and `end` positions.
      *
      * @private
      * @param {number} start The start of the view.
      * @param {number} end The end of the view.
-     * @param {Array} [transforms] The transformations to apply to the view.
+     * @param {Array} transforms The transformations to apply to the view.
      * @returns {Object} Returns an object containing the `start` and `end`
      *  positions of the view.
      */
     function getView(start, end, transforms) {
       var index = -1,
-          length = transforms ? transforms.length : 0;
+          length = transforms.length;
 
       while (++index < length) {
         var data = transforms[index],
@@ -40451,7 +45041,6 @@ return jQuery;
      * **Note:** This function only supports cloning values with tags of
      * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
      *
-     *
      * @private
      * @param {Object} object The object to clone.
      * @param {string} tag The `toStringTag` of the object to clone.
@@ -40486,28 +45075,33 @@ return jQuery;
     }
 
     /**
-     * Checks if `func` is eligible for `this` binding.
+     * Invokes the method at `path` on `object`.
      *
      * @private
-     * @param {Function} func The function to check.
-     * @returns {boolean} Returns `true` if `func` is eligible, else `false`.
+     * @param {Object} object The object to query.
+     * @param {Array|string} path The path of the method to invoke.
+     * @param {Array} args The arguments to invoke the method with.
+     * @returns {*} Returns the result of the invoked method.
      */
-    function isBindable(func) {
-      var support = lodash.support,
-          result = !(support.funcNames ? func.name : support.funcDecomp);
-
-      if (!result) {
-        var source = fnToString.call(func);
-        if (!support.funcNames) {
-          result = !reFuncName.test(source);
-        }
-        if (!result) {
-          // Check if `func` references the `this` keyword and store the result.
-          result = reThis.test(source) || isNative(func);
-          baseSetData(func, result);
-        }
+    function invokePath(object, path, args) {
+      if (object != null && !isKey(path, object)) {
+        path = toPath(path);
+        object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+        path = last(path);
       }
-      return result;
+      var func = object == null ? object : object[path];
+      return func == null ? undefined : func.apply(object, args);
+    }
+
+    /**
+     * Checks if `value` is array-like.
+     *
+     * @private
+     * @param {*} value The value to check.
+     * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+     */
+    function isArrayLike(value) {
+      return value != null && isLength(getLength(value));
     }
 
     /**
@@ -40519,7 +45113,7 @@ return jQuery;
      * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
      */
     function isIndex(value, length) {
-      value = +value;
+      value = (typeof value == 'number' || reIsUint.test(value)) ? +value : -1;
       length = length == null ? MAX_SAFE_INTEGER : length;
       return value > -1 && value % 1 == 0 && value < length;
     }
@@ -40538,25 +45132,60 @@ return jQuery;
         return false;
       }
       var type = typeof index;
-      if (type == 'number') {
-        var length = object.length,
-            prereq = isLength(length) && isIndex(index, length);
-      } else {
-        prereq = type == 'string' && index in object;
-      }
-      if (prereq) {
+      if (type == 'number'
+          ? (isArrayLike(object) && isIndex(index, object.length))
+          : (type == 'string' && index in object)) {
         var other = object[index];
-        return value === value ? value === other : other !== other;
+        return value === value ? (value === other) : (other !== other);
       }
       return false;
     }
 
     /**
+     * Checks if `value` is a property name and not a property path.
+     *
+     * @private
+     * @param {*} value The value to check.
+     * @param {Object} [object] The object to query keys on.
+     * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+     */
+    function isKey(value, object) {
+      var type = typeof value;
+      if ((type == 'string' && reIsPlainProp.test(value)) || type == 'number') {
+        return true;
+      }
+      if (isArray(value)) {
+        return false;
+      }
+      var result = !reIsDeepProp.test(value);
+      return result || (object != null && value in toObject(object));
+    }
+
+    /**
+     * Checks if `func` has a lazy counterpart.
+     *
+     * @private
+     * @param {Function} func The function to check.
+     * @returns {boolean} Returns `true` if `func` has a lazy counterpart, else `false`.
+     */
+    function isLaziable(func) {
+      var funcName = getFuncName(func),
+          other = lodash[funcName];
+
+      if (typeof other != 'function' || !(funcName in LazyWrapper.prototype)) {
+        return false;
+      }
+      if (func === other) {
+        return true;
+      }
+      var data = getData(other);
+      return !!data && func === data[0];
+    }
+
+    /**
      * Checks if `value` is a valid array-like length.
      *
-     * **Note:** This function is based on ES `ToLength`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength)
-     * for more details.
+     * **Note:** This function is based on [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
      *
      * @private
      * @param {*} value The value to check.
@@ -40575,7 +45204,7 @@ return jQuery;
      *  equality comparisons, else `false`.
      */
     function isStrictComparable(value) {
-      return value === value && (value === 0 ? ((1 / value) > 0) : !isObject(value));
+      return value === value && !isObject(value);
     }
 
     /**
@@ -40596,22 +45225,13 @@ return jQuery;
     function mergeData(data, source) {
       var bitmask = data[1],
           srcBitmask = source[1],
-          newBitmask = bitmask | srcBitmask;
+          newBitmask = bitmask | srcBitmask,
+          isCommon = newBitmask < ARY_FLAG;
 
-      var arityFlags = ARY_FLAG | REARG_FLAG,
-          bindFlags = BIND_FLAG | BIND_KEY_FLAG,
-          comboFlags = arityFlags | bindFlags | CURRY_BOUND_FLAG | CURRY_RIGHT_FLAG;
-
-      var isAry = bitmask & ARY_FLAG && !(srcBitmask & ARY_FLAG),
-          isRearg = bitmask & REARG_FLAG && !(srcBitmask & REARG_FLAG),
-          argPos = (isRearg ? data : source)[7],
-          ary = (isAry ? data : source)[8];
-
-      var isCommon = !(bitmask >= REARG_FLAG && srcBitmask > bindFlags) &&
-        !(bitmask > bindFlags && srcBitmask >= REARG_FLAG);
-
-      var isCombo = (newBitmask >= arityFlags && newBitmask <= comboFlags) &&
-        (bitmask < REARG_FLAG || ((isRearg || isAry) && argPos.length <= ary));
+      var isCombo =
+        (srcBitmask == ARY_FLAG && bitmask == CURRY_FLAG) ||
+        (srcBitmask == ARY_FLAG && bitmask == REARG_FLAG && data[7].length <= source[8]) ||
+        (srcBitmask == (ARY_FLAG | REARG_FLAG) && bitmask == CURRY_FLAG);
 
       // Exit early if metadata can't be merged.
       if (!(isCommon || isCombo)) {
@@ -40658,8 +45278,20 @@ return jQuery;
     }
 
     /**
-     * A specialized version of `_.pick` that picks `object` properties specified
-     * by the `props` array.
+     * Used by `_.defaultsDeep` to customize its `_.merge` use.
+     *
+     * @private
+     * @param {*} objectValue The destination object property value.
+     * @param {*} sourceValue The source object property value.
+     * @returns {*} Returns the value to assign to the destination object.
+     */
+    function mergeDefaults(objectValue, sourceValue) {
+      return objectValue === undefined ? sourceValue : merge(objectValue, sourceValue, mergeDefaults);
+    }
+
+    /**
+     * A specialized version of `_.pick` which picks `object` properties specified
+     * by `props`.
      *
      * @private
      * @param {Object} object The source object.
@@ -40683,7 +45315,7 @@ return jQuery;
     }
 
     /**
-     * A specialized version of `_.pick` that picks `object` properties `predicate`
+     * A specialized version of `_.pick` which picks `object` properties `predicate`
      * returns truthy for.
      *
      * @private
@@ -40757,53 +45389,20 @@ return jQuery;
     }());
 
     /**
-     * A fallback implementation of `_.isPlainObject` which checks if `value`
-     * is an object created by the `Object` constructor or has a `[[Prototype]]`
-     * of `null`.
-     *
-     * @private
-     * @param {*} value The value to check.
-     * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-     */
-    function shimIsPlainObject(value) {
-      var Ctor,
-          support = lodash.support;
-
-      // Exit early for non `Object` objects.
-      if (!(isObjectLike(value) && objToString.call(value) == objectTag) ||
-          (!hasOwnProperty.call(value, 'constructor') &&
-            (Ctor = value.constructor, typeof Ctor == 'function' && !(Ctor instanceof Ctor)))) {
-        return false;
-      }
-      // IE < 9 iterates inherited properties before own properties. If the first
-      // iterated property is an object's own property then there are no inherited
-      // enumerable properties.
-      var result;
-      // In most environments an object's own properties are iterated before
-      // its inherited properties. If the last iterated property is an object's
-      // own property then there are no inherited enumerable properties.
-      baseForIn(value, function(subValue, key) {
-        result = key;
-      });
-      return typeof result == 'undefined' || hasOwnProperty.call(value, result);
-    }
-
-    /**
      * A fallback implementation of `Object.keys` which creates an array of the
      * own enumerable property names of `object`.
      *
      * @private
-     * @param {Object} object The object to inspect.
+     * @param {Object} object The object to query.
      * @returns {Array} Returns the array of property names.
      */
     function shimKeys(object) {
       var props = keysIn(object),
           propsLength = props.length,
-          length = propsLength && object.length,
-          support = lodash.support;
+          length = propsLength && object.length;
 
-      var allowIndexes = length && isLength(length) &&
-        (isArray(object) || (support.nonEnumArgs && isArguments(object)));
+      var allowIndexes = !!length && isLength(length) &&
+        (isArray(object) || isArguments(object));
 
       var index = -1,
           result = [];
@@ -40818,7 +45417,7 @@ return jQuery;
     }
 
     /**
-     * Converts `value` to an array-like object if it is not one.
+     * Converts `value` to an array-like object if it's not one.
      *
      * @private
      * @param {*} value The value to process.
@@ -40828,14 +45427,14 @@ return jQuery;
       if (value == null) {
         return [];
       }
-      if (!isLength(value.length)) {
+      if (!isArrayLike(value)) {
         return values(value);
       }
       return isObject(value) ? value : Object(value);
     }
 
     /**
-     * Converts `value` to an object if it is not one.
+     * Converts `value` to an object if it's not one.
      *
      * @private
      * @param {*} value The value to process.
@@ -40843,6 +45442,24 @@ return jQuery;
      */
     function toObject(value) {
       return isObject(value) ? value : Object(value);
+    }
+
+    /**
+     * Converts `value` to property path array if it's not one.
+     *
+     * @private
+     * @param {*} value The value to process.
+     * @returns {Array} Returns the property path array.
+     */
+    function toPath(value) {
+      if (isArray(value)) {
+        return value;
+      }
+      var result = [];
+      baseToString(value).replace(rePropName, function(match, number, quote, string) {
+        result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+      });
+      return result;
     }
 
     /**
@@ -40884,12 +45501,12 @@ return jQuery;
       if (guard ? isIterateeCall(array, size, guard) : size == null) {
         size = 1;
       } else {
-        size = nativeMax(+size || 1, 1);
+        size = nativeMax(nativeFloor(size) || 1, 1);
       }
       var index = 0,
           length = array ? array.length : 0,
           resIndex = -1,
-          result = Array(ceil(length / size));
+          result = Array(nativeCeil(length / size));
 
       while (index < length) {
         result[++resIndex] = baseSlice(array, index, (index += size));
@@ -40927,13 +45544,9 @@ return jQuery;
     }
 
     /**
-     * Creates an array excluding all values of the provided arrays using
-     * `SameValueZero` for equality comparisons.
-     *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
+     * Creates an array of unique `array` values not included in the other
+     * provided arrays using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons.
      *
      * @static
      * @memberOf _
@@ -40946,19 +45559,11 @@ return jQuery;
      * _.difference([1, 2, 3], [4, 2]);
      * // => [1, 3]
      */
-    function difference() {
-      var args = arguments,
-          index = -1,
-          length = args.length;
-
-      while (++index < length) {
-        var value = args[index];
-        if (isArray(value) || isArguments(value)) {
-          break;
-        }
-      }
-      return baseDifference(value, baseFlatten(args, false, true, ++index));
-    }
+    var difference = restParam(function(array, values) {
+      return (isObjectLike(array) && isArrayLike(array))
+        ? baseDifference(array, baseFlatten(values, false, true))
+        : [];
+    });
 
     /**
      * Creates a slice of `array` with `n` elements dropped from the beginning.
@@ -41034,7 +45639,7 @@ return jQuery;
     /**
      * Creates a slice of `array` excluding elements dropped from the end.
      * Elements are dropped until `predicate` returns falsey. The predicate is
-     * bound to `thisArg` and invoked with three arguments; (value, index, array).
+     * bound to `thisArg` and invoked with three arguments: (value, index, array).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -41081,19 +45686,15 @@ return jQuery;
      * // => ['barney', 'fred', 'pebbles']
      */
     function dropRightWhile(array, predicate, thisArg) {
-      var length = array ? array.length : 0;
-      if (!length) {
-        return [];
-      }
-      predicate = getCallback(predicate, thisArg, 3);
-      while (length-- && predicate(array[length], length, array)) {}
-      return baseSlice(array, 0, length + 1);
+      return (array && array.length)
+        ? baseWhile(array, getCallback(predicate, thisArg, 3), true, true)
+        : [];
     }
 
     /**
      * Creates a slice of `array` excluding elements dropped from the beginning.
      * Elements are dropped until `predicate` returns falsey. The predicate is
-     * bound to `thisArg` and invoked with three arguments; (value, index, array).
+     * bound to `thisArg` and invoked with three arguments: (value, index, array).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -41140,14 +45741,9 @@ return jQuery;
      * // => ['barney', 'fred', 'pebbles']
      */
     function dropWhile(array, predicate, thisArg) {
-      var length = array ? array.length : 0;
-      if (!length) {
-        return [];
-      }
-      var index = -1;
-      predicate = getCallback(predicate, thisArg, 3);
-      while (++index < length && predicate(array[index], index, array)) {}
-      return baseSlice(array, index);
+      return (array && array.length)
+        ? baseWhile(array, getCallback(predicate, thisArg, 3), true)
+        : [];
     }
 
     /**
@@ -41164,6 +45760,19 @@ return jQuery;
      * @param {number} [start=0] The start position.
      * @param {number} [end=array.length] The end position.
      * @returns {Array} Returns `array`.
+     * @example
+     *
+     * var array = [1, 2, 3];
+     *
+     * _.fill(array, 'a');
+     * console.log(array);
+     * // => ['a', 'a', 'a']
+     *
+     * _.fill(Array(3), 2);
+     * // => [2, 2, 2]
+     *
+     * _.fill([4, 6, 8], '*', 1, 2);
+     * // => [4, '*', 8]
      */
     function fill(array, value, start, end) {
       var length = array ? array.length : 0;
@@ -41179,7 +45788,7 @@ return jQuery;
 
     /**
      * This method is like `_.find` except that it returns the index of the first
-     * element `predicate` returns truthy for, instead of the element itself.
+     * element `predicate` returns truthy for instead of the element itself.
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -41225,18 +45834,7 @@ return jQuery;
      * _.findIndex(users, 'active');
      * // => 2
      */
-    function findIndex(array, predicate, thisArg) {
-      var index = -1,
-          length = array ? array.length : 0;
-
-      predicate = getCallback(predicate, thisArg, 3);
-      while (++index < length) {
-        if (predicate(array[index], index, array)) {
-          return index;
-        }
-      }
-      return -1;
-    }
+    var findIndex = createFindIndex();
 
     /**
      * This method is like `_.findIndex` except that it iterates over elements
@@ -41286,16 +45884,7 @@ return jQuery;
      * _.findLastIndex(users, 'active');
      * // => 0
      */
-    function findLastIndex(array, predicate, thisArg) {
-      var length = array ? array.length : 0;
-      predicate = getCallback(predicate, thisArg, 3);
-      while (length--) {
-        if (predicate(array[length], length, array)) {
-          return length;
-        }
-      }
-      return -1;
-    }
+    var findLastIndex = createFindIndex(true);
 
     /**
      * Gets the first element of `array`.
@@ -41320,7 +45909,7 @@ return jQuery;
 
     /**
      * Flattens a nested array. If `isDeep` is `true` the array is recursively
-     * flattened, otherwise it is only flattened a single level.
+     * flattened, otherwise it's only flattened a single level.
      *
      * @static
      * @memberOf _
@@ -41332,18 +45921,18 @@ return jQuery;
      * @example
      *
      * _.flatten([1, [2, 3, [4]]]);
-     * // => [1, 2, 3, [4]];
+     * // => [1, 2, 3, [4]]
      *
      * // using `isDeep`
      * _.flatten([1, [2, 3, [4]]], true);
-     * // => [1, 2, 3, 4];
+     * // => [1, 2, 3, 4]
      */
     function flatten(array, isDeep, guard) {
       var length = array ? array.length : 0;
       if (guard && isIterateeCall(array, isDeep, guard)) {
         isDeep = false;
       }
-      return length ? baseFlatten(array, isDeep, false, 0) : [];
+      return length ? baseFlatten(array, isDeep) : [];
     }
 
     /**
@@ -41357,23 +45946,19 @@ return jQuery;
      * @example
      *
      * _.flattenDeep([1, [2, 3, [4]]]);
-     * // => [1, 2, 3, 4];
+     * // => [1, 2, 3, 4]
      */
     function flattenDeep(array) {
       var length = array ? array.length : 0;
-      return length ? baseFlatten(array, true, false, 0) : [];
+      return length ? baseFlatten(array, true) : [];
     }
 
     /**
      * Gets the index at which the first occurrence of `value` is found in `array`
-     * using `SameValueZero` for equality comparisons. If `fromIndex` is negative,
-     * it is used as the offset from the end of `array`. If `array` is sorted
-     * providing `true` for `fromIndex` performs a faster binary search.
-     *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
+     * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons. If `fromIndex` is negative, it's used as the offset
+     * from the end of `array`. If `array` is sorted providing `true` for `fromIndex`
+     * performs a faster binary search.
      *
      * @static
      * @memberOf _
@@ -41404,10 +45989,12 @@ return jQuery;
       if (typeof fromIndex == 'number') {
         fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : fromIndex;
       } else if (fromIndex) {
-        var index = binaryIndex(array, value),
-            other = array[index];
-
-        return (value === value ? value === other : other !== other) ? index : -1;
+        var index = binaryIndex(array, value);
+        if (index < length &&
+            (value === value ? (value === array[index]) : (array[index] !== array[index]))) {
+          return index;
+        }
+        return -1;
       }
       return baseIndexOf(array, value, fromIndex || 0);
     }
@@ -41430,13 +46017,9 @@ return jQuery;
     }
 
     /**
-     * Creates an array of unique values in all provided arrays using `SameValueZero`
+     * Creates an array of unique values that are included in all of the provided
+     * arrays using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
      * for equality comparisons.
-     *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
      *
      * @static
      * @memberOf _
@@ -41447,36 +46030,31 @@ return jQuery;
      * _.intersection([1, 2], [4, 2], [2, 1]);
      * // => [2]
      */
-    function intersection() {
-      var args = [],
-          argsIndex = -1,
-          argsLength = arguments.length,
-          caches = [],
+    var intersection = restParam(function(arrays) {
+      var othLength = arrays.length,
+          othIndex = othLength,
+          caches = Array(length),
           indexOf = getIndexOf(),
-          isCommon = indexOf == baseIndexOf;
+          isCommon = indexOf === baseIndexOf,
+          result = [];
 
-      while (++argsIndex < argsLength) {
-        var value = arguments[argsIndex];
-        if (isArray(value) || isArguments(value)) {
-          args.push(value);
-          caches.push((isCommon && value.length >= 120) ? createCache(argsIndex && value) : null);
-        }
+      while (othIndex--) {
+        var value = arrays[othIndex] = isArrayLike(value = arrays[othIndex]) ? value : [];
+        caches[othIndex] = (isCommon && value.length >= 120) ? createCache(othIndex && value) : null;
       }
-      argsLength = args.length;
-      var array = args[0],
+      var array = arrays[0],
           index = -1,
           length = array ? array.length : 0,
-          result = [],
           seen = caches[0];
 
       outer:
       while (++index < length) {
         value = array[index];
         if ((seen ? cacheIndexOf(seen, value) : indexOf(result, value, 0)) < 0) {
-          argsIndex = argsLength;
-          while (--argsIndex) {
-            var cache = caches[argsIndex];
-            if ((cache ? cacheIndexOf(cache, value) : indexOf(args[argsIndex], value, 0)) < 0) {
+          var othIndex = othLength;
+          while (--othIndex) {
+            var cache = caches[othIndex];
+            if ((cache ? cacheIndexOf(cache, value) : indexOf(arrays[othIndex], value, 0)) < 0) {
               continue outer;
             }
           }
@@ -41487,7 +46065,7 @@ return jQuery;
         }
       }
       return result;
-    }
+    });
 
     /**
      * Gets the last element of `array`.
@@ -41543,7 +46121,10 @@ return jQuery;
       } else if (fromIndex) {
         index = binaryIndex(array, value, true) - 1;
         var other = array[index];
-        return (value === value ? value === other : other !== other) ? index : -1;
+        if (value === value ? (value === other) : (other !== other)) {
+          return index;
+        }
+        return -1;
       }
       if (value !== value) {
         return indexOfNaN(array, index, true);
@@ -41557,14 +46138,11 @@ return jQuery;
     }
 
     /**
-     * Removes all provided values from `array` using `SameValueZero` for equality
-     * comparisons.
+     * Removes all provided values from `array` using
+     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons.
      *
-     * **Notes:**
-     *  - Unlike `_.without`, this method mutates `array`.
-     *  - `SameValueZero` comparisons are like strict equality comparisons, e.g. `===`,
-     *    except that `NaN` matches `NaN`. See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     *    for more details.
+     * **Note:** Unlike `_.without`, this method mutates `array`.
      *
      * @static
      * @memberOf _
@@ -41627,14 +46205,18 @@ return jQuery;
      * console.log(evens);
      * // => [10, 20]
      */
-    function pullAt(array) {
-      return basePullAt(array || [], baseFlatten(arguments, false, false, 1));
-    }
+    var pullAt = restParam(function(array, indexes) {
+      indexes = baseFlatten(indexes);
+
+      var result = baseAt(array, indexes);
+      basePullAt(array, indexes.sort(baseCompareAscending));
+      return result;
+    });
 
     /**
      * Removes all elements from `array` that `predicate` returns truthy for
      * and returns an array of the removed elements. The predicate is bound to
-     * `thisArg` and invoked with three arguments; (value, index, array).
+     * `thisArg` and invoked with three arguments: (value, index, array).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -41671,19 +46253,23 @@ return jQuery;
      * // => [2, 4]
      */
     function remove(array, predicate, thisArg) {
+      var result = [];
+      if (!(array && array.length)) {
+        return result;
+      }
       var index = -1,
-          length = array ? array.length : 0,
-          result = [];
+          indexes = [],
+          length = array.length;
 
       predicate = getCallback(predicate, thisArg, 3);
       while (++index < length) {
         var value = array[index];
         if (predicate(value, index, array)) {
           result.push(value);
-          splice.call(array, index--, 1);
-          length--;
+          indexes.push(index);
         }
       }
+      basePullAt(array, indexes);
       return result;
     }
 
@@ -41708,7 +46294,7 @@ return jQuery;
     /**
      * Creates a slice of `array` from `start` up to, but not including, `end`.
      *
-     * **Note:** This function is used instead of `Array#slice` to support node
+     * **Note:** This method is used instead of `Array#slice` to support node
      * lists in IE < 9 and to ensure dense arrays are returned.
      *
      * @static
@@ -41734,18 +46320,18 @@ return jQuery;
     /**
      * Uses a binary search to determine the lowest index at which `value` should
      * be inserted into `array` in order to maintain its sort order. If an iteratee
-     * function is provided it is invoked for `value` and each element of `array`
+     * function is provided it's invoked for `value` and each element of `array`
      * to compute their sort ranking. The iteratee is bound to `thisArg` and
      * invoked with one argument; (value).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -41779,12 +46365,7 @@ return jQuery;
      * _.sortedIndex([{ 'x': 30 }, { 'x': 50 }], { 'x': 40 }, 'x');
      * // => 1
      */
-    function sortedIndex(array, value, iteratee, thisArg) {
-      var func = getCallback(iteratee);
-      return (func === baseCallback && iteratee == null)
-        ? binaryIndex(array, value)
-        : binaryIndexBy(array, value, func(iteratee, thisArg, 1));
-    }
+    var sortedIndex = createSortedIndex();
 
     /**
      * This method is like `_.sortedIndex` except that it returns the highest
@@ -41806,12 +46387,7 @@ return jQuery;
      * _.sortedLastIndex([4, 4, 5, 5], 5);
      * // => 4
      */
-    function sortedLastIndex(array, value, iteratee, thisArg) {
-      var func = getCallback(iteratee);
-      return (func === baseCallback && iteratee == null)
-        ? binaryIndex(array, value, true)
-        : binaryIndexBy(array, value, func(iteratee, thisArg, 1), true);
-    }
+    var sortedLastIndex = createSortedIndex(true);
 
     /**
      * Creates a slice of `array` with `n` elements taken from the beginning.
@@ -41887,7 +46463,7 @@ return jQuery;
     /**
      * Creates a slice of `array` with elements taken from the end. Elements are
      * taken until `predicate` returns falsey. The predicate is bound to `thisArg`
-     * and invoked with three arguments; (value, index, array).
+     * and invoked with three arguments: (value, index, array).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -41934,19 +46510,15 @@ return jQuery;
      * // => []
      */
     function takeRightWhile(array, predicate, thisArg) {
-      var length = array ? array.length : 0;
-      if (!length) {
-        return [];
-      }
-      predicate = getCallback(predicate, thisArg, 3);
-      while (length-- && predicate(array[length], length, array)) {}
-      return baseSlice(array, length + 1);
+      return (array && array.length)
+        ? baseWhile(array, getCallback(predicate, thisArg, 3), false, true)
+        : [];
     }
 
     /**
      * Creates a slice of `array` with elements taken from the beginning. Elements
      * are taken until `predicate` returns falsey. The predicate is bound to
-     * `thisArg` and invoked with three arguments; (value, index, array).
+     * `thisArg` and invoked with three arguments: (value, index, array).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -41993,24 +46565,15 @@ return jQuery;
      * // => []
      */
     function takeWhile(array, predicate, thisArg) {
-      var length = array ? array.length : 0;
-      if (!length) {
-        return [];
-      }
-      var index = -1;
-      predicate = getCallback(predicate, thisArg, 3);
-      while (++index < length && predicate(array[index], index, array)) {}
-      return baseSlice(array, 0, index);
+      return (array && array.length)
+        ? baseWhile(array, getCallback(predicate, thisArg, 3))
+        : [];
     }
 
     /**
-     * Creates an array of unique values, in order, of the provided arrays using
-     * `SameValueZero` for equality comparisons.
-     *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
+     * Creates an array of unique values, in order, from all of the provided arrays
+     * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons.
      *
      * @static
      * @memberOf _
@@ -42022,33 +46585,30 @@ return jQuery;
      * _.union([1, 2], [4, 2], [2, 1]);
      * // => [1, 2, 4]
      */
-    function union() {
-      return baseUniq(baseFlatten(arguments, false, true, 0));
-    }
+    var union = restParam(function(arrays) {
+      return baseUniq(baseFlatten(arrays, false, true));
+    });
 
     /**
-     * Creates a duplicate-value-free version of an array using `SameValueZero`
-     * for equality comparisons. Providing `true` for `isSorted` performs a faster
-     * search algorithm for sorted arrays. If an iteratee function is provided it
-     * is invoked for each value in the array to generate the criterion by which
-     * uniqueness is computed. The `iteratee` is bound to `thisArg` and invoked
-     * with three arguments; (value, index, array).
+     * Creates a duplicate-free version of an array, using
+     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons, in which only the first occurence of each element
+     * is kept. Providing `true` for `isSorted` performs a faster search algorithm
+     * for sorted arrays. If an iteratee function is provided it's invoked for
+     * each element in the array to generate the criterion by which uniqueness
+     * is computed. The `iteratee` is bound to `thisArg` and invoked with three
+     * arguments: (value, index, array).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
-     *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
      *
      * @static
      * @memberOf _
@@ -42061,8 +46621,8 @@ return jQuery;
      * @returns {Array} Returns the new duplicate-value-free array.
      * @example
      *
-     * _.uniq([1, 2, 1]);
-     * // => [1, 2]
+     * _.uniq([2, 1, 2]);
+     * // => [2, 1]
      *
      * // using `isSorted`
      * _.uniq([1, 1, 2], true);
@@ -42085,21 +46645,21 @@ return jQuery;
       }
       if (isSorted != null && typeof isSorted != 'boolean') {
         thisArg = iteratee;
-        iteratee = isIterateeCall(array, isSorted, thisArg) ? null : isSorted;
+        iteratee = isIterateeCall(array, isSorted, thisArg) ? undefined : isSorted;
         isSorted = false;
       }
-      var func = getCallback();
-      if (!(func === baseCallback && iteratee == null)) {
-        iteratee = func(iteratee, thisArg, 3);
+      var callback = getCallback();
+      if (!(iteratee == null && callback === baseCallback)) {
+        iteratee = callback(iteratee, thisArg, 3);
       }
-      return (isSorted && getIndexOf() == baseIndexOf)
+      return (isSorted && getIndexOf() === baseIndexOf)
         ? sortedUniq(array, iteratee)
         : baseUniq(array, iteratee);
     }
 
     /**
      * This method is like `_.zip` except that it accepts an array of grouped
-     * elements and creates an array regrouping the elements to their pre-`_.zip`
+     * elements and creates an array regrouping the elements to their pre-zip
      * configuration.
      *
      * @static
@@ -42116,10 +46676,19 @@ return jQuery;
      * // => [['fred', 'barney'], [30, 40], [true, false]]
      */
     function unzip(array) {
+      if (!(array && array.length)) {
+        return [];
+      }
       var index = -1,
-          length = (array && array.length && arrayMax(arrayMap(array, getLength))) >>> 0,
-          result = Array(length);
+          length = 0;
 
+      array = arrayFilter(array, function(group) {
+        if (isArrayLike(group)) {
+          length = nativeMax(group.length, length);
+          return true;
+        }
+      });
+      var result = Array(length);
       while (++index < length) {
         result[index] = arrayMap(array, baseProperty(index));
       }
@@ -42127,13 +46696,44 @@ return jQuery;
     }
 
     /**
-     * Creates an array excluding all provided values using `SameValueZero` for
-     * equality comparisons.
+     * This method is like `_.unzip` except that it accepts an iteratee to specify
+     * how regrouped values should be combined. The `iteratee` is bound to `thisArg`
+     * and invoked with four arguments: (accumulator, value, index, group).
      *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
+     * @static
+     * @memberOf _
+     * @category Array
+     * @param {Array} array The array of grouped elements to process.
+     * @param {Function} [iteratee] The function to combine regrouped values.
+     * @param {*} [thisArg] The `this` binding of `iteratee`.
+     * @returns {Array} Returns the new array of regrouped elements.
+     * @example
+     *
+     * var zipped = _.zip([1, 2], [10, 20], [100, 200]);
+     * // => [[1, 10, 100], [2, 20, 200]]
+     *
+     * _.unzipWith(zipped, _.add);
+     * // => [3, 30, 300]
+     */
+    function unzipWith(array, iteratee, thisArg) {
+      var length = array ? array.length : 0;
+      if (!length) {
+        return [];
+      }
+      var result = unzip(array);
+      if (iteratee == null) {
+        return result;
+      }
+      iteratee = bindCallback(iteratee, thisArg, 4);
+      return arrayMap(result, function(group) {
+        return arrayReduce(group, iteratee, undefined, true);
+      });
+    }
+
+    /**
+     * Creates an array excluding all provided values using
+     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons.
      *
      * @static
      * @memberOf _
@@ -42146,14 +46746,15 @@ return jQuery;
      * _.without([1, 2, 1, 3], 1, 2);
      * // => [3]
      */
-    function without(array) {
-      return baseDifference(array, baseSlice(arguments, 1));
-    }
+    var without = restParam(function(array, values) {
+      return isArrayLike(array)
+        ? baseDifference(array, values)
+        : [];
+    });
 
     /**
-     * Creates an array that is the symmetric difference of the provided arrays.
-     * See [Wikipedia](https://en.wikipedia.org/wiki/Symmetric_difference) for
-     * more details.
+     * Creates an array of unique values that is the [symmetric difference](https://en.wikipedia.org/wiki/Symmetric_difference)
+     * of the provided arrays.
      *
      * @static
      * @memberOf _
@@ -42171,9 +46772,9 @@ return jQuery;
 
       while (++index < length) {
         var array = arguments[index];
-        if (isArray(array) || isArguments(array)) {
+        if (isArrayLike(array)) {
           var result = result
-            ? baseDifference(result, array).concat(baseDifference(array, result))
+            ? arrayPush(baseDifference(result, array), baseDifference(array, result))
             : array;
         }
       }
@@ -42195,20 +46796,13 @@ return jQuery;
      * _.zip(['fred', 'barney'], [30, 40], [true, false]);
      * // => [['fred', 30, true], ['barney', 40, false]]
      */
-    function zip() {
-      var length = arguments.length,
-          array = Array(length);
-
-      while (length--) {
-        array[length] = arguments[length];
-      }
-      return unzip(array);
-    }
+    var zip = restParam(unzip);
 
     /**
-     * Creates an object composed from arrays of property names and values. Provide
-     * either a single two dimensional array, e.g. `[[key1, value1], [key2, value2]]`
-     * or two arrays, one of property names and one of corresponding values.
+     * The inverse of `_.pairs`; this method returns an object composed from arrays
+     * of property names and values. Provide either a single two dimensional array,
+     * e.g. `[[key1, value1], [key2, value2]]` or two arrays, one of property names
+     * and one of corresponding values.
      *
      * @static
      * @memberOf _
@@ -42218,6 +46812,9 @@ return jQuery;
      * @param {Array} [values=[]] The property values.
      * @returns {Object} Returns the new object.
      * @example
+     *
+     * _.zipObject([['fred', 30], ['barney', 40]]);
+     * // => { 'fred': 30, 'barney': 40 }
      *
      * _.zipObject(['fred', 'barney'], [30, 40]);
      * // => { 'fred': 30, 'barney': 40 }
@@ -42240,6 +46837,38 @@ return jQuery;
       }
       return result;
     }
+
+    /**
+     * This method is like `_.zip` except that it accepts an iteratee to specify
+     * how grouped values should be combined. The `iteratee` is bound to `thisArg`
+     * and invoked with four arguments: (accumulator, value, index, group).
+     *
+     * @static
+     * @memberOf _
+     * @category Array
+     * @param {...Array} [arrays] The arrays to process.
+     * @param {Function} [iteratee] The function to combine grouped values.
+     * @param {*} [thisArg] The `this` binding of `iteratee`.
+     * @returns {Array} Returns the new array of grouped elements.
+     * @example
+     *
+     * _.zipWith([1, 2], [10, 20], [100, 200], _.add);
+     * // => [111, 222]
+     */
+    var zipWith = restParam(function(arrays) {
+      var length = arrays.length,
+          iteratee = length > 2 ? arrays[length - 2] : undefined,
+          thisArg = length > 1 ? arrays[length - 1] : undefined;
+
+      if (length > 2 && typeof iteratee == 'function') {
+        length -= 2;
+      } else {
+        iteratee = (length > 1 && typeof thisArg == 'function') ? (--length, thisArg) : undefined;
+        thisArg = undefined;
+      }
+      arrays.length = length;
+      return unzipWith(arrays, iteratee, thisArg);
+    });
 
     /*------------------------------------------------------------------------*/
 
@@ -42315,13 +46944,14 @@ return jQuery;
      * @returns {*} Returns the result of `interceptor`.
      * @example
      *
-     * _([1, 2, 3])
-     *  .last()
+     * _('  abc  ')
+     *  .chain()
+     *  .trim()
      *  .thru(function(value) {
      *    return [value];
      *  })
      *  .value();
-     * // => [3]
+     * // => ['abc']
      */
     function thru(value, interceptor, thisArg) {
       return interceptor.call(thisArg, value);
@@ -42366,16 +46996,16 @@ return jQuery;
      * @example
      *
      * var array = [1, 2];
-     * var wrapper = _(array).push(3);
+     * var wrapped = _(array).push(3);
      *
      * console.log(array);
      * // => [1, 2]
      *
-     * wrapper = wrapper.commit();
+     * wrapped = wrapped.commit();
      * console.log(array);
      * // => [1, 2, 3]
      *
-     * wrapper.last();
+     * wrapped.last();
      * // => 3
      *
      * console.log(array);
@@ -42384,6 +47014,33 @@ return jQuery;
     function wrapperCommit() {
       return new LodashWrapper(this.value(), this.__chain__);
     }
+
+    /**
+     * Creates a new array joining a wrapped array with any additional arrays
+     * and/or values.
+     *
+     * @name concat
+     * @memberOf _
+     * @category Chain
+     * @param {...*} [values] The values to concatenate.
+     * @returns {Array} Returns the new concatenated array.
+     * @example
+     *
+     * var array = [1];
+     * var wrapped = _(array).concat(2, [3], [[4]]);
+     *
+     * console.log(wrapped.value());
+     * // => [1, 2, 3, [4]]
+     *
+     * console.log(array);
+     * // => [1]
+     */
+    var wrapperConcat = restParam(function(values) {
+      values = baseFlatten(values);
+      return this.thru(function(array) {
+        return arrayConcat(isArray(array) ? array : [toObject(array)], values);
+      });
+    });
 
     /**
      * Creates a clone of the chained sequence planting `value` as the wrapped value.
@@ -42395,17 +47052,17 @@ return jQuery;
      * @example
      *
      * var array = [1, 2];
-     * var wrapper = _(array).map(function(value) {
+     * var wrapped = _(array).map(function(value) {
      *   return Math.pow(value, 2);
      * });
      *
      * var other = [3, 4];
-     * var otherWrapper = wrapper.plant(other);
+     * var otherWrapped = wrapped.plant(other);
      *
-     * otherWrapper.value();
+     * otherWrapped.value();
      * // => [9, 16]
      *
-     * wrapper.value();
+     * wrapped.value();
      * // => [1, 4]
      */
     function wrapperPlant(value) {
@@ -42448,15 +47105,20 @@ return jQuery;
      */
     function wrapperReverse() {
       var value = this.__wrapped__;
-      if (value instanceof LazyWrapper) {
-        if (this.__actions__.length) {
-          value = new LazyWrapper(this);
-        }
-        return new LodashWrapper(value.reverse(), this.__chain__);
-      }
-      return this.thru(function(value) {
+
+      var interceptor = function(value) {
         return value.reverse();
-      });
+      };
+      if (value instanceof LazyWrapper) {
+        var wrapped = value;
+        if (this.__actions__.length) {
+          wrapped = new LazyWrapper(this);
+        }
+        wrapped = wrapped.reverse();
+        wrapped.__actions__.push({ 'func': thru, 'args': [interceptor], 'thisArg': undefined });
+        return new LodashWrapper(wrapped, this.__chain__);
+      }
+      return this.thru(interceptor);
     }
 
     /**
@@ -42511,32 +47173,28 @@ return jQuery;
      * _.at(['a', 'b', 'c'], [0, 2]);
      * // => ['a', 'c']
      *
-     * _.at(['fred', 'barney', 'pebbles'], 0, 2);
-     * // => ['fred', 'pebbles']
+     * _.at(['barney', 'fred', 'pebbles'], 0, 2);
+     * // => ['barney', 'pebbles']
      */
-    function at(collection) {
-      var length = collection ? collection.length : 0;
-      if (isLength(length)) {
-        collection = toIterable(collection);
-      }
-      return baseAt(collection, baseFlatten(arguments, false, false, 1));
-    }
+    var at = restParam(function(collection, props) {
+      return baseAt(collection, baseFlatten(props));
+    });
 
     /**
      * Creates an object composed of keys generated from the results of running
      * each element of `collection` through `iteratee`. The corresponding value
      * of each key is the number of times the key was returned by `iteratee`.
-     * The `iteratee` is bound to `thisArg` and invoked with three arguments;
+     * The `iteratee` is bound to `thisArg` and invoked with three arguments:
      * (value, index|key, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -42569,7 +47227,7 @@ return jQuery;
 
     /**
      * Checks if `predicate` returns truthy for **all** elements of `collection`.
-     * The predicate is bound to `thisArg` and invoked with three arguments;
+     * The predicate is bound to `thisArg` and invoked with three arguments:
      * (value, index|key, collection).
      *
      * If a property name is provided for `predicate` the created `_.property`
@@ -42617,7 +47275,10 @@ return jQuery;
      */
     function every(collection, predicate, thisArg) {
       var func = isArray(collection) ? arrayEvery : baseEvery;
-      if (typeof predicate != 'function' || typeof thisArg != 'undefined') {
+      if (thisArg && isIterateeCall(collection, predicate, thisArg)) {
+        predicate = undefined;
+      }
+      if (typeof predicate != 'function' || thisArg !== undefined) {
         predicate = getCallback(predicate, thisArg, 3);
       }
       return func(collection, predicate);
@@ -42626,7 +47287,7 @@ return jQuery;
     /**
      * Iterates over elements of `collection`, returning an array of all elements
      * `predicate` returns truthy for. The predicate is bound to `thisArg` and
-     * invoked with three arguments; (value, index|key, collection).
+     * invoked with three arguments: (value, index|key, collection).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -42681,7 +47342,7 @@ return jQuery;
     /**
      * Iterates over elements of `collection`, returning the first element
      * `predicate` returns truthy for. The predicate is bound to `thisArg` and
-     * invoked with three arguments; (value, index|key, collection).
+     * invoked with three arguments: (value, index|key, collection).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -42728,14 +47389,7 @@ return jQuery;
      * _.result(_.find(users, 'active'), 'user');
      * // => 'barney'
      */
-    function find(collection, predicate, thisArg) {
-      if (isArray(collection)) {
-        var index = findIndex(collection, predicate, thisArg);
-        return index > -1 ? collection[index] : undefined;
-      }
-      predicate = getCallback(predicate, thisArg, 3);
-      return baseFind(collection, predicate, baseEach);
-    }
+    var find = createFind(baseEach);
 
     /**
      * This method is like `_.find` except that it iterates over elements of
@@ -42756,10 +47410,7 @@ return jQuery;
      * });
      * // => 3
      */
-    function findLast(collection, predicate, thisArg) {
-      predicate = getCallback(predicate, thisArg, 3);
-      return baseFind(collection, predicate, baseEachRight);
-    }
+    var findLast = createFind(baseEachRight, true);
 
     /**
      * Performs a deep comparison between each element in `collection` and the
@@ -42796,11 +47447,11 @@ return jQuery;
 
     /**
      * Iterates over elements of `collection` invoking `iteratee` for each element.
-     * The `iteratee` is bound to `thisArg` and invoked with three arguments;
-     * (value, index|key, collection). Iterator functions may exit iteration early
+     * The `iteratee` is bound to `thisArg` and invoked with three arguments:
+     * (value, index|key, collection). Iteratee functions may exit iteration early
      * by explicitly returning `false`.
      *
-     * **Note:** As with other "Collections" methods, objects with a `length` property
+     * **Note:** As with other "Collections" methods, objects with a "length" property
      * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
      * may be used for object iteration.
      *
@@ -42824,11 +47475,7 @@ return jQuery;
      * });
      * // => logs each value-key pair and returns the object (iteration order is not guaranteed)
      */
-    function forEach(collection, iteratee, thisArg) {
-      return (typeof iteratee == 'function' && typeof thisArg == 'undefined' && isArray(collection))
-        ? arrayEach(collection, iteratee)
-        : baseEach(collection, bindCallback(iteratee, thisArg, 3));
-    }
+    var forEach = createForEach(arrayEach, baseEach);
 
     /**
      * This method is like `_.forEach` except that it iterates over elements of
@@ -42846,30 +47493,26 @@ return jQuery;
      *
      * _([1, 2]).forEachRight(function(n) {
      *   console.log(n);
-     * }).join(',');
+     * }).value();
      * // => logs each value from right to left and returns the array
      */
-    function forEachRight(collection, iteratee, thisArg) {
-      return (typeof iteratee == 'function' && typeof thisArg == 'undefined' && isArray(collection))
-        ? arrayEachRight(collection, iteratee)
-        : baseEachRight(collection, bindCallback(iteratee, thisArg, 3));
-    }
+    var forEachRight = createForEach(arrayEachRight, baseEachRight);
 
     /**
      * Creates an object composed of keys generated from the results of running
      * each element of `collection` through `iteratee`. The corresponding value
      * of each key is an array of the elements responsible for generating the key.
-     * The `iteratee` is bound to `thisArg` and invoked with three arguments;
+     * The `iteratee` is bound to `thisArg` and invoked with three arguments:
      * (value, index|key, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -42906,14 +47549,10 @@ return jQuery;
     });
 
     /**
-     * Checks if `value` is in `collection` using `SameValueZero` for equality
-     * comparisons. If `fromIndex` is negative, it is used as the offset from
-     * the end of `collection`.
-     *
-     * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
-     * e.g. `===`, except that `NaN` matches `NaN`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
-     * for more details.
+     * Checks if `target` is in `collection` using
+     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+     * for equality comparisons. If `fromIndex` is negative, it's used as the offset
+     * from the end of `collection`.
      *
      * @static
      * @memberOf _
@@ -42922,6 +47561,7 @@ return jQuery;
      * @param {Array|Object|string} collection The collection to search.
      * @param {*} target The value to search for.
      * @param {number} [fromIndex=0] The index to search from.
+     * @param- {Object} [guard] Enables use as a callback for functions like `_.reduce`.
      * @returns {boolean} Returns `true` if a matching element is found, else `false`.
      * @example
      *
@@ -42937,40 +47577,37 @@ return jQuery;
      * _.includes('pebbles', 'eb');
      * // => true
      */
-    function includes(collection, target, fromIndex) {
-      var length = collection ? collection.length : 0;
+    function includes(collection, target, fromIndex, guard) {
+      var length = collection ? getLength(collection) : 0;
       if (!isLength(length)) {
         collection = values(collection);
         length = collection.length;
       }
-      if (!length) {
-        return false;
-      }
-      if (typeof fromIndex == 'number') {
-        fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : (fromIndex || 0);
-      } else {
+      if (typeof fromIndex != 'number' || (guard && isIterateeCall(target, fromIndex, guard))) {
         fromIndex = 0;
+      } else {
+        fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : (fromIndex || 0);
       }
       return (typeof collection == 'string' || !isArray(collection) && isString(collection))
-        ? (fromIndex < length && collection.indexOf(target, fromIndex) > -1)
-        : (getIndexOf(collection, target, fromIndex) > -1);
+        ? (fromIndex <= length && collection.indexOf(target, fromIndex) > -1)
+        : (!!length && getIndexOf(collection, target, fromIndex) > -1);
     }
 
     /**
      * Creates an object composed of keys generated from the results of running
      * each element of `collection` through `iteratee`. The corresponding value
      * of each key is the last element responsible for generating the key. The
-     * iteratee function is bound to `thisArg` and invoked with three arguments;
+     * iteratee function is bound to `thisArg` and invoked with three arguments:
      * (value, index|key, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -43007,16 +47644,16 @@ return jQuery;
     });
 
     /**
-     * Invokes the method named by `methodName` on each element in `collection`,
-     * returning an array of the results of each invoked method. Any additional
-     * arguments are provided to each invoked method. If `methodName` is a function
-     * it is invoked for, and `this` bound to, each element in `collection`.
+     * Invokes the method at `path` of each element in `collection`, returning
+     * an array of the results of each invoked method. Any additional arguments
+     * are provided to each invoked method. If `methodName` is a function it's
+     * invoked for, and `this` bound to, each element in `collection`.
      *
      * @static
      * @memberOf _
      * @category Collection
      * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {Function|string} methodName The name of the method to invoke or
+     * @param {Array|Function|string} path The path of the method to invoke or
      *  the function invoked per iteration.
      * @param {...*} [args] The arguments to invoke the method with.
      * @returns {Array} Returns the array of results.
@@ -43028,34 +47665,44 @@ return jQuery;
      * _.invoke([123, 456], String.prototype.split, '');
      * // => [['1', '2', '3'], ['4', '5', '6']]
      */
-    function invoke(collection, methodName) {
-      return baseInvoke(collection, methodName, baseSlice(arguments, 2));
-    }
+    var invoke = restParam(function(collection, path, args) {
+      var index = -1,
+          isFunc = typeof path == 'function',
+          isProp = isKey(path),
+          result = isArrayLike(collection) ? Array(collection.length) : [];
+
+      baseEach(collection, function(value) {
+        var func = isFunc ? path : ((isProp && value != null) ? value[path] : undefined);
+        result[++index] = func ? func.apply(value, args) : invokePath(value, path, args);
+      });
+      return result;
+    });
 
     /**
      * Creates an array of values by running each element in `collection` through
      * `iteratee`. The `iteratee` is bound to `thisArg` and invoked with three
-     * arguments; (value, index|key, collection).
+     * arguments: (value, index|key, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
-     * Many lodash methods are guarded to work as interatees for methods like
+     * Many lodash methods are guarded to work as iteratees for methods like
      * `_.every`, `_.filter`, `_.map`, `_.mapValues`, `_.reject`, and `_.some`.
      *
      * The guarded methods are:
-     * `ary`, `callback`, `chunk`, `clone`, `create`, `curry`, `curryRight`, `drop`,
-     * `dropRight`, `fill`, `flatten`, `invert`, `max`, `min`, `parseInt`, `slice`,
-     * `sortBy`, `take`, `takeRight`, `template`, `trim`, `trimLeft`, `trimRight`,
-     * `trunc`, `random`, `range`, `sample`, `uniq`, and `words`
+     * `ary`, `callback`, `chunk`, `clone`, `create`, `curry`, `curryRight`,
+     * `drop`, `dropRight`, `every`, `fill`, `flatten`, `invert`, `max`, `min`,
+     * `parseInt`, `slice`, `sortBy`, `take`, `takeRight`, `template`, `trim`,
+     * `trimLeft`, `trimRight`, `trunc`, `random`, `range`, `sample`, `some`,
+     * `sum`, `uniq`, and `words`
      *
      * @static
      * @memberOf _
@@ -43064,7 +47711,6 @@ return jQuery;
      * @param {Array|Object|string} collection The collection to iterate over.
      * @param {Function|Object|string} [iteratee=_.identity] The function invoked
      *  per iteration.
-     *  create a `_.property` or `_.matches` style callback respectively.
      * @param {*} [thisArg] The `this` binding of `iteratee`.
      * @returns {Array} Returns the new mapped array.
      * @example
@@ -43098,7 +47744,7 @@ return jQuery;
      * Creates an array of elements split into two groups, the first of which
      * contains elements `predicate` returns truthy for, while the second of which
      * contains elements `predicate` returns falsey for. The predicate is bound
-     * to `thisArg` and invoked with three arguments; (value, index|key, collection).
+     * to `thisArg` and invoked with three arguments: (value, index|key, collection).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -43158,13 +47804,13 @@ return jQuery;
     }, function() { return [[], []]; });
 
     /**
-     * Gets the value of `key` from all elements in `collection`.
+     * Gets the property value of `path` from all elements in `collection`.
      *
      * @static
      * @memberOf _
      * @category Collection
      * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {string} key The key of the property to pluck.
+     * @param {Array|string} path The path of the property to pluck.
      * @returns {Array} Returns the property values.
      * @example
      *
@@ -43180,8 +47826,8 @@ return jQuery;
      * _.pluck(userIndex, 'age');
      * // => [36, 40] (iteration order is not guaranteed)
      */
-    function pluck(collection, key) {
-      return map(collection, baseProperty(key));
+    function pluck(collection, path) {
+      return map(collection, property(path));
     }
 
     /**
@@ -43189,14 +47835,15 @@ return jQuery;
      * each element in `collection` through `iteratee`, where each successive
      * invocation is supplied the return value of the previous. If `accumulator`
      * is not provided the first element of `collection` is used as the initial
-     * value. The `iteratee` is bound to `thisArg`and invoked with four arguments;
+     * value. The `iteratee` is bound to `thisArg` and invoked with four arguments:
      * (accumulator, value, index|key, collection).
      *
-     * Many lodash methods are guarded to work as interatees for methods like
+     * Many lodash methods are guarded to work as iteratees for methods like
      * `_.reduce`, `_.reduceRight`, and `_.transform`.
      *
      * The guarded methods are:
-     * `assign`, `defaults`, `merge`, and `sortAllBy`
+     * `assign`, `defaults`, `defaultsDeep`, `includes`, `merge`, `sortByAll`,
+     * and `sortByOrder`
      *
      * @static
      * @memberOf _
@@ -43209,8 +47856,8 @@ return jQuery;
      * @returns {*} Returns the accumulated value.
      * @example
      *
-     * _.reduce([1, 2], function(sum, n) {
-     *   return sum + n;
+     * _.reduce([1, 2], function(total, n) {
+     *   return total + n;
      * });
      * // => 3
      *
@@ -43220,10 +47867,7 @@ return jQuery;
      * }, {});
      * // => { 'a': 3, 'b': 6 } (iteration order is not guaranteed)
      */
-    function reduce(collection, iteratee, accumulator, thisArg) {
-      var func = isArray(collection) ? arrayReduce : baseReduce;
-      return func(collection, getCallback(iteratee, thisArg, 4), accumulator, arguments.length < 3, baseEach);
-    }
+    var reduce = createReduce(arrayReduce, baseEach);
 
     /**
      * This method is like `_.reduce` except that it iterates over elements of
@@ -43247,25 +47891,11 @@ return jQuery;
      * }, []);
      * // => [4, 5, 2, 3, 0, 1]
      */
-    function reduceRight(collection, iteratee, accumulator, thisArg) {
-      var func = isArray(collection) ? arrayReduceRight : baseReduce;
-      return func(collection, getCallback(iteratee, thisArg, 4), accumulator, arguments.length < 3, baseEachRight);
-    }
+    var reduceRight = createReduce(arrayReduceRight, baseEachRight);
 
     /**
      * The opposite of `_.filter`; this method returns the elements of `collection`
      * that `predicate` does **not** return truthy for.
-     *
-     * If a property name is provided for `predicate` the created `_.property`
-     * style callback returns the property value of the given element.
-     *
-     * If a value is also provided for `thisArg` the created `_.matchesProperty`
-     * style callback returns `true` for elements that have a matching property
-     * value, else `false`.
-     *
-     * If an object is provided for `predicate` the created `_.matches` style
-     * callback returns `true` for elements that have the properties of the given
-     * object, else `false`.
      *
      * @static
      * @memberOf _
@@ -43331,15 +47961,26 @@ return jQuery;
         var length = collection.length;
         return length > 0 ? collection[baseRandom(0, length - 1)] : undefined;
       }
-      var result = shuffle(collection);
-      result.length = nativeMin(n < 0 ? 0 : (+n || 0), result.length);
+      var index = -1,
+          result = toArray(collection),
+          length = result.length,
+          lastIndex = length - 1;
+
+      n = nativeMin(n < 0 ? 0 : (+n || 0), length);
+      while (++index < n) {
+        var rand = baseRandom(index, lastIndex),
+            value = result[rand];
+
+        result[rand] = result[index];
+        result[index] = value;
+      }
+      result.length = n;
       return result;
     }
 
     /**
-     * Creates an array of shuffled values, using a version of the Fisher-Yates
-     * shuffle. See [Wikipedia](https://en.wikipedia.org/wiki/Fisher-Yates_shuffle)
-     * for more details.
+     * Creates an array of shuffled values, using a version of the
+     * [Fisher-Yates shuffle](https://en.wikipedia.org/wiki/Fisher-Yates_shuffle).
      *
      * @static
      * @memberOf _
@@ -43352,20 +47993,7 @@ return jQuery;
      * // => [4, 1, 3, 2]
      */
     function shuffle(collection) {
-      collection = toIterable(collection);
-
-      var index = -1,
-          length = collection.length,
-          result = Array(length);
-
-      while (++index < length) {
-        var rand = baseRandom(0, index);
-        if (index != rand) {
-          result[index] = result[rand];
-        }
-        result[rand] = collection[index];
-      }
-      return result;
+      return sample(collection, POSITIVE_INFINITY);
     }
 
     /**
@@ -43389,7 +48017,7 @@ return jQuery;
      * // => 7
      */
     function size(collection) {
-      var length = collection ? collection.length : 0;
+      var length = collection ? getLength(collection) : 0;
       return isLength(length) ? length : keys(collection).length;
     }
 
@@ -43397,7 +48025,7 @@ return jQuery;
      * Checks if `predicate` returns truthy for **any** element of `collection`.
      * The function returns as soon as it finds a passing value and does not iterate
      * over the entire collection. The predicate is bound to `thisArg` and invoked
-     * with three arguments; (value, index|key, collection).
+     * with three arguments: (value, index|key, collection).
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -43444,7 +48072,10 @@ return jQuery;
      */
     function some(collection, predicate, thisArg) {
       var func = isArray(collection) ? arraySome : baseSome;
-      if (typeof predicate != 'function' || typeof thisArg != 'undefined') {
+      if (thisArg && isIterateeCall(collection, predicate, thisArg)) {
+        predicate = undefined;
+      }
+      if (typeof predicate != 'function' || thisArg !== undefined) {
         predicate = getCallback(predicate, thisArg, 3);
       }
       return func(collection, predicate);
@@ -43454,17 +48085,17 @@ return jQuery;
      * Creates an array of elements, sorted in ascending order by the results of
      * running each element in a collection through `iteratee`. This method performs
      * a stable sort, that is, it preserves the original sort order of equal elements.
-     * The `iteratee` is bound to `thisArg` and invoked with three arguments;
+     * The `iteratee` is bound to `thisArg` and invoked with three arguments:
      * (value, index|key, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -43472,9 +48103,8 @@ return jQuery;
      * @memberOf _
      * @category Collection
      * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {Array|Function|Object|string} [iteratee=_.identity] The function
-     *  invoked per iteration. If a property name or an object is provided it is
-     *  used to create a `_.property` or `_.matches` style callback respectively.
+     * @param {Function|Object|string} [iteratee=_.identity] The function invoked
+     *  per iteration.
      * @param {*} [thisArg] The `this` binding of `iteratee`.
      * @returns {Array} Returns the new sorted array.
      * @example
@@ -43503,96 +48133,112 @@ return jQuery;
       if (collection == null) {
         return [];
       }
-      var index = -1,
-          length = collection.length,
-          result = isLength(length) ? Array(length) : [];
-
       if (thisArg && isIterateeCall(collection, iteratee, thisArg)) {
-        iteratee = null;
+        iteratee = undefined;
       }
+      var index = -1;
       iteratee = getCallback(iteratee, thisArg, 3);
-      baseEach(collection, function(value, key, collection) {
-        result[++index] = { 'criteria': iteratee(value, key, collection), 'index': index, 'value': value };
+
+      var result = baseMap(collection, function(value, key, collection) {
+        return { 'criteria': iteratee(value, key, collection), 'index': ++index, 'value': value };
       });
       return baseSortBy(result, compareAscending);
     }
 
     /**
-     * This method is like `_.sortBy` except that it sorts by property names
-     * instead of an iteratee function.
+     * This method is like `_.sortBy` except that it can sort by multiple iteratees
+     * or property names.
+     *
+     * If a property name is provided for an iteratee the created `_.property`
+     * style callback returns the property value of the given element.
+     *
+     * If an object is provided for an iteratee the created `_.matches` style
+     * callback returns `true` for elements that have the properties of the given
+     * object, else `false`.
      *
      * @static
      * @memberOf _
      * @category Collection
      * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {...(string|string[])} props The property names to sort by,
-     *  specified as individual property names or arrays of property names.
+     * @param {...(Function|Function[]|Object|Object[]|string|string[])} iteratees
+     *  The iteratees to sort by, specified as individual values or arrays of values.
      * @returns {Array} Returns the new sorted array.
      * @example
      *
      * var users = [
+     *   { 'user': 'fred',   'age': 48 },
      *   { 'user': 'barney', 'age': 36 },
-     *   { 'user': 'fred',   'age': 40 },
-     *   { 'user': 'barney', 'age': 26 },
-     *   { 'user': 'fred',   'age': 30 }
+     *   { 'user': 'fred',   'age': 42 },
+     *   { 'user': 'barney', 'age': 34 }
      * ];
      *
      * _.map(_.sortByAll(users, ['user', 'age']), _.values);
-     * // => [['barney', 26], ['barney', 36], ['fred', 30], ['fred', 40]]
+     * // => [['barney', 34], ['barney', 36], ['fred', 42], ['fred', 48]]
+     *
+     * _.map(_.sortByAll(users, 'user', function(chr) {
+     *   return Math.floor(chr.age / 10);
+     * }), _.values);
+     * // => [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 42]]
      */
-    function sortByAll(collection) {
+    var sortByAll = restParam(function(collection, iteratees) {
       if (collection == null) {
         return [];
       }
-      var args = arguments,
-          guard = args[3];
-
-      if (guard && isIterateeCall(args[1], args[2], guard)) {
-        args = [collection, args[1]];
+      var guard = iteratees[2];
+      if (guard && isIterateeCall(iteratees[0], iteratees[1], guard)) {
+        iteratees.length = 1;
       }
-      return baseSortByOrder(collection, baseFlatten(args, false, false, 1), []);
-    }
+      return baseSortByOrder(collection, baseFlatten(iteratees), []);
+    });
 
     /**
      * This method is like `_.sortByAll` except that it allows specifying the
-     * sort orders of the property names to sort by. A truthy value in `orders`
-     * will sort the corresponding property name in ascending order while a
-     * falsey value will sort it in descending order.
+     * sort orders of the iteratees to sort by. If `orders` is unspecified, all
+     * values are sorted in ascending order. Otherwise, a value is sorted in
+     * ascending order if its corresponding order is "asc", and descending if "desc".
+     *
+     * If a property name is provided for an iteratee the created `_.property`
+     * style callback returns the property value of the given element.
+     *
+     * If an object is provided for an iteratee the created `_.matches` style
+     * callback returns `true` for elements that have the properties of the given
+     * object, else `false`.
      *
      * @static
      * @memberOf _
      * @category Collection
      * @param {Array|Object|string} collection The collection to iterate over.
-     * @param {string[]} props The property names to sort by.
-     * @param {boolean[]} orders The sort orders of `props`.
+     * @param {Function[]|Object[]|string[]} iteratees The iteratees to sort by.
+     * @param {boolean[]} [orders] The sort orders of `iteratees`.
+     * @param- {Object} [guard] Enables use as a callback for functions like `_.reduce`.
      * @returns {Array} Returns the new sorted array.
      * @example
      *
      * var users = [
-     *   { 'user': 'barney', 'age': 36 },
-     *   { 'user': 'fred',   'age': 40 },
-     *   { 'user': 'barney', 'age': 26 },
-     *   { 'user': 'fred',   'age': 30 }
+     *   { 'user': 'fred',   'age': 48 },
+     *   { 'user': 'barney', 'age': 34 },
+     *   { 'user': 'fred',   'age': 42 },
+     *   { 'user': 'barney', 'age': 36 }
      * ];
      *
      * // sort by `user` in ascending order and by `age` in descending order
-     * _.map(_.sortByOrder(users, ['user', 'age'], [true, false]), _.values);
-     * // => [['barney', 36], ['barney', 26], ['fred', 40], ['fred', 30]]
+     * _.map(_.sortByOrder(users, ['user', 'age'], ['asc', 'desc']), _.values);
+     * // => [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 42]]
      */
-    function sortByOrder(collection, props, orders, guard) {
+    function sortByOrder(collection, iteratees, orders, guard) {
       if (collection == null) {
         return [];
       }
-      if (guard && isIterateeCall(props, orders, guard)) {
-        orders = null;
+      if (guard && isIterateeCall(iteratees, orders, guard)) {
+        orders = undefined;
       }
-      if (!isArray(props)) {
-        props = props == null ? [] : [props];
+      if (!isArray(iteratees)) {
+        iteratees = iteratees == null ? [] : [iteratees];
       }
       if (!isArray(orders)) {
         orders = orders == null ? [] : [orders];
       }
-      return baseSortByOrder(collection, props, orders);
+      return baseSortByOrder(collection, iteratees, orders);
     }
 
     /**
@@ -43652,7 +48298,7 @@ return jQuery;
 
     /**
      * The opposite of `_.before`; this method creates a function that invokes
-     * `func` once it is called `n` or more times.
+     * `func` once it's called `n` or more times.
      *
      * @static
      * @memberOf _
@@ -43709,15 +48355,15 @@ return jQuery;
      */
     function ary(func, n, guard) {
       if (guard && isIterateeCall(func, n, guard)) {
-        n = null;
+        n = undefined;
       }
       n = (func && n == null) ? func.length : nativeMax(+n || 0, 0);
-      return createWrapper(func, ARY_FLAG, null, null, null, null, n);
+      return createWrapper(func, ARY_FLAG, undefined, undefined, undefined, undefined, n);
     }
 
     /**
      * Creates a function that invokes `func`, with the `this` binding and arguments
-     * of the created function, while it is called less than `n` times. Subsequent
+     * of the created function, while it's called less than `n` times. Subsequent
      * calls to the created function return the result of the last `func` invocation.
      *
      * @static
@@ -43745,8 +48391,9 @@ return jQuery;
       return function() {
         if (--n > 0) {
           result = func.apply(this, arguments);
-        } else {
-          func = null;
+        }
+        if (n <= 1) {
+          func = undefined;
         }
         return result;
       };
@@ -43760,7 +48407,7 @@ return jQuery;
      * The `_.bind.placeholder` value, which defaults to `_` in monolithic builds,
      * may be used as a placeholder for partially applied arguments.
      *
-     * **Note:** Unlike native `Function#bind` this method does not set the `length`
+     * **Note:** Unlike native `Function#bind` this method does not set the "length"
      * property of bound functions.
      *
      * @static
@@ -43768,7 +48415,7 @@ return jQuery;
      * @category Function
      * @param {Function} func The function to bind.
      * @param {*} thisArg The `this` binding of `func`.
-     * @param {...*} [args] The arguments to be partially applied.
+     * @param {...*} [partials] The arguments to be partially applied.
      * @returns {Function} Returns the new bound function.
      * @example
      *
@@ -43787,16 +48434,14 @@ return jQuery;
      * bound('hi');
      * // => 'hi fred!'
      */
-    function bind(func, thisArg) {
+    var bind = restParam(function(func, thisArg, partials) {
       var bitmask = BIND_FLAG;
-      if (arguments.length > 2) {
-        var partials = baseSlice(arguments, 2),
-            holders = replaceHolders(partials, bind.placeholder);
-
+      if (partials.length) {
+        var holders = replaceHolders(partials, bind.placeholder);
         bitmask |= PARTIAL_FLAG;
       }
       return createWrapper(func, bitmask, thisArg, partials, holders);
-    }
+    });
 
     /**
      * Binds methods of an object to the object itself, overwriting the existing
@@ -43804,7 +48449,7 @@ return jQuery;
      * of method names. If no method names are provided all enumerable function
      * properties, own and inherited, of `object` are bound.
      *
-     * **Note:** This method does not set the `length` property of bound functions.
+     * **Note:** This method does not set the "length" property of bound functions.
      *
      * @static
      * @memberOf _
@@ -43826,13 +48471,18 @@ return jQuery;
      * jQuery('#docs').on('click', view.onClick);
      * // => logs 'clicked docs' when the element is clicked
      */
-    function bindAll(object) {
-      return baseBindAll(object,
-        arguments.length > 1
-          ? baseFlatten(arguments, false, false, 1)
-          : functions(object)
-      );
-    }
+    var bindAll = restParam(function(object, methodNames) {
+      methodNames = methodNames.length ? baseFlatten(methodNames) : functions(object);
+
+      var index = -1,
+          length = methodNames.length;
+
+      while (++index < length) {
+        var key = methodNames[index];
+        object[key] = createWrapper(object[key], BIND_FLAG, object);
+      }
+      return object;
+    });
 
     /**
      * Creates a function that invokes the method at `object[key]` and prepends
@@ -43840,7 +48490,7 @@ return jQuery;
      *
      * This method differs from `_.bind` by allowing bound functions to reference
      * methods that may be redefined or don't yet exist.
-     * See [Peter Michaux's article](http://michaux.ca/articles/lazy-function-definition-pattern)
+     * See [Peter Michaux's article](http://peter.michaux.ca/articles/lazy-function-definition-pattern)
      * for more details.
      *
      * The `_.bindKey.placeholder` value, which defaults to `_` in monolithic
@@ -43851,7 +48501,7 @@ return jQuery;
      * @category Function
      * @param {Object} object The object the method belongs to.
      * @param {string} key The key of the method.
-     * @param {...*} [args] The arguments to be partially applied.
+     * @param {...*} [partials] The arguments to be partially applied.
      * @returns {Function} Returns the new bound function.
      * @example
      *
@@ -43878,16 +48528,14 @@ return jQuery;
      * bound('hi');
      * // => 'hiya fred!'
      */
-    function bindKey(object, key) {
+    var bindKey = restParam(function(object, key, partials) {
       var bitmask = BIND_FLAG | BIND_KEY_FLAG;
-      if (arguments.length > 2) {
-        var partials = baseSlice(arguments, 2),
-            holders = replaceHolders(partials, bindKey.placeholder);
-
+      if (partials.length) {
+        var holders = replaceHolders(partials, bindKey.placeholder);
         bitmask |= PARTIAL_FLAG;
       }
       return createWrapper(key, bitmask, object, partials, holders);
-    }
+    });
 
     /**
      * Creates a function that accepts one or more arguments of `func` that when
@@ -43899,7 +48547,7 @@ return jQuery;
      * The `_.curry.placeholder` value, which defaults to `_` in monolithic builds,
      * may be used as a placeholder for provided arguments.
      *
-     * **Note:** This method does not set the `length` property of curried functions.
+     * **Note:** This method does not set the "length" property of curried functions.
      *
      * @static
      * @memberOf _
@@ -43929,14 +48577,7 @@ return jQuery;
      * curried(1)(_, 3)(2);
      * // => [1, 2, 3]
      */
-    function curry(func, arity, guard) {
-      if (guard && isIterateeCall(func, arity, guard)) {
-        arity = null;
-      }
-      var result = createWrapper(func, CURRY_FLAG, null, null, null, null, null, arity);
-      result.placeholder = curry.placeholder;
-      return result;
-    }
+    var curry = createCurry(CURRY_FLAG);
 
     /**
      * This method is like `_.curry` except that arguments are applied to `func`
@@ -43945,7 +48586,7 @@ return jQuery;
      * The `_.curryRight.placeholder` value, which defaults to `_` in monolithic
      * builds, may be used as a placeholder for provided arguments.
      *
-     * **Note:** This method does not set the `length` property of curried functions.
+     * **Note:** This method does not set the "length" property of curried functions.
      *
      * @static
      * @memberOf _
@@ -43975,22 +48616,16 @@ return jQuery;
      * curried(3)(1, _)(2);
      * // => [1, 2, 3]
      */
-    function curryRight(func, arity, guard) {
-      if (guard && isIterateeCall(func, arity, guard)) {
-        arity = null;
-      }
-      var result = createWrapper(func, CURRY_RIGHT_FLAG, null, null, null, null, null, arity);
-      result.placeholder = curryRight.placeholder;
-      return result;
-    }
+    var curryRight = createCurry(CURRY_RIGHT_FLAG);
 
     /**
-     * Creates a function that delays invoking `func` until after `wait` milliseconds
-     * have elapsed since the last time it was invoked. The created function comes
-     * with a `cancel` method to cancel delayed invocations. Provide an options
-     * object to indicate that `func` should be invoked on the leading and/or
-     * trailing edge of the `wait` timeout. Subsequent calls to the debounced
-     * function return the result of the last `func` invocation.
+     * Creates a debounced function that delays invoking `func` until after `wait`
+     * milliseconds have elapsed since the last time the debounced function was
+     * invoked. The debounced function comes with a `cancel` method to cancel
+     * delayed invocations. Provide an options object to indicate that `func`
+     * should be invoked on the leading and/or trailing edge of the `wait` timeout.
+     * Subsequent calls to the debounced function return the result of the last
+     * `func` invocation.
      *
      * **Note:** If `leading` and `trailing` options are `true`, `func` is invoked
      * on the trailing edge of the timeout only if the the debounced function is
@@ -44008,7 +48643,7 @@ return jQuery;
      * @param {boolean} [options.leading=false] Specify invoking on the leading
      *  edge of the timeout.
      * @param {number} [options.maxWait] The maximum time `func` is allowed to be
-     *  delayed before it is invoked.
+     *  delayed before it's invoked.
      * @param {boolean} [options.trailing=true] Specify invoking on the trailing
      *  edge of the timeout.
      * @returns {Function} Returns the new debounced function.
@@ -44066,9 +48701,9 @@ return jQuery;
         var leading = true;
         trailing = false;
       } else if (isObject(options)) {
-        leading = options.leading;
+        leading = !!options.leading;
         maxWait = 'maxWait' in options && nativeMax(+options.maxWait || 0, wait);
-        trailing = 'trailing' in options ? options.trailing : trailing;
+        trailing = 'trailing' in options ? !!options.trailing : trailing;
       }
 
       function cancel() {
@@ -44078,41 +48713,35 @@ return jQuery;
         if (maxTimeoutId) {
           clearTimeout(maxTimeoutId);
         }
+        lastCalled = 0;
         maxTimeoutId = timeoutId = trailingCall = undefined;
+      }
+
+      function complete(isCalled, id) {
+        if (id) {
+          clearTimeout(id);
+        }
+        maxTimeoutId = timeoutId = trailingCall = undefined;
+        if (isCalled) {
+          lastCalled = now();
+          result = func.apply(thisArg, args);
+          if (!timeoutId && !maxTimeoutId) {
+            args = thisArg = undefined;
+          }
+        }
       }
 
       function delayed() {
         var remaining = wait - (now() - stamp);
         if (remaining <= 0 || remaining > wait) {
-          if (maxTimeoutId) {
-            clearTimeout(maxTimeoutId);
-          }
-          var isCalled = trailingCall;
-          maxTimeoutId = timeoutId = trailingCall = undefined;
-          if (isCalled) {
-            lastCalled = now();
-            result = func.apply(thisArg, args);
-            if (!timeoutId && !maxTimeoutId) {
-              args = thisArg = null;
-            }
-          }
+          complete(trailingCall, maxTimeoutId);
         } else {
           timeoutId = setTimeout(delayed, remaining);
         }
       }
 
       function maxDelayed() {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        maxTimeoutId = timeoutId = trailingCall = undefined;
-        if (trailing || (maxWait !== wait)) {
-          lastCalled = now();
-          result = func.apply(thisArg, args);
-          if (!timeoutId && !maxTimeoutId) {
-            args = thisArg = null;
-          }
-        }
+        complete(trailing, timeoutId);
       }
 
       function debounced() {
@@ -44152,7 +48781,7 @@ return jQuery;
           result = func.apply(thisArg, args);
         }
         if (isCalled && !timeoutId && !maxTimeoutId) {
-          args = thisArg = null;
+          args = thisArg = undefined;
         }
         return result;
       }
@@ -44162,7 +48791,7 @@ return jQuery;
 
     /**
      * Defers invoking the `func` until the current call stack has cleared. Any
-     * additional arguments are provided to `func` when it is invoked.
+     * additional arguments are provided to `func` when it's invoked.
      *
      * @static
      * @memberOf _
@@ -44177,13 +48806,13 @@ return jQuery;
      * }, 'deferred');
      * // logs 'deferred' after one or more milliseconds
      */
-    function defer(func) {
-      return baseDelay(func, 1, arguments, 1);
-    }
+    var defer = restParam(function(func, args) {
+      return baseDelay(func, 1, args);
+    });
 
     /**
      * Invokes `func` after `wait` milliseconds. Any additional arguments are
-     * provided to `func` when it is invoked.
+     * provided to `func` when it's invoked.
      *
      * @static
      * @memberOf _
@@ -44199,9 +48828,9 @@ return jQuery;
      * }, 1000, 'later');
      * // => logs 'later' after one second
      */
-    function delay(func, wait) {
-      return baseDelay(func, wait, arguments, 2);
-    }
+    var delay = restParam(function(func, wait, args) {
+      return baseDelay(func, wait, args);
+    });
 
     /**
      * Creates a function that returns the result of invoking the provided
@@ -44223,7 +48852,7 @@ return jQuery;
      * addSquare(1, 2);
      * // => 9
      */
-    var flow = createComposer();
+    var flow = createFlow();
 
     /**
      * This method is like `_.flow` except that it creates a function that
@@ -44245,7 +48874,7 @@ return jQuery;
      * addSquare(1, 2);
      * // => 9
      */
-    var flowRight = createComposer(true);
+    var flowRight = createFlow(true);
 
     /**
      * Creates a function that memoizes the result of `func`. If `resolver` is
@@ -44257,10 +48886,8 @@ return jQuery;
      *
      * **Note:** The cache is exposed as the `cache` property on the memoized
      * function. Its creation may be customized by replacing the `_.memoize.Cache`
-     * constructor with one whose instances implement the ES `Map` method interface
-     * of `get`, `has`, and `set`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-properties-of-the-map-prototype-object)
-     * for more details.
+     * constructor with one whose instances implement the [`Map`](http://ecma-international.org/ecma-262/6.0/#sec-properties-of-the-map-prototype-object)
+     * method interface of `get`, `has`, and `set`.
      *
      * @static
      * @memberOf _
@@ -44306,19 +48933,65 @@ return jQuery;
       }
       var memoized = function() {
         var args = arguments,
-            cache = memoized.cache,
-            key = resolver ? resolver.apply(this, args) : args[0];
+            key = resolver ? resolver.apply(this, args) : args[0],
+            cache = memoized.cache;
 
         if (cache.has(key)) {
           return cache.get(key);
         }
         var result = func.apply(this, args);
-        cache.set(key, result);
+        memoized.cache = cache.set(key, result);
         return result;
       };
       memoized.cache = new memoize.Cache;
       return memoized;
     }
+
+    /**
+     * Creates a function that runs each argument through a corresponding
+     * transform function.
+     *
+     * @static
+     * @memberOf _
+     * @category Function
+     * @param {Function} func The function to wrap.
+     * @param {...(Function|Function[])} [transforms] The functions to transform
+     * arguments, specified as individual functions or arrays of functions.
+     * @returns {Function} Returns the new function.
+     * @example
+     *
+     * function doubled(n) {
+     *   return n * 2;
+     * }
+     *
+     * function square(n) {
+     *   return n * n;
+     * }
+     *
+     * var modded = _.modArgs(function(x, y) {
+     *   return [x, y];
+     * }, square, doubled);
+     *
+     * modded(1, 2);
+     * // => [1, 4]
+     *
+     * modded(5, 10);
+     * // => [25, 20]
+     */
+    var modArgs = restParam(function(func, transforms) {
+      transforms = baseFlatten(transforms);
+      if (typeof func != 'function' || !arrayEvery(transforms, baseIsFunction)) {
+        throw new TypeError(FUNC_ERROR_TEXT);
+      }
+      var length = transforms.length;
+      return restParam(function(args) {
+        var index = nativeMin(args.length, length);
+        while (index--) {
+          args[index] = transforms[index](args[index]);
+        }
+        return func.apply(this, args);
+      });
+    });
 
     /**
      * Creates a function that negates the result of the predicate `func`. The
@@ -44351,7 +49024,7 @@ return jQuery;
     /**
      * Creates a function that is restricted to invoking `func` once. Repeat calls
      * to the function return the value of the first call. The `func` is invoked
-     * with the `this` binding of the created function.
+     * with the `this` binding and arguments of the created function.
      *
      * @static
      * @memberOf _
@@ -44366,7 +49039,7 @@ return jQuery;
      * // `initialize` invokes `createApplication` once
      */
     function once(func) {
-      return before(func, 2);
+      return before(2, func);
     }
 
     /**
@@ -44377,14 +49050,14 @@ return jQuery;
      * The `_.partial.placeholder` value, which defaults to `_` in monolithic
      * builds, may be used as a placeholder for partially applied arguments.
      *
-     * **Note:** This method does not set the `length` property of partially
+     * **Note:** This method does not set the "length" property of partially
      * applied functions.
      *
      * @static
      * @memberOf _
      * @category Function
      * @param {Function} func The function to partially apply arguments to.
-     * @param {...*} [args] The arguments to be partially applied.
+     * @param {...*} [partials] The arguments to be partially applied.
      * @returns {Function} Returns the new partially applied function.
      * @example
      *
@@ -44401,12 +49074,7 @@ return jQuery;
      * greetFred('hi');
      * // => 'hi fred'
      */
-    function partial(func) {
-      var partials = baseSlice(arguments, 1),
-          holders = replaceHolders(partials, partial.placeholder);
-
-      return createWrapper(func, PARTIAL_FLAG, null, partials, holders);
-    }
+    var partial = createPartial(PARTIAL_FLAG);
 
     /**
      * This method is like `_.partial` except that partially applied arguments
@@ -44415,14 +49083,14 @@ return jQuery;
      * The `_.partialRight.placeholder` value, which defaults to `_` in monolithic
      * builds, may be used as a placeholder for partially applied arguments.
      *
-     * **Note:** This method does not set the `length` property of partially
+     * **Note:** This method does not set the "length" property of partially
      * applied functions.
      *
      * @static
      * @memberOf _
      * @category Function
      * @param {Function} func The function to partially apply arguments to.
-     * @param {...*} [args] The arguments to be partially applied.
+     * @param {...*} [partials] The arguments to be partially applied.
      * @returns {Function} Returns the new partially applied function.
      * @example
      *
@@ -44439,12 +49107,7 @@ return jQuery;
      * sayHelloTo('fred');
      * // => 'hello fred'
      */
-    function partialRight(func) {
-      var partials = baseSlice(arguments, 1),
-          holders = replaceHolders(partials, partialRight.placeholder);
-
-      return createWrapper(func, PARTIAL_RIGHT_FLAG, null, partials, holders);
-    }
+    var partialRight = createPartial(PARTIAL_RIGHT_FLAG);
 
     /**
      * Creates a function that invokes `func` with arguments arranged according
@@ -44474,29 +49137,80 @@ return jQuery;
      * }, [1, 2, 3]);
      * // => [3, 6, 9]
      */
-    function rearg(func) {
-      var indexes = baseFlatten(arguments, false, false, 1);
-      return createWrapper(func, REARG_FLAG, null, null, null, indexes);
-    }
+    var rearg = restParam(function(func, indexes) {
+      return createWrapper(func, REARG_FLAG, undefined, undefined, undefined, baseFlatten(indexes));
+    });
 
     /**
      * Creates a function that invokes `func` with the `this` binding of the
-     * created function and the array of arguments provided to the created
-     * function much like [Function#apply](http://es5.github.io/#x15.3.4.3).
+     * created function and arguments from `start` and beyond provided as an array.
+     *
+     * **Note:** This method is based on the [rest parameter](https://developer.mozilla.org/Web/JavaScript/Reference/Functions/rest_parameters).
+     *
+     * @static
+     * @memberOf _
+     * @category Function
+     * @param {Function} func The function to apply a rest parameter to.
+     * @param {number} [start=func.length-1] The start position of the rest parameter.
+     * @returns {Function} Returns the new function.
+     * @example
+     *
+     * var say = _.restParam(function(what, names) {
+     *   return what + ' ' + _.initial(names).join(', ') +
+     *     (_.size(names) > 1 ? ', & ' : '') + _.last(names);
+     * });
+     *
+     * say('hello', 'fred', 'barney', 'pebbles');
+     * // => 'hello fred, barney, & pebbles'
+     */
+    function restParam(func, start) {
+      if (typeof func != 'function') {
+        throw new TypeError(FUNC_ERROR_TEXT);
+      }
+      start = nativeMax(start === undefined ? (func.length - 1) : (+start || 0), 0);
+      return function() {
+        var args = arguments,
+            index = -1,
+            length = nativeMax(args.length - start, 0),
+            rest = Array(length);
+
+        while (++index < length) {
+          rest[index] = args[start + index];
+        }
+        switch (start) {
+          case 0: return func.call(this, rest);
+          case 1: return func.call(this, args[0], rest);
+          case 2: return func.call(this, args[0], args[1], rest);
+        }
+        var otherArgs = Array(start + 1);
+        index = -1;
+        while (++index < start) {
+          otherArgs[index] = args[index];
+        }
+        otherArgs[start] = rest;
+        return func.apply(this, otherArgs);
+      };
+    }
+
+    /**
+     * Creates a function that invokes `func` with the `this` binding of the created
+     * function and an array of arguments much like [`Function#apply`](https://es5.github.io/#x15.3.4.3).
+     *
+     * **Note:** This method is based on the [spread operator](https://developer.mozilla.org/Web/JavaScript/Reference/Operators/Spread_operator).
      *
      * @static
      * @memberOf _
      * @category Function
      * @param {Function} func The function to spread arguments over.
-     * @returns {*} Returns the new function.
+     * @returns {Function} Returns the new function.
      * @example
      *
-     * var spread = _.spread(function(who, what) {
+     * var say = _.spread(function(who, what) {
      *   return who + ' says ' + what;
      * });
      *
-     * spread(['Fred', 'hello']);
-     * // => 'Fred says hello'
+     * say(['fred', 'hello']);
+     * // => 'fred says hello'
      *
      * // with a Promise
      * var numbers = Promise.all([
@@ -44519,12 +49233,12 @@ return jQuery;
     }
 
     /**
-     * Creates a function that only invokes `func` at most once per every `wait`
-     * milliseconds. The created function comes with a `cancel` method to cancel
-     * delayed invocations. Provide an options object to indicate that `func`
-     * should be invoked on the leading and/or trailing edge of the `wait` timeout.
-     * Subsequent calls to the throttled function return the result of the last
-     * `func` call.
+     * Creates a throttled function that only invokes `func` at most once per
+     * every `wait` milliseconds. The throttled function comes with a `cancel`
+     * method to cancel delayed invocations. Provide an options object to indicate
+     * that `func` should be invoked on the leading and/or trailing edge of the
+     * `wait` timeout. Subsequent calls to the throttled function return the
+     * result of the last `func` call.
      *
      * **Note:** If `leading` and `trailing` options are `true`, `func` is invoked
      * on the trailing edge of the timeout only if the the throttled function is
@@ -44570,10 +49284,7 @@ return jQuery;
         leading = 'leading' in options ? !!options.leading : leading;
         trailing = 'trailing' in options ? !!options.trailing : trailing;
       }
-      debounceOptions.leading = leading;
-      debounceOptions.maxWait = +wait;
-      debounceOptions.trailing = trailing;
-      return debounce(func, wait, debounceOptions);
+      return debounce(func, wait, { 'leading': leading, 'maxWait': +wait, 'trailing': trailing });
     }
 
     /**
@@ -44599,24 +49310,24 @@ return jQuery;
      */
     function wrap(value, wrapper) {
       wrapper = wrapper == null ? identity : wrapper;
-      return createWrapper(wrapper, PARTIAL_FLAG, null, [value], []);
+      return createWrapper(wrapper, PARTIAL_FLAG, undefined, [value], []);
     }
 
     /*------------------------------------------------------------------------*/
 
     /**
      * Creates a clone of `value`. If `isDeep` is `true` nested objects are cloned,
-     * otherwise they are assigned by reference. If `customizer` is provided it is
+     * otherwise they are assigned by reference. If `customizer` is provided it's
      * invoked to produce the cloned values. If `customizer` returns `undefined`
      * cloning is handled by the method instead. The `customizer` is bound to
-     * `thisArg` and invoked with two argument; (value [, index|key, object]).
+     * `thisArg` and invoked with up to three argument; (value [, index|key, object]).
      *
-     * **Note:** This method is loosely based on the structured clone algorithm.
+     * **Note:** This method is loosely based on the
+     * [structured clone algorithm](http://www.w3.org/TR/html5/infrastructure.html#internal-structured-cloning-algorithm).
      * The enumerable properties of `arguments` objects and objects created by
      * constructors other than `Object` are cloned to plain `Object` objects. An
      * empty object is returned for uncloneable values such as functions, DOM nodes,
-     * Maps, Sets, and WeakMaps. See the [HTML5 specification](http://www.w3.org/TR/html5/infrastructure.html#internal-structured-cloning-algorithm)
-     * for more details.
+     * Maps, Sets, and WeakMaps.
      *
      * @static
      * @memberOf _
@@ -44664,22 +49375,23 @@ return jQuery;
         customizer = isDeep;
         isDeep = false;
       }
-      customizer = typeof customizer == 'function' && bindCallback(customizer, thisArg, 1);
-      return baseClone(value, isDeep, customizer);
+      return typeof customizer == 'function'
+        ? baseClone(value, isDeep, bindCallback(customizer, thisArg, 3))
+        : baseClone(value, isDeep);
     }
 
     /**
-     * Creates a deep clone of `value`. If `customizer` is provided it is invoked
+     * Creates a deep clone of `value`. If `customizer` is provided it's invoked
      * to produce the cloned values. If `customizer` returns `undefined` cloning
      * is handled by the method instead. The `customizer` is bound to `thisArg`
-     * and invoked with two argument; (value [, index|key, object]).
+     * and invoked with up to three argument; (value [, index|key, object]).
      *
-     * **Note:** This method is loosely based on the structured clone algorithm.
+     * **Note:** This method is loosely based on the
+     * [structured clone algorithm](http://www.w3.org/TR/html5/infrastructure.html#internal-structured-cloning-algorithm).
      * The enumerable properties of `arguments` objects and objects created by
      * constructors other than `Object` are cloned to plain `Object` objects. An
      * empty object is returned for uncloneable values such as functions, DOM nodes,
-     * Maps, Sets, and WeakMaps. See the [HTML5 specification](http://www.w3.org/TR/html5/infrastructure.html#internal-structured-cloning-algorithm)
-     * for more details.
+     * Maps, Sets, and WeakMaps.
      *
      * @static
      * @memberOf _
@@ -44714,8 +49426,57 @@ return jQuery;
      * // => 20
      */
     function cloneDeep(value, customizer, thisArg) {
-      customizer = typeof customizer == 'function' && bindCallback(customizer, thisArg, 1);
-      return baseClone(value, true, customizer);
+      return typeof customizer == 'function'
+        ? baseClone(value, true, bindCallback(customizer, thisArg, 3))
+        : baseClone(value, true);
+    }
+
+    /**
+     * Checks if `value` is greater than `other`.
+     *
+     * @static
+     * @memberOf _
+     * @category Lang
+     * @param {*} value The value to compare.
+     * @param {*} other The other value to compare.
+     * @returns {boolean} Returns `true` if `value` is greater than `other`, else `false`.
+     * @example
+     *
+     * _.gt(3, 1);
+     * // => true
+     *
+     * _.gt(3, 3);
+     * // => false
+     *
+     * _.gt(1, 3);
+     * // => false
+     */
+    function gt(value, other) {
+      return value > other;
+    }
+
+    /**
+     * Checks if `value` is greater than or equal to `other`.
+     *
+     * @static
+     * @memberOf _
+     * @category Lang
+     * @param {*} value The value to compare.
+     * @param {*} other The other value to compare.
+     * @returns {boolean} Returns `true` if `value` is greater than or equal to `other`, else `false`.
+     * @example
+     *
+     * _.gte(3, 1);
+     * // => true
+     *
+     * _.gte(3, 3);
+     * // => true
+     *
+     * _.gte(1, 3);
+     * // => false
+     */
+    function gte(value, other) {
+      return value >= other;
     }
 
     /**
@@ -44735,8 +49496,8 @@ return jQuery;
      * // => false
      */
     function isArguments(value) {
-      var length = isObjectLike(value) ? value.length : undefined;
-      return (isLength(length) && objToString.call(value) == argsTag) || false;
+      return isObjectLike(value) && isArrayLike(value) &&
+        hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee');
     }
 
     /**
@@ -44756,7 +49517,7 @@ return jQuery;
      * // => false
      */
     var isArray = nativeIsArray || function(value) {
-      return (isObjectLike(value) && isLength(value.length) && objToString.call(value) == arrayTag) || false;
+      return isObjectLike(value) && isLength(value.length) && objToString.call(value) == arrayTag;
     };
 
     /**
@@ -44776,7 +49537,7 @@ return jQuery;
      * // => false
      */
     function isBoolean(value) {
-      return (value === true || value === false || isObjectLike(value) && objToString.call(value) == boolTag) || false;
+      return value === true || value === false || (isObjectLike(value) && objToString.call(value) == boolTag);
     }
 
     /**
@@ -44796,7 +49557,7 @@ return jQuery;
      * // => false
      */
     function isDate(value) {
-      return (isObjectLike(value) && objToString.call(value) == dateTag) || false;
+      return isObjectLike(value) && objToString.call(value) == dateTag;
     }
 
     /**
@@ -44816,18 +49577,11 @@ return jQuery;
      * // => false
      */
     function isElement(value) {
-      return (value && value.nodeType === 1 && isObjectLike(value) &&
-        objToString.call(value).indexOf('Element') > -1) || false;
-    }
-    // Fallback for environments without DOM support.
-    if (!support.dom) {
-      isElement = function(value) {
-        return (value && value.nodeType === 1 && isObjectLike(value) && !isPlainObject(value)) || false;
-      };
+      return !!value && value.nodeType === 1 && isObjectLike(value) && !isPlainObject(value);
     }
 
     /**
-     * Checks if `value` is empty. A value is considered empty unless it is an
+     * Checks if `value` is empty. A value is considered empty unless it's an
      * `arguments` object, array, string, or jQuery-like collection with a length
      * greater than `0` or an object with own enumerable properties.
      *
@@ -44857,20 +49611,19 @@ return jQuery;
       if (value == null) {
         return true;
       }
-      var length = value.length;
-      if (isLength(length) && (isArray(value) || isString(value) || isArguments(value) ||
+      if (isArrayLike(value) && (isArray(value) || isString(value) || isArguments(value) ||
           (isObjectLike(value) && isFunction(value.splice)))) {
-        return !length;
+        return !value.length;
       }
       return !keys(value).length;
     }
 
     /**
      * Performs a deep comparison between two values to determine if they are
-     * equivalent. If `customizer` is provided it is invoked to compare values.
+     * equivalent. If `customizer` is provided it's invoked to compare values.
      * If `customizer` returns `undefined` comparisons are handled by the method
-     * instead. The `customizer` is bound to `thisArg` and invoked with three
-     * arguments; (value, other [, index|key]).
+     * instead. The `customizer` is bound to `thisArg` and invoked with up to
+     * three arguments: (value, other [, index|key]).
      *
      * **Note:** This method supports comparing arrays, booleans, `Date` objects,
      * numbers, `Object` objects, regexes, and strings. Objects are compared by
@@ -44880,10 +49633,11 @@ return jQuery;
      *
      * @static
      * @memberOf _
+     * @alias eq
      * @category Lang
      * @param {*} value The value to compare.
      * @param {*} other The other value to compare.
-     * @param {Function} [customizer] The function to customize comparing values.
+     * @param {Function} [customizer] The function to customize value comparisons.
      * @param {*} [thisArg] The `this` binding of `customizer`.
      * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
      * @example
@@ -44909,12 +49663,9 @@ return jQuery;
      * // => true
      */
     function isEqual(value, other, customizer, thisArg) {
-      customizer = typeof customizer == 'function' && bindCallback(customizer, thisArg, 3);
-      if (!customizer && isStrictComparable(value) && isStrictComparable(other)) {
-        return value === other;
-      }
+      customizer = typeof customizer == 'function' ? bindCallback(customizer, thisArg, 3) : undefined;
       var result = customizer ? customizer(value, other) : undefined;
-      return typeof result == 'undefined' ? baseIsEqual(value, other, customizer) : !!result;
+      return  result === undefined ? baseIsEqual(value, other, customizer) : !!result;
     }
 
     /**
@@ -44935,15 +49686,13 @@ return jQuery;
      * // => false
      */
     function isError(value) {
-      return (isObjectLike(value) && typeof value.message == 'string' && objToString.call(value) == errorTag) || false;
+      return isObjectLike(value) && typeof value.message == 'string' && objToString.call(value) == errorTag;
     }
 
     /**
      * Checks if `value` is a finite primitive number.
      *
-     * **Note:** This method is based on ES `Number.isFinite`. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.isfinite)
-     * for more details.
+     * **Note:** This method is based on [`Number.isFinite`](http://ecma-international.org/ecma-262/6.0/#sec-number.isfinite).
      *
      * @static
      * @memberOf _
@@ -44967,9 +49716,9 @@ return jQuery;
      * _.isFinite(Infinity);
      * // => false
      */
-    var isFinite = nativeNumIsFinite || function(value) {
+    function isFinite(value) {
       return typeof value == 'number' && nativeIsFinite(value);
-    };
+    }
 
     /**
      * Checks if `value` is classified as a `Function` object.
@@ -44987,18 +49736,16 @@ return jQuery;
      * _.isFunction(/abc/);
      * // => false
      */
-    var isFunction = !(baseIsFunction(/x/) || (Uint8Array && !baseIsFunction(Uint8Array))) ? baseIsFunction : function(value) {
+    function isFunction(value) {
       // The use of `Object#toString` avoids issues with the `typeof` operator
       // in older versions of Chrome and Safari which return 'function' for regexes
-      // and Safari 8 equivalents which return 'object' for typed array constructors.
-      return objToString.call(value) == funcTag;
-    };
+      // and Safari 8 which returns 'object' for typed array constructors.
+      return isObject(value) && objToString.call(value) == funcTag;
+    }
 
     /**
-     * Checks if `value` is the language type of `Object`.
+     * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
      * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-     *
-     * **Note:** See the [ES5 spec](https://es5.github.io/#x8) for more details.
      *
      * @static
      * @memberOf _
@@ -45020,15 +49767,15 @@ return jQuery;
       // Avoid a V8 JIT bug in Chrome 19-20.
       // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
       var type = typeof value;
-      return type == 'function' || (value && type == 'object') || false;
+      return !!value && (type == 'object' || type == 'function');
     }
 
     /**
      * Performs a deep comparison between `object` and `source` to determine if
      * `object` contains equivalent property values. If `customizer` is provided
-     * it is invoked to compare values. If `customizer` returns `undefined`
+     * it's invoked to compare values. If `customizer` returns `undefined`
      * comparisons are handled by the method instead. The `customizer` is bound
-     * to `thisArg` and invoked with three arguments; (value, other, index|key).
+     * to `thisArg` and invoked with three arguments: (value, other, index|key).
      *
      * **Note:** This method supports comparing properties of arrays, booleans,
      * `Date` objects, numbers, `Object` objects, regexes, and strings. Functions
@@ -45040,7 +49787,7 @@ return jQuery;
      * @category Lang
      * @param {Object} object The object to inspect.
      * @param {Object} source The object of property values to match.
-     * @param {Function} [customizer] The function to customize comparing values.
+     * @param {Function} [customizer] The function to customize value comparisons.
      * @param {*} [thisArg] The `this` binding of `customizer`.
      * @returns {boolean} Returns `true` if `object` is a match, else `false`.
      * @example
@@ -45063,34 +49810,15 @@ return jQuery;
      * // => true
      */
     function isMatch(object, source, customizer, thisArg) {
-      var props = keys(source),
-          length = props.length;
-
-      customizer = typeof customizer == 'function' && bindCallback(customizer, thisArg, 3);
-      if (!customizer && length == 1) {
-        var key = props[0],
-            value = source[key];
-
-        if (isStrictComparable(value)) {
-          return object != null && value === object[key] && hasOwnProperty.call(object, key);
-        }
-      }
-      var values = Array(length),
-          strictCompareFlags = Array(length);
-
-      while (length--) {
-        value = values[length] = source[props[length]];
-        strictCompareFlags[length] = isStrictComparable(value);
-      }
-      return baseIsMatch(object, props, values, strictCompareFlags, customizer);
+      customizer = typeof customizer == 'function' ? bindCallback(customizer, thisArg, 3) : undefined;
+      return baseIsMatch(object, getMatchData(source), customizer);
     }
 
     /**
      * Checks if `value` is `NaN`.
      *
-     * **Note:** This method is not the same as native `isNaN` which returns `true`
-     * for `undefined` and other non-numeric values. See the [ES5 spec](https://es5.github.io/#x15.1.2.4)
-     * for more details.
+     * **Note:** This method is not the same as [`isNaN`](https://es5.github.io/#x15.1.2.4)
+     * which returns `true` for `undefined` and other non-numeric values.
      *
      * @static
      * @memberOf _
@@ -45137,10 +49865,10 @@ return jQuery;
       if (value == null) {
         return false;
       }
-      if (objToString.call(value) == funcTag) {
-        return reNative.test(fnToString.call(value));
+      if (isFunction(value)) {
+        return reIsNative.test(fnToString.call(value));
       }
-      return (isObjectLike(value) && reHostCtor.test(value)) || false;
+      return isObjectLike(value) && reIsHostCtor.test(value);
     }
 
     /**
@@ -45186,7 +49914,7 @@ return jQuery;
      * // => false
      */
     function isNumber(value) {
-      return typeof value == 'number' || (isObjectLike(value) && objToString.call(value) == numberTag) || false;
+      return typeof value == 'number' || (isObjectLike(value) && objToString.call(value) == numberTag);
     }
 
     /**
@@ -45219,17 +49947,26 @@ return jQuery;
      * _.isPlainObject(Object.create(null));
      * // => true
      */
-    var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
-      if (!(value && objToString.call(value) == objectTag)) {
+    function isPlainObject(value) {
+      var Ctor;
+
+      // Exit early for non `Object` objects.
+      if (!(isObjectLike(value) && objToString.call(value) == objectTag && !isArguments(value)) ||
+          (!hasOwnProperty.call(value, 'constructor') && (Ctor = value.constructor, typeof Ctor == 'function' && !(Ctor instanceof Ctor)))) {
         return false;
       }
-      var valueOf = value.valueOf,
-          objProto = isNative(valueOf) && (objProto = getPrototypeOf(valueOf)) && getPrototypeOf(objProto);
-
-      return objProto
-        ? (value == objProto || getPrototypeOf(value) == objProto)
-        : shimIsPlainObject(value);
-    };
+      // IE < 9 iterates inherited properties before own properties. If the first
+      // iterated property is an object's own property then there are no inherited
+      // enumerable properties.
+      var result;
+      // In most environments an object's own properties are iterated before
+      // its inherited properties. If the last iterated property is an object's
+      // own property then there are no inherited enumerable properties.
+      baseForIn(value, function(subValue, key) {
+        result = key;
+      });
+      return result === undefined || hasOwnProperty.call(value, result);
+    }
 
     /**
      * Checks if `value` is classified as a `RegExp` object.
@@ -45248,7 +49985,7 @@ return jQuery;
      * // => false
      */
     function isRegExp(value) {
-      return (isObjectLike(value) && objToString.call(value) == regexpTag) || false;
+      return isObject(value) && objToString.call(value) == regexpTag;
     }
 
     /**
@@ -45268,7 +50005,7 @@ return jQuery;
      * // => false
      */
     function isString(value) {
-      return typeof value == 'string' || (isObjectLike(value) && objToString.call(value) == stringTag) || false;
+      return typeof value == 'string' || (isObjectLike(value) && objToString.call(value) == stringTag);
     }
 
     /**
@@ -45288,7 +50025,7 @@ return jQuery;
      * // => false
      */
     function isTypedArray(value) {
-      return (isObjectLike(value) && isLength(value.length) && typedArrayTags[objToString.call(value)]) || false;
+      return isObjectLike(value) && isLength(value.length) && !!typedArrayTags[objToString.call(value)];
     }
 
     /**
@@ -45308,7 +50045,55 @@ return jQuery;
      * // => false
      */
     function isUndefined(value) {
-      return typeof value == 'undefined';
+      return value === undefined;
+    }
+
+    /**
+     * Checks if `value` is less than `other`.
+     *
+     * @static
+     * @memberOf _
+     * @category Lang
+     * @param {*} value The value to compare.
+     * @param {*} other The other value to compare.
+     * @returns {boolean} Returns `true` if `value` is less than `other`, else `false`.
+     * @example
+     *
+     * _.lt(1, 3);
+     * // => true
+     *
+     * _.lt(3, 3);
+     * // => false
+     *
+     * _.lt(3, 1);
+     * // => false
+     */
+    function lt(value, other) {
+      return value < other;
+    }
+
+    /**
+     * Checks if `value` is less than or equal to `other`.
+     *
+     * @static
+     * @memberOf _
+     * @category Lang
+     * @param {*} value The value to compare.
+     * @param {*} other The other value to compare.
+     * @returns {boolean} Returns `true` if `value` is less than or equal to `other`, else `false`.
+     * @example
+     *
+     * _.lte(1, 3);
+     * // => true
+     *
+     * _.lte(3, 3);
+     * // => true
+     *
+     * _.lte(3, 1);
+     * // => false
+     */
+    function lte(value, other) {
+      return value <= other;
     }
 
     /**
@@ -45327,7 +50112,7 @@ return jQuery;
      * // => [2, 3]
      */
     function toArray(value) {
-      var length = value ? value.length : 0;
+      var length = value ? getLength(value) : 0;
       if (!isLength(length)) {
         return values(value);
       }
@@ -45367,11 +50152,64 @@ return jQuery;
     /*------------------------------------------------------------------------*/
 
     /**
+     * Recursively merges own enumerable properties of the source object(s), that
+     * don't resolve to `undefined` into the destination object. Subsequent sources
+     * overwrite property assignments of previous sources. If `customizer` is
+     * provided it's invoked to produce the merged values of the destination and
+     * source properties. If `customizer` returns `undefined` merging is handled
+     * by the method instead. The `customizer` is bound to `thisArg` and invoked
+     * with five arguments: (objectValue, sourceValue, key, object, source).
+     *
+     * @static
+     * @memberOf _
+     * @category Object
+     * @param {Object} object The destination object.
+     * @param {...Object} [sources] The source objects.
+     * @param {Function} [customizer] The function to customize assigned values.
+     * @param {*} [thisArg] The `this` binding of `customizer`.
+     * @returns {Object} Returns `object`.
+     * @example
+     *
+     * var users = {
+     *   'data': [{ 'user': 'barney' }, { 'user': 'fred' }]
+     * };
+     *
+     * var ages = {
+     *   'data': [{ 'age': 36 }, { 'age': 40 }]
+     * };
+     *
+     * _.merge(users, ages);
+     * // => { 'data': [{ 'user': 'barney', 'age': 36 }, { 'user': 'fred', 'age': 40 }] }
+     *
+     * // using a customizer callback
+     * var object = {
+     *   'fruits': ['apple'],
+     *   'vegetables': ['beet']
+     * };
+     *
+     * var other = {
+     *   'fruits': ['banana'],
+     *   'vegetables': ['carrot']
+     * };
+     *
+     * _.merge(object, other, function(a, b) {
+     *   if (_.isArray(a)) {
+     *     return a.concat(b);
+     *   }
+     * });
+     * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot'] }
+     */
+    var merge = createAssigner(baseMerge);
+
+    /**
      * Assigns own enumerable properties of source object(s) to the destination
      * object. Subsequent sources overwrite property assignments of previous sources.
-     * If `customizer` is provided it is invoked to produce the assigned values.
-     * The `customizer` is bound to `thisArg` and invoked with five arguments;
+     * If `customizer` is provided it's invoked to produce the assigned values.
+     * The `customizer` is bound to `thisArg` and invoked with five arguments:
      * (objectValue, sourceValue, key, object, source).
+     *
+     * **Note:** This method mutates `object` and is based on
+     * [`Object.assign`](http://ecma-international.org/ecma-262/6.0/#sec-object.assign).
      *
      * @static
      * @memberOf _
@@ -45379,7 +50217,7 @@ return jQuery;
      * @category Object
      * @param {Object} object The destination object.
      * @param {...Object} [sources] The source objects.
-     * @param {Function} [customizer] The function to customize assigning values.
+     * @param {Function} [customizer] The function to customize assigned values.
      * @param {*} [thisArg] The `this` binding of `customizer`.
      * @returns {Object} Returns `object`.
      * @example
@@ -45389,13 +50227,17 @@ return jQuery;
      *
      * // using a customizer callback
      * var defaults = _.partialRight(_.assign, function(value, other) {
-     *   return typeof value == 'undefined' ? other : value;
+     *   return _.isUndefined(value) ? other : value;
      * });
      *
      * defaults({ 'user': 'barney' }, { 'age': 36 }, { 'user': 'fred' });
      * // => { 'user': 'barney', 'age': 36 }
      */
-    var assign = createAssigner(baseAssign);
+    var assign = createAssigner(function(object, source, customizer) {
+      return customizer
+        ? assignWith(object, source, customizer)
+        : baseAssign(object, source);
+    });
 
     /**
      * Creates an object that inherits from the given `prototype` object. If a
@@ -45434,15 +50276,17 @@ return jQuery;
     function create(prototype, properties, guard) {
       var result = baseCreate(prototype);
       if (guard && isIterateeCall(prototype, properties, guard)) {
-        properties = null;
+        properties = undefined;
       }
-      return properties ? baseCopy(properties, result, keys(properties)) : result;
+      return properties ? baseAssign(result, properties) : result;
     }
 
     /**
      * Assigns own enumerable properties of source object(s) to the destination
      * object for all destination properties that resolve to `undefined`. Once a
      * property is set, additional values of the same property are ignored.
+     *
+     * **Note:** This method mutates `object`.
      *
      * @static
      * @memberOf _
@@ -45455,18 +50299,31 @@ return jQuery;
      * _.defaults({ 'user': 'barney' }, { 'age': 36 }, { 'user': 'fred' });
      * // => { 'user': 'barney', 'age': 36 }
      */
-    function defaults(object) {
-      if (object == null) {
-        return object;
-      }
-      var args = arrayCopy(arguments);
-      args.push(assignDefaults);
-      return assign.apply(undefined, args);
-    }
+    var defaults = createDefaults(assign, assignDefaults);
 
     /**
-     * This method is like `_.findIndex` except that it returns the key of the
-     * first element `predicate` returns truthy for, instead of the element itself.
+     * This method is like `_.defaults` except that it recursively assigns
+     * default properties.
+     *
+     * **Note:** This method mutates `object`.
+     *
+     * @static
+     * @memberOf _
+     * @category Object
+     * @param {Object} object The destination object.
+     * @param {...Object} [sources] The source objects.
+     * @returns {Object} Returns `object`.
+     * @example
+     *
+     * _.defaultsDeep({ 'user': { 'name': 'barney' } }, { 'user': { 'name': 'fred', 'age': 36 } });
+     * // => { 'user': { 'name': 'barney', 'age': 36 } }
+     *
+     */
+    var defaultsDeep = createDefaults(merge, mergeDefaults);
+
+    /**
+     * This method is like `_.find` except that it returns the key of the first
+     * element `predicate` returns truthy for instead of the element itself.
      *
      * If a property name is provided for `predicate` the created `_.property`
      * style callback returns the property value of the given element.
@@ -45512,10 +50369,7 @@ return jQuery;
      * _.findKey(users, 'active');
      * // => 'barney'
      */
-    function findKey(object, predicate, thisArg) {
-      predicate = getCallback(predicate, thisArg, 3);
-      return baseFind(object, predicate, baseForOwn, true);
-    }
+    var findKey = createFindKey(baseForOwn);
 
     /**
      * This method is like `_.findKey` except that it iterates over elements of
@@ -45565,15 +50419,12 @@ return jQuery;
      * _.findLastKey(users, 'active');
      * // => 'pebbles'
      */
-    function findLastKey(object, predicate, thisArg) {
-      predicate = getCallback(predicate, thisArg, 3);
-      return baseFind(object, predicate, baseForOwnRight, true);
-    }
+    var findLastKey = createFindKey(baseForOwnRight);
 
     /**
      * Iterates over own and inherited enumerable properties of an object invoking
      * `iteratee` for each property. The `iteratee` is bound to `thisArg` and invoked
-     * with three arguments; (value, key, object). Iterator functions may exit
+     * with three arguments: (value, key, object). Iteratee functions may exit
      * iteration early by explicitly returning `false`.
      *
      * @static
@@ -45597,12 +50448,7 @@ return jQuery;
      * });
      * // => logs 'a', 'b', and 'c' (iteration order is not guaranteed)
      */
-    function forIn(object, iteratee, thisArg) {
-      if (typeof iteratee != 'function' || typeof thisArg != 'undefined') {
-        iteratee = bindCallback(iteratee, thisArg, 3);
-      }
-      return baseFor(object, iteratee, keysIn);
-    }
+    var forIn = createForIn(baseFor);
 
     /**
      * This method is like `_.forIn` except that it iterates over properties of
@@ -45629,15 +50475,12 @@ return jQuery;
      * });
      * // => logs 'c', 'b', and 'a' assuming `_.forIn ` logs 'a', 'b', and 'c'
      */
-    function forInRight(object, iteratee, thisArg) {
-      iteratee = bindCallback(iteratee, thisArg, 3);
-      return baseForRight(object, iteratee, keysIn);
-    }
+    var forInRight = createForIn(baseForRight);
 
     /**
      * Iterates over own enumerable properties of an object invoking `iteratee`
      * for each property. The `iteratee` is bound to `thisArg` and invoked with
-     * three arguments; (value, key, object). Iterator functions may exit iteration
+     * three arguments: (value, key, object). Iteratee functions may exit iteration
      * early by explicitly returning `false`.
      *
      * @static
@@ -45661,12 +50504,7 @@ return jQuery;
      * });
      * // => logs 'a' and 'b' (iteration order is not guaranteed)
      */
-    function forOwn(object, iteratee, thisArg) {
-      if (typeof iteratee != 'function' || typeof thisArg != 'undefined') {
-        iteratee = bindCallback(iteratee, thisArg, 3);
-      }
-      return baseForOwn(object, iteratee);
-    }
+    var forOwn = createForOwn(baseForOwn);
 
     /**
      * This method is like `_.forOwn` except that it iterates over properties of
@@ -45693,10 +50531,7 @@ return jQuery;
      * });
      * // => logs 'b' and 'a' assuming `_.forOwn` logs 'a' and 'b'
      */
-    function forOwnRight(object, iteratee, thisArg) {
-      iteratee = bindCallback(iteratee, thisArg, 3);
-      return baseForRight(object, iteratee, keys);
-    }
+    var forOwnRight = createForOwn(baseForOwnRight);
 
     /**
      * Creates an array of function property names from all enumerable properties,
@@ -45718,24 +50553,72 @@ return jQuery;
     }
 
     /**
-     * Checks if `key` exists as a direct property of `object` instead of an
-     * inherited property.
+     * Gets the property value at `path` of `object`. If the resolved value is
+     * `undefined` the `defaultValue` is used in its place.
      *
      * @static
      * @memberOf _
      * @category Object
-     * @param {Object} object The object to inspect.
-     * @param {string} key The key to check.
-     * @returns {boolean} Returns `true` if `key` is a direct property, else `false`.
+     * @param {Object} object The object to query.
+     * @param {Array|string} path The path of the property to get.
+     * @param {*} [defaultValue] The value returned if the resolved value is `undefined`.
+     * @returns {*} Returns the resolved value.
      * @example
      *
-     * var object = { 'a': 1, 'b': 2, 'c': 3 };
+     * var object = { 'a': [{ 'b': { 'c': 3 } }] };
      *
-     * _.has(object, 'b');
+     * _.get(object, 'a[0].b.c');
+     * // => 3
+     *
+     * _.get(object, ['a', '0', 'b', 'c']);
+     * // => 3
+     *
+     * _.get(object, 'a.b.c', 'default');
+     * // => 'default'
+     */
+    function get(object, path, defaultValue) {
+      var result = object == null ? undefined : baseGet(object, toPath(path), (path + ''));
+      return result === undefined ? defaultValue : result;
+    }
+
+    /**
+     * Checks if `path` is a direct property.
+     *
+     * @static
+     * @memberOf _
+     * @category Object
+     * @param {Object} object The object to query.
+     * @param {Array|string} path The path to check.
+     * @returns {boolean} Returns `true` if `path` is a direct property, else `false`.
+     * @example
+     *
+     * var object = { 'a': { 'b': { 'c': 3 } } };
+     *
+     * _.has(object, 'a');
+     * // => true
+     *
+     * _.has(object, 'a.b.c');
+     * // => true
+     *
+     * _.has(object, ['a', 'b', 'c']);
      * // => true
      */
-    function has(object, key) {
-      return object ? hasOwnProperty.call(object, key) : false;
+    function has(object, path) {
+      if (object == null) {
+        return false;
+      }
+      var result = hasOwnProperty.call(object, path);
+      if (!result && !isKey(path)) {
+        path = toPath(path);
+        object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+        if (object == null) {
+          return false;
+        }
+        path = last(path);
+        result = hasOwnProperty.call(object, path);
+      }
+      return result || (isLength(object.length) && isIndex(path, object.length) &&
+        (isArray(object) || isArguments(object)));
     }
 
     /**
@@ -45763,7 +50646,7 @@ return jQuery;
      */
     function invert(object, multiValue, guard) {
       if (guard && isIterateeCall(object, multiValue, guard)) {
-        multiValue = null;
+        multiValue = undefined;
       }
       var index = -1,
           props = keys(object),
@@ -45792,13 +50675,13 @@ return jQuery;
      * Creates an array of the own enumerable property names of `object`.
      *
      * **Note:** Non-object values are coerced to objects. See the
-     * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.keys)
+     * [ES spec](http://ecma-international.org/ecma-262/6.0/#sec-object.keys)
      * for more details.
      *
      * @static
      * @memberOf _
      * @category Object
-     * @param {Object} object The object to inspect.
+     * @param {Object} object The object to query.
      * @returns {Array} Returns the array of property names.
      * @example
      *
@@ -45816,12 +50699,9 @@ return jQuery;
      * // => ['0', '1']
      */
     var keys = !nativeKeys ? shimKeys : function(object) {
-      if (object) {
-        var Ctor = object.constructor,
-            length = object.length;
-      }
+      var Ctor = object == null ? undefined : object.constructor;
       if ((typeof Ctor == 'function' && Ctor.prototype === object) ||
-         (typeof object != 'function' && (length && isLength(length)))) {
+          (typeof object != 'function' && isArrayLike(object))) {
         return shimKeys(object);
       }
       return isObject(object) ? nativeKeys(object) : [];
@@ -45835,7 +50715,7 @@ return jQuery;
      * @static
      * @memberOf _
      * @category Object
-     * @param {Object} object The object to inspect.
+     * @param {Object} object The object to query.
      * @returns {Array} Returns the array of property names.
      * @example
      *
@@ -45858,7 +50738,7 @@ return jQuery;
       }
       var length = object.length;
       length = (length && isLength(length) &&
-        (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) || 0;
+        (isArray(object) || isArguments(object)) && length) || 0;
 
       var Ctor = object.constructor,
           index = -1,
@@ -45879,9 +50759,31 @@ return jQuery;
     }
 
     /**
+     * The opposite of `_.mapValues`; this method creates an object with the
+     * same values as `object` and keys generated by running each own enumerable
+     * property of `object` through `iteratee`.
+     *
+     * @static
+     * @memberOf _
+     * @category Object
+     * @param {Object} object The object to iterate over.
+     * @param {Function|Object|string} [iteratee=_.identity] The function invoked
+     *  per iteration.
+     * @param {*} [thisArg] The `this` binding of `iteratee`.
+     * @returns {Object} Returns the new mapped object.
+     * @example
+     *
+     * _.mapKeys({ 'a': 1, 'b': 2 }, function(value, key) {
+     *   return key + value;
+     * });
+     * // => { 'a1': 1, 'b2': 2 }
+     */
+    var mapKeys = createObjectMapper(true);
+
+    /**
      * Creates an object with the same keys as `object` and values generated by
      * running each own enumerable property of `object` through `iteratee`. The
-     * iteratee function is bound to `thisArg` and invoked with three arguments;
+     * iteratee function is bound to `thisArg` and invoked with three arguments:
      * (value, key, object).
      *
      * If a property name is provided for `iteratee` the created `_.property`
@@ -45919,74 +50821,11 @@ return jQuery;
      * _.mapValues(users, 'age');
      * // => { 'fred': 40, 'pebbles': 1 } (iteration order is not guaranteed)
      */
-    function mapValues(object, iteratee, thisArg) {
-      var result = {};
-      iteratee = getCallback(iteratee, thisArg, 3);
-
-      baseForOwn(object, function(value, key, object) {
-        result[key] = iteratee(value, key, object);
-      });
-      return result;
-    }
-
-    /**
-     * Recursively merges own enumerable properties of the source object(s), that
-     * don't resolve to `undefined` into the destination object. Subsequent sources
-     * overwrite property assignments of previous sources. If `customizer` is
-     * provided it is invoked to produce the merged values of the destination and
-     * source properties. If `customizer` returns `undefined` merging is handled
-     * by the method instead. The `customizer` is bound to `thisArg` and invoked
-     * with five arguments; (objectValue, sourceValue, key, object, source).
-     *
-     * @static
-     * @memberOf _
-     * @category Object
-     * @param {Object} object The destination object.
-     * @param {...Object} [sources] The source objects.
-     * @param {Function} [customizer] The function to customize merging properties.
-     * @param {*} [thisArg] The `this` binding of `customizer`.
-     * @returns {Object} Returns `object`.
-     * @example
-     *
-     * var users = {
-     *   'data': [{ 'user': 'barney' }, { 'user': 'fred' }]
-     * };
-     *
-     * var ages = {
-     *   'data': [{ 'age': 36 }, { 'age': 40 }]
-     * };
-     *
-     * _.merge(users, ages);
-     * // => { 'data': [{ 'user': 'barney', 'age': 36 }, { 'user': 'fred', 'age': 40 }] }
-     *
-     * // using a customizer callback
-     * var object = {
-     *   'fruits': ['apple'],
-     *   'vegetables': ['beet']
-     * };
-     *
-     * var other = {
-     *   'fruits': ['banana'],
-     *   'vegetables': ['carrot']
-     * };
-     *
-     * _.merge(object, other, function(a, b) {
-     *   if (_.isArray(a)) {
-     *     return a.concat(b);
-     *   }
-     * });
-     * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot'] }
-     */
-    var merge = createAssigner(baseMerge);
+    var mapValues = createObjectMapper();
 
     /**
      * The opposite of `_.pick`; this method creates an object composed of the
      * own and inherited enumerable properties of `object` that are not omitted.
-     * Property names may be specified as individual arguments or as arrays of
-     * property names. If `predicate` is provided it is invoked for each property
-     * of `object` omitting the properties `predicate` returns truthy for. The
-     * predicate is bound to `thisArg` and invoked with three arguments;
-     * (value, key, object).
      *
      * @static
      * @memberOf _
@@ -46007,19 +50846,19 @@ return jQuery;
      * _.omit(object, _.isNumber);
      * // => { 'user': 'fred' }
      */
-    function omit(object, predicate, thisArg) {
+    var omit = restParam(function(object, props) {
       if (object == null) {
         return {};
       }
-      if (typeof predicate != 'function') {
-        var props = arrayMap(baseFlatten(arguments, false, false, 1), String);
+      if (typeof props[0] != 'function') {
+        var props = arrayMap(baseFlatten(props), String);
         return pickByArray(object, baseDifference(keysIn(object), props));
       }
-      predicate = bindCallback(predicate, thisArg, 3);
+      var predicate = bindCallback(props[0], props[1], 3);
       return pickByCallback(object, function(value, key, object) {
         return !predicate(value, key, object);
       });
-    }
+    });
 
     /**
      * Creates a two dimensional array of the key-value pairs for `object`,
@@ -46028,7 +50867,7 @@ return jQuery;
      * @static
      * @memberOf _
      * @category Object
-     * @param {Object} object The object to inspect.
+     * @param {Object} object The object to query.
      * @returns {Array} Returns the new array of key-value pairs.
      * @example
      *
@@ -46036,6 +50875,8 @@ return jQuery;
      * // => [['barney', 36], ['fred', 40]] (iteration order is not guaranteed)
      */
     function pairs(object) {
+      object = toObject(object);
+
       var index = -1,
           props = keys(object),
           length = props.length,
@@ -46051,9 +50892,9 @@ return jQuery;
     /**
      * Creates an object composed of the picked `object` properties. Property
      * names may be specified as individual arguments or as arrays of property
-     * names. If `predicate` is provided it is invoked for each property of `object`
+     * names. If `predicate` is provided it's invoked for each property of `object`
      * picking the properties `predicate` returns truthy for. The predicate is
-     * bound to `thisArg` and invoked with three arguments; (value, key, object).
+     * bound to `thisArg` and invoked with three arguments: (value, key, object).
      *
      * @static
      * @memberOf _
@@ -46074,51 +50915,103 @@ return jQuery;
      * _.pick(object, _.isString);
      * // => { 'user': 'fred' }
      */
-    function pick(object, predicate, thisArg) {
+    var pick = restParam(function(object, props) {
       if (object == null) {
         return {};
       }
-      return typeof predicate == 'function'
-        ? pickByCallback(object, bindCallback(predicate, thisArg, 3))
-        : pickByArray(object, baseFlatten(arguments, false, false, 1));
-    }
+      return typeof props[0] == 'function'
+        ? pickByCallback(object, bindCallback(props[0], props[1], 3))
+        : pickByArray(object, baseFlatten(props));
+    });
 
     /**
-     * Resolves the value of property `key` on `object`. If the value of `key` is
-     * a function it is invoked with the `this` binding of `object` and its result
-     * is returned, else the property value is returned. If the property value is
-     * `undefined` the `defaultValue` is used in its place.
+     * This method is like `_.get` except that if the resolved value is a function
+     * it's invoked with the `this` binding of its parent object and its result
+     * is returned.
      *
      * @static
      * @memberOf _
      * @category Object
      * @param {Object} object The object to query.
-     * @param {string} key The key of the property to resolve.
-     * @param {*} [defaultValue] The value returned if the property value
-     *  resolves to `undefined`.
+     * @param {Array|string} path The path of the property to resolve.
+     * @param {*} [defaultValue] The value returned if the resolved value is `undefined`.
      * @returns {*} Returns the resolved value.
      * @example
      *
-     * var object = { 'user': 'fred', 'age': _.constant(40) };
+     * var object = { 'a': [{ 'b': { 'c1': 3, 'c2': _.constant(4) } }] };
      *
-     * _.result(object, 'user');
-     * // => 'fred'
+     * _.result(object, 'a[0].b.c1');
+     * // => 3
      *
-     * _.result(object, 'age');
-     * // => 40
+     * _.result(object, 'a[0].b.c2');
+     * // => 4
      *
-     * _.result(object, 'status', 'busy');
-     * // => 'busy'
+     * _.result(object, 'a.b.c', 'default');
+     * // => 'default'
      *
-     * _.result(object, 'status', _.constant('busy'));
-     * // => 'busy'
+     * _.result(object, 'a.b.c', _.constant('default'));
+     * // => 'default'
      */
-    function result(object, key, defaultValue) {
-      var value = object == null ? undefined : object[key];
-      if (typeof value == 'undefined') {
-        value = defaultValue;
+    function result(object, path, defaultValue) {
+      var result = object == null ? undefined : object[path];
+      if (result === undefined) {
+        if (object != null && !isKey(path, object)) {
+          path = toPath(path);
+          object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+          result = object == null ? undefined : object[last(path)];
+        }
+        result = result === undefined ? defaultValue : result;
       }
-      return isFunction(value) ? value.call(object) : value;
+      return isFunction(result) ? result.call(object) : result;
+    }
+
+    /**
+     * Sets the property value of `path` on `object`. If a portion of `path`
+     * does not exist it's created.
+     *
+     * @static
+     * @memberOf _
+     * @category Object
+     * @param {Object} object The object to augment.
+     * @param {Array|string} path The path of the property to set.
+     * @param {*} value The value to set.
+     * @returns {Object} Returns `object`.
+     * @example
+     *
+     * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+     *
+     * _.set(object, 'a[0].b.c', 4);
+     * console.log(object.a[0].b.c);
+     * // => 4
+     *
+     * _.set(object, 'x[0].y.z', 5);
+     * console.log(object.x[0].y.z);
+     * // => 5
+     */
+    function set(object, path, value) {
+      if (object == null) {
+        return object;
+      }
+      var pathKey = (path + '');
+      path = (object[pathKey] != null || isKey(path, object)) ? [pathKey] : toPath(path);
+
+      var index = -1,
+          length = path.length,
+          lastIndex = length - 1,
+          nested = object;
+
+      while (nested != null && ++index < length) {
+        var key = path[index];
+        if (isObject(nested)) {
+          if (index == lastIndex) {
+            nested[key] = value;
+          } else if (nested[key] == null) {
+            nested[key] = isIndex(path[index + 1]) ? [] : {};
+          }
+        }
+        nested = nested[key];
+      }
+      return object;
     }
 
     /**
@@ -46126,7 +51019,7 @@ return jQuery;
      * `accumulator` object which is the result of running each of its own enumerable
      * properties through `iteratee`, with each invocation potentially mutating
      * the `accumulator` object. The `iteratee` is bound to `thisArg` and invoked
-     * with four arguments; (accumulator, value, key, object). Iterator functions
+     * with four arguments: (accumulator, value, key, object). Iteratee functions
      * may exit iteration early by explicitly returning `false`.
      *
      * @static
@@ -46160,7 +51053,7 @@ return jQuery;
           if (isArr) {
             accumulator = isArray(object) ? new Ctor : [];
           } else {
-            accumulator = baseCreate(isFunction(Ctor) && Ctor.prototype);
+            accumulator = baseCreate(isFunction(Ctor) ? Ctor.prototype : undefined);
           }
         } else {
           accumulator = {};
@@ -46232,7 +51125,7 @@ return jQuery;
 
     /**
      * Checks if `n` is between `start` and up to but not including, `end`. If
-     * `end` is not specified it is set to `start` with `start` then set to `0`.
+     * `end` is not specified it's set to `start` with `start` then set to `0`.
      *
      * @static
      * @memberOf _
@@ -46263,13 +51156,13 @@ return jQuery;
      */
     function inRange(value, start, end) {
       start = +start || 0;
-      if (typeof end === 'undefined') {
+      if (end === undefined) {
         end = start;
         start = 0;
       } else {
         end = +end || 0;
       }
-      return value >= start && value < end;
+      return value >= nativeMin(start, end) && value < nativeMax(start, end);
     }
 
     /**
@@ -46301,7 +51194,7 @@ return jQuery;
      */
     function random(min, max, floating) {
       if (floating && isIterateeCall(min, max, floating)) {
-        max = floating = null;
+        max = floating = undefined;
       }
       var noMin = min == null,
           noMax = max == null;
@@ -46337,8 +51230,7 @@ return jQuery;
     /*------------------------------------------------------------------------*/
 
     /**
-     * Converts `string` to camel case.
-     * See [Wikipedia](https://en.wikipedia.org/wiki/CamelCase) for more details.
+     * Converts `string` to [camel case](https://en.wikipedia.org/wiki/CamelCase).
      *
      * @static
      * @memberOf _
@@ -46380,9 +51272,8 @@ return jQuery;
     }
 
     /**
-     * Deburrs `string` by converting latin-1 supplementary letters to basic latin letters.
-     * See [Wikipedia](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
-     * for more details.
+     * Deburrs `string` by converting [latin-1 supplementary letters](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
+     * to basic latin letters and removing [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks).
      *
      * @static
      * @memberOf _
@@ -46396,7 +51287,7 @@ return jQuery;
      */
     function deburr(string) {
       string = baseToString(string);
-      return string && string.replace(reLatin1, deburrLetter);
+      return string && string.replace(reLatin1, deburrLetter).replace(reComboMark, '');
     }
 
     /**
@@ -46425,7 +51316,11 @@ return jQuery;
       target = (target + '');
 
       var length = string.length;
-      position = (typeof position == 'undefined' ? length : nativeMin(position < 0 ? 0 : (+position || 0), length)) - target.length;
+      position = position === undefined
+        ? length
+        : nativeMin(position < 0 ? 0 : (+position || 0), length);
+
+      position -= target.length;
       return position >= 0 && string.indexOf(target, position) == position;
     }
 
@@ -46437,19 +51332,19 @@ return jQuery;
      * use a third-party library like [_he_](https://mths.be/he).
      *
      * Though the ">" character is escaped for symmetry, characters like
-     * ">" and "/" don't require escaping in HTML and have no special meaning
+     * ">" and "/" don't need escaping in HTML and have no special meaning
      * unless they're part of a tag or unquoted attribute value.
      * See [Mathias Bynens's article](https://mathiasbynens.be/notes/ambiguous-ampersands)
      * (under "semi-related fun fact") for more details.
      *
      * Backticks are escaped because in Internet Explorer < 9, they can break out
-     * of attribute values or HTML comments. See [#102](https://html5sec.org/#102),
-     * [#108](https://html5sec.org/#108), and [#133](https://html5sec.org/#133) of
-     * the [HTML5 Security Cheatsheet](https://html5sec.org/) for more details.
-     *
-     * When working with HTML you should always quote attribute values to reduce
-     * XSS vectors. See [Ryan Grove's article](http://wonko.com/post/html-escaping)
+     * of attribute values or HTML comments. See [#59](https://html5sec.org/#59),
+     * [#102](https://html5sec.org/#102), [#108](https://html5sec.org/#108), and
+     * [#133](https://html5sec.org/#133) of the [HTML5 Security Cheatsheet](https://html5sec.org/)
      * for more details.
+     *
+     * When working with HTML you should always [quote attribute values](http://wonko.com/post/html-escaping)
+     * to reduce XSS vectors.
      *
      * @static
      * @memberOf _
@@ -46470,8 +51365,8 @@ return jQuery;
     }
 
     /**
-     * Escapes the `RegExp` special characters "\", "^", "$", ".", "|", "?", "*",
-     * "+", "(", ")", "[", "]", "{" and "}" in `string`.
+     * Escapes the `RegExp` special characters "\", "/", "^", "$", ".", "|", "?",
+     * "*", "+", "(", ")", "[", "]", "{" and "}" in `string`.
      *
      * @static
      * @memberOf _
@@ -46481,19 +51376,17 @@ return jQuery;
      * @example
      *
      * _.escapeRegExp('[lodash](https://lodash.com/)');
-     * // => '\[lodash\]\(https://lodash\.com/\)'
+     * // => '\[lodash\]\(https:\/\/lodash\.com\/\)'
      */
     function escapeRegExp(string) {
       string = baseToString(string);
       return (string && reHasRegExpChars.test(string))
-        ? string.replace(reRegExpChars, '\\$&')
-        : string;
+        ? string.replace(reRegExpChars, escapeRegExpChar)
+        : (string || '(?:)');
     }
 
     /**
-     * Converts `string` to kebab case.
-     * See [Wikipedia](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles) for
-     * more details.
+     * Converts `string` to [kebab case](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles).
      *
      * @static
      * @memberOf _
@@ -46516,9 +51409,8 @@ return jQuery;
     });
 
     /**
-     * Pads `string` on the left and right sides if it is shorter then the given
-     * padding length. The `chars` string may be truncated if the number of padding
-     * characters can't be evenly divided by the padding length.
+     * Pads `string` on the left and right sides if it's shorter than `length`.
+     * Padding characters are truncated if they can't be evenly divided by `length`.
      *
      * @static
      * @memberOf _
@@ -46547,17 +51439,16 @@ return jQuery;
         return string;
       }
       var mid = (length - strLength) / 2,
-          leftLength = floor(mid),
-          rightLength = ceil(mid);
+          leftLength = nativeFloor(mid),
+          rightLength = nativeCeil(mid);
 
-      chars = createPad('', rightLength, chars);
+      chars = createPadding('', rightLength, chars);
       return chars.slice(0, leftLength) + string + chars;
     }
 
     /**
-     * Pads `string` on the left side if it is shorter then the given padding
-     * length. The `chars` string may be truncated if the number of padding
-     * characters exceeds the padding length.
+     * Pads `string` on the left side if it's shorter than `length`. Padding
+     * characters are truncated if they exceed `length`.
      *
      * @static
      * @memberOf _
@@ -46577,15 +51468,11 @@ return jQuery;
      * _.padLeft('abc', 3);
      * // => 'abc'
      */
-    function padLeft(string, length, chars) {
-      string = baseToString(string);
-      return string && (createPad(string, length, chars) + string);
-    }
+    var padLeft = createPadDir();
 
     /**
-     * Pads `string` on the right side if it is shorter then the given padding
-     * length. The `chars` string may be truncated if the number of padding
-     * characters exceeds the padding length.
+     * Pads `string` on the right side if it's shorter than `length`. Padding
+     * characters are truncated if they exceed `length`.
      *
      * @static
      * @memberOf _
@@ -46605,18 +51492,15 @@ return jQuery;
      * _.padRight('abc', 3);
      * // => 'abc'
      */
-    function padRight(string, length, chars) {
-      string = baseToString(string);
-      return string && (string + createPad(string, length, chars));
-    }
+    var padRight = createPadDir(true);
 
     /**
      * Converts `string` to an integer of the specified radix. If `radix` is
      * `undefined` or `0`, a `radix` of `10` is used unless `value` is a hexadecimal,
      * in which case a `radix` of `16` is used.
      *
-     * **Note:** This method aligns with the ES5 implementation of `parseInt`.
-     * See the [ES5 spec](https://es5.github.io/#E) for more details.
+     * **Note:** This method aligns with the [ES5 implementation](https://es5.github.io/#E)
+     * of `parseInt`.
      *
      * @static
      * @memberOf _
@@ -46634,25 +51518,16 @@ return jQuery;
      * // => [6, 8, 10]
      */
     function parseInt(string, radix, guard) {
-      if (guard && isIterateeCall(string, radix, guard)) {
+      // Firefox < 21 and Opera < 15 follow ES3 for `parseInt`.
+      // Chrome fails to trim leading <BOM> whitespace characters.
+      // See https://code.google.com/p/v8/issues/detail?id=3109 for more details.
+      if (guard ? isIterateeCall(string, radix, guard) : radix == null) {
         radix = 0;
+      } else if (radix) {
+        radix = +radix;
       }
-      return nativeParseInt(string, radix);
-    }
-    // Fallback for environments with pre-ES5 implementations.
-    if (nativeParseInt(whitespace + '08') != 8) {
-      parseInt = function(string, radix, guard) {
-        // Firefox < 21 and Opera < 15 follow ES3 for `parseInt`.
-        // Chrome fails to trim leading <BOM> whitespace characters.
-        // See https://code.google.com/p/v8/issues/detail?id=3109 for more details.
-        if (guard ? isIterateeCall(string, radix, guard) : radix == null) {
-          radix = 0;
-        } else if (radix) {
-          radix = +radix;
-        }
-        string = trim(string);
-        return nativeParseInt(string, radix || (reHexPrefix.test(string) ? 16 : 10));
-      };
+      string = trim(string);
+      return nativeParseInt(string, radix || (reHasHexPrefix.test(string) ? 16 : 10));
     }
 
     /**
@@ -46688,7 +51563,7 @@ return jQuery;
         if (n % 2) {
           result += string;
         }
-        n = floor(n / 2);
+        n = nativeFloor(n / 2);
         string += string;
       } while (n);
 
@@ -46696,8 +51571,7 @@ return jQuery;
     }
 
     /**
-     * Converts `string` to snake case.
-     * See [Wikipedia](https://en.wikipedia.org/wiki/Snake_case) for more details.
+     * Converts `string` to [snake case](https://en.wikipedia.org/wiki/Snake_case).
      *
      * @static
      * @memberOf _
@@ -46720,9 +51594,7 @@ return jQuery;
     });
 
     /**
-     * Converts `string` to start case.
-     * See [Wikipedia](https://en.wikipedia.org/wiki/Letter_case#Stylistic_or_specialised_usage)
-     * for more details.
+     * Converts `string` to [start case](https://en.wikipedia.org/wiki/Letter_case#Stylistic_or_specialised_usage).
      *
      * @static
      * @memberOf _
@@ -46767,7 +51639,10 @@ return jQuery;
      */
     function startsWith(string, target, position) {
       string = baseToString(string);
-      position = position == null ? 0 : nativeMin(position < 0 ? 0 : (+position || 0), string.length);
+      position = position == null
+        ? 0
+        : nativeMin(position < 0 ? 0 : (+position || 0), string.length);
+
       return string.lastIndexOf(target, position) == position;
     }
 
@@ -46778,9 +51653,9 @@ return jQuery;
      * properties may be accessed as free variables in the template. If a setting
      * object is provided it takes precedence over `_.templateSettings` values.
      *
-     * **Note:** In the development build `_.template` utilizes sourceURLs for easier debugging.
-     * See the [HTML5 Rocks article on sourcemaps](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl)
-     * for more details.
+     * **Note:** In the development build `_.template` utilizes
+     * [sourceURLs](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl)
+     * for easier debugging.
      *
      * For more information on precompiling templates see
      * [lodash's custom builds documentation](https://lodash.com/custom-builds).
@@ -46873,12 +51748,12 @@ return jQuery;
       var settings = lodash.templateSettings;
 
       if (otherOptions && isIterateeCall(string, options, otherOptions)) {
-        options = otherOptions = null;
+        options = otherOptions = undefined;
       }
       string = baseToString(string);
-      options = baseAssign(baseAssign({}, otherOptions || options), settings, assignOwnDefaults);
+      options = assignWith(baseAssign({}, otherOptions || options), settings, assignOwnDefaults);
 
-      var imports = baseAssign(baseAssign({}, options.imports), settings.imports, assignOwnDefaults),
+      var imports = assignWith(baseAssign({}, options.imports), settings.imports, assignOwnDefaults),
           importsKeys = keys(imports),
           importsValues = baseValues(imports, importsKeys);
 
@@ -46992,7 +51867,7 @@ return jQuery;
      * // => 'abc'
      *
      * _.map(['  foo  ', '  bar  '], _.trim);
-     * // => ['foo', 'bar]
+     * // => ['foo', 'bar']
      */
     function trim(string, chars, guard) {
       var value = string;
@@ -47068,7 +51943,7 @@ return jQuery;
     }
 
     /**
-     * Truncates `string` if it is longer than the given maximum string length.
+     * Truncates `string` if it's longer than the given maximum string length.
      * The last characters of the truncated string are replaced with the omission
      * string which defaults to "...".
      *
@@ -47100,7 +51975,7 @@ return jQuery;
      *   'length': 24,
      *   'separator': /,? +/
      * });
-     * //=> 'hi-diddly-ho there...'
+     * // => 'hi-diddly-ho there...'
      *
      * _.trunc('hi-diddly-ho there, neighborino', {
      *   'omission': ' [...]'
@@ -47109,7 +51984,7 @@ return jQuery;
      */
     function trunc(string, options, guard) {
       if (guard && isIterateeCall(string, options, guard)) {
-        options = null;
+        options = undefined;
       }
       var length = DEFAULT_TRUNC_LENGTH,
           omission = DEFAULT_TRUNC_OMISSION;
@@ -47117,7 +51992,7 @@ return jQuery;
       if (options != null) {
         if (isObject(options)) {
           var separator = 'separator' in options ? options.separator : separator;
-          length = 'length' in options ? +options.length || 0 : length;
+          length = 'length' in options ? (+options.length || 0) : length;
           omission = 'omission' in options ? baseToString(options.omission) : omission;
         } else {
           length = +options || 0;
@@ -47204,7 +52079,7 @@ return jQuery;
      */
     function words(string, pattern, guard) {
       if (guard && isIterateeCall(string, pattern, guard)) {
-        pattern = null;
+        pattern = undefined;
       }
       string = baseToString(string);
       return string.match(pattern || reWords) || [];
@@ -47214,12 +52089,12 @@ return jQuery;
 
     /**
      * Attempts to invoke `func`, returning either the result or the caught error
-     * object. Any additional arguments are provided to `func` when it is invoked.
+     * object. Any additional arguments are provided to `func` when it's invoked.
      *
      * @static
      * @memberOf _
      * @category Utility
-     * @param {*} func The function to attempt.
+     * @param {Function} func The function to attempt.
      * @returns {*} Returns the `func` result or error object.
      * @example
      *
@@ -47232,20 +52107,13 @@ return jQuery;
      *   elements = [];
      * }
      */
-    function attempt() {
-      var func = arguments[0],
-          length = arguments.length,
-          args = Array(length ? length - 1 : 0);
-
-      while (--length > 0) {
-        args[length - 1] = arguments[length];
-      }
+    var attempt = restParam(function(func, args) {
       try {
         return func.apply(undefined, args);
       } catch(e) {
         return isError(e) ? e : new Error(e);
       }
-    }
+    });
 
     /**
      * Creates a function that invokes `func` with the `this` binding of `thisArg`
@@ -47287,7 +52155,7 @@ return jQuery;
      */
     function callback(func, thisArg, guard) {
       if (guard && isIterateeCall(func, thisArg, guard)) {
-        thisArg = null;
+        thisArg = undefined;
       }
       return isObjectLike(func)
         ? matches(func)
@@ -47336,7 +52204,7 @@ return jQuery;
     }
 
     /**
-     * Creates a function which performs a deep comparison between a given object
+     * Creates a function that performs a deep comparison between a given object
      * and `source`, returning `true` if the given object has equivalent property
      * values, else `false`.
      *
@@ -47365,7 +52233,7 @@ return jQuery;
     }
 
     /**
-     * Creates a function which compares the property value of `key` on a given
+     * Creates a function that compares the property value of `path` on a given
      * object to `value`.
      *
      * **Note:** This method supports comparing arrays, booleans, `Date` objects,
@@ -47375,33 +52243,92 @@ return jQuery;
      * @static
      * @memberOf _
      * @category Utility
-     * @param {string} key The key of the property to get.
-     * @param {*} value The value to compare.
+     * @param {Array|string} path The path of the property to get.
+     * @param {*} srcValue The value to match.
      * @returns {Function} Returns the new function.
      * @example
      *
      * var users = [
      *   { 'user': 'barney' },
-     *   { 'user': 'fred' },
-     *   { 'user': 'pebbles' }
+     *   { 'user': 'fred' }
      * ];
      *
      * _.find(users, _.matchesProperty('user', 'fred'));
-     * // => { 'user': 'fred', 'age': 40 }
+     * // => { 'user': 'fred' }
      */
-    function matchesProperty(key, value) {
-      return baseMatchesProperty(key + '', baseClone(value, true));
+    function matchesProperty(path, srcValue) {
+      return baseMatchesProperty(path, baseClone(srcValue, true));
     }
+
+    /**
+     * Creates a function that invokes the method at `path` on a given object.
+     * Any additional arguments are provided to the invoked method.
+     *
+     * @static
+     * @memberOf _
+     * @category Utility
+     * @param {Array|string} path The path of the method to invoke.
+     * @param {...*} [args] The arguments to invoke the method with.
+     * @returns {Function} Returns the new function.
+     * @example
+     *
+     * var objects = [
+     *   { 'a': { 'b': { 'c': _.constant(2) } } },
+     *   { 'a': { 'b': { 'c': _.constant(1) } } }
+     * ];
+     *
+     * _.map(objects, _.method('a.b.c'));
+     * // => [2, 1]
+     *
+     * _.invoke(_.sortBy(objects, _.method(['a', 'b', 'c'])), 'a.b.c');
+     * // => [1, 2]
+     */
+    var method = restParam(function(path, args) {
+      return function(object) {
+        return invokePath(object, path, args);
+      };
+    });
+
+    /**
+     * The opposite of `_.method`; this method creates a function that invokes
+     * the method at a given path on `object`. Any additional arguments are
+     * provided to the invoked method.
+     *
+     * @static
+     * @memberOf _
+     * @category Utility
+     * @param {Object} object The object to query.
+     * @param {...*} [args] The arguments to invoke the method with.
+     * @returns {Function} Returns the new function.
+     * @example
+     *
+     * var array = _.times(3, _.constant),
+     *     object = { 'a': array, 'b': array, 'c': array };
+     *
+     * _.map(['a[2]', 'c[0]'], _.methodOf(object));
+     * // => [2, 0]
+     *
+     * _.map([['a', '2'], ['c', '0']], _.methodOf(object));
+     * // => [2, 0]
+     */
+    var methodOf = restParam(function(object, args) {
+      return function(path) {
+        return invokePath(object, path, args);
+      };
+    });
 
     /**
      * Adds all own enumerable function properties of a source object to the
      * destination object. If `object` is a function then methods are added to
      * its prototype as well.
      *
+     * **Note:** Use `_.runInContext` to create a pristine `lodash` function to
+     * avoid conflicts caused by modifying the original.
+     *
      * @static
      * @memberOf _
      * @category Utility
-     * @param {Function|Object} [object=this] object The destination object.
+     * @param {Function|Object} [object=lodash] The destination object.
      * @param {Object} source The object of functions to add.
      * @param {Object} [options] The options object.
      * @param {boolean} [options.chain=true] Specify whether the functions added
@@ -47414,9 +52341,6 @@ return jQuery;
      *     return /[aeiou]/i.test(v);
      *   });
      * }
-     *
-     * // use `_.runInContext` to avoid potential conflicts (esp. in Node.js)
-     * var _ = require('lodash').runInContext();
      *
      * _.mixin({ 'vowels': vowels });
      * _.vowels('fred');
@@ -47432,8 +52356,8 @@ return jQuery;
     function mixin(object, source, options) {
       if (options == null) {
         var isObj = isObject(source),
-            props = isObj && keys(source),
-            methodNames = props && props.length && baseFunctions(source, props);
+            props = isObj ? keys(source) : undefined,
+            methodNames = (props && props.length) ? baseFunctions(source, props) : undefined;
 
         if (!(methodNames ? methodNames.length : isObj)) {
           methodNames = false;
@@ -47465,14 +52389,14 @@ return jQuery;
             return function() {
               var chainAll = this.__chain__;
               if (chain || chainAll) {
-                var result = object(this.__wrapped__);
-                (result.__actions__ = arrayCopy(this.__actions__)).push({ 'func': func, 'args': arguments, 'thisArg': object });
+                var result = object(this.__wrapped__),
+                    actions = result.__actions__ = arrayCopy(this.__actions__);
+
+                actions.push({ 'func': func, 'args': arguments, 'thisArg': object });
                 result.__chain__ = chainAll;
                 return result;
               }
-              var args = [this.value()];
-              push.apply(args, arguments);
-              return func.apply(object, args);
+              return func.apply(object, arrayPush([this.value()], arguments));
             };
           }(func));
         }
@@ -47493,12 +52417,12 @@ return jQuery;
      * var lodash = _.noConflict();
      */
     function noConflict() {
-      context._ = oldDash;
+      root._ = oldDash;
       return this;
     }
 
     /**
-     * A no-operation function which returns `undefined` regardless of the
+     * A no-operation function that returns `undefined` regardless of the
      * arguments it receives.
      *
      * @static
@@ -47516,61 +52440,61 @@ return jQuery;
     }
 
     /**
-     * Creates a function which returns the property value of `key` on a given object.
+     * Creates a function that returns the property value at `path` on a
+     * given object.
      *
      * @static
      * @memberOf _
      * @category Utility
-     * @param {string} key The key of the property to get.
+     * @param {Array|string} path The path of the property to get.
      * @returns {Function} Returns the new function.
      * @example
      *
-     * var users = [
-     *   { 'user': 'fred' },
-     *   { 'user': 'barney' }
+     * var objects = [
+     *   { 'a': { 'b': { 'c': 2 } } },
+     *   { 'a': { 'b': { 'c': 1 } } }
      * ];
      *
-     * var getName = _.property('user');
+     * _.map(objects, _.property('a.b.c'));
+     * // => [2, 1]
      *
-     * _.map(users, getName);
-     * // => ['fred', barney']
-     *
-     * _.pluck(_.sortBy(users, getName), 'user');
-     * // => ['barney', 'fred']
+     * _.pluck(_.sortBy(objects, _.property(['a', 'b', 'c'])), 'a.b.c');
+     * // => [1, 2]
      */
-    function property(key) {
-      return baseProperty(key + '');
+    function property(path) {
+      return isKey(path) ? baseProperty(path) : basePropertyDeep(path);
     }
 
     /**
-     * The inverse of `_.property`; this method creates a function which returns
-     * the property value of a given key on `object`.
+     * The opposite of `_.property`; this method creates a function that returns
+     * the property value at a given path on `object`.
      *
      * @static
      * @memberOf _
      * @category Utility
-     * @param {Object} object The object to inspect.
+     * @param {Object} object The object to query.
      * @returns {Function} Returns the new function.
      * @example
      *
-     * var object = { 'a': 3, 'b': 1, 'c': 2 };
+     * var array = [0, 1, 2],
+     *     object = { 'a': array, 'b': array, 'c': array };
      *
-     * _.map(['a', 'c'], _.propertyOf(object));
-     * // => [3, 2]
+     * _.map(['a[2]', 'c[0]'], _.propertyOf(object));
+     * // => [2, 0]
      *
-     * _.sortBy(['a', 'b', 'c'], _.propertyOf(object));
-     * // => ['b', 'c', 'a']
+     * _.map([['a', '2'], ['c', '0']], _.propertyOf(object));
+     * // => [2, 0]
      */
     function propertyOf(object) {
-      return function(key) {
-        return object == null ? undefined : object[key];
+      return function(path) {
+        return baseGet(object, toPath(path), (path + ''));
       };
     }
 
     /**
      * Creates an array of numbers (positive and/or negative) progressing from
-     * `start` up to, but not including, `end`. If `end` is not specified it is
-     * set to `start` with `start` then set to `0`. If `start` is less than `end`
+     * `start` up to, but not including, `end`. If `end` is not specified it's
+     * set to `start` with `start` then set to `0`. If `end` is less than `start`
      * a zero-length range is created unless a negative `step` is specified.
      *
      * @static
@@ -47602,7 +52526,7 @@ return jQuery;
      */
     function range(start, end, step) {
       if (step && isIterateeCall(start, end, step)) {
-        end = step = null;
+        end = step = undefined;
       }
       start = +start || 0;
       step = step == null ? 1 : (+step || 0);
@@ -47616,7 +52540,7 @@ return jQuery;
       // Use `Array(length)` so engines like Chakra and V8 avoid slower modes.
       // See https://youtu.be/XAqIpGU8ZZk#t=17m25s for more details.
       var index = -1,
-          length = nativeMax(ceil((end - start) / (step || 1)), 0),
+          length = nativeMax(nativeCeil((end - start) / (step || 1)), 0),
           result = Array(length);
 
       while (++index < length) {
@@ -47646,7 +52570,7 @@ return jQuery;
      * _.times(3, function(n) {
      *   mage.castSpell(n);
      * });
-     * // => invokes `mage.castSpell(n)` three times with `n` of `0`, `1`, and `2` respectively
+     * // => invokes `mage.castSpell(n)` three times with `n` of `0`, `1`, and `2`
      *
      * _.times(3, function(n) {
      *   this.cast(n);
@@ -47654,7 +52578,7 @@ return jQuery;
      * // => also invokes `mage.castSpell(n)` three times
      */
     function times(n, iteratee, thisArg) {
-      n = +n;
+      n = nativeFloor(n);
 
       // Exit early to avoid a JSC JIT bug in Safari 8
       // where `Array(0)` is treated as `Array(1)`.
@@ -47713,24 +52637,68 @@ return jQuery;
      * // => 10
      */
     function add(augend, addend) {
-      return augend + addend;
+      return (+augend || 0) + (+addend || 0);
     }
 
     /**
+     * Calculates `n` rounded up to `precision`.
+     *
+     * @static
+     * @memberOf _
+     * @category Math
+     * @param {number} n The number to round up.
+     * @param {number} [precision=0] The precision to round up to.
+     * @returns {number} Returns the rounded up number.
+     * @example
+     *
+     * _.ceil(4.006);
+     * // => 5
+     *
+     * _.ceil(6.004, 2);
+     * // => 6.01
+     *
+     * _.ceil(6040, -2);
+     * // => 6100
+     */
+    var ceil = createRound('ceil');
+
+    /**
+     * Calculates `n` rounded down to `precision`.
+     *
+     * @static
+     * @memberOf _
+     * @category Math
+     * @param {number} n The number to round down.
+     * @param {number} [precision=0] The precision to round down to.
+     * @returns {number} Returns the rounded down number.
+     * @example
+     *
+     * _.floor(4.006);
+     * // => 4
+     *
+     * _.floor(0.046, 2);
+     * // => 0.04
+     *
+     * _.floor(4060, -2);
+     * // => 4000
+     */
+    var floor = createRound('floor');
+
+    /**
      * Gets the maximum value of `collection`. If `collection` is empty or falsey
-     * `-Infinity` is returned. If an iteratee function is provided it is invoked
+     * `-Infinity` is returned. If an iteratee function is provided it's invoked
      * for each value in `collection` to generate the criterion by which the value
      * is ranked. The `iteratee` is bound to `thisArg` and invoked with three
-     * arguments; (value, index, collection).
+     * arguments: (value, index, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -47757,29 +52725,29 @@ return jQuery;
      * _.max(users, function(chr) {
      *   return chr.age;
      * });
-     * // => { 'user': 'fred', 'age': 40 };
+     * // => { 'user': 'fred', 'age': 40 }
      *
      * // using the `_.property` callback shorthand
      * _.max(users, 'age');
-     * // => { 'user': 'fred', 'age': 40 };
+     * // => { 'user': 'fred', 'age': 40 }
      */
-    var max = createExtremum(arrayMax);
+    var max = createExtremum(gt, NEGATIVE_INFINITY);
 
     /**
      * Gets the minimum value of `collection`. If `collection` is empty or falsey
-     * `Infinity` is returned. If an iteratee function is provided it is invoked
+     * `Infinity` is returned. If an iteratee function is provided it's invoked
      * for each value in `collection` to generate the criterion by which the value
      * is ranked. The `iteratee` is bound to `thisArg` and invoked with three
-     * arguments; (value, index, collection).
+     * arguments: (value, index, collection).
      *
-     * If a property name is provided for `predicate` the created `_.property`
+     * If a property name is provided for `iteratee` the created `_.property`
      * style callback returns the property value of the given element.
      *
      * If a value is also provided for `thisArg` the created `_.matchesProperty`
      * style callback returns `true` for elements that have a matching property
      * value, else `false`.
      *
-     * If an object is provided for `predicate` the created `_.matches` style
+     * If an object is provided for `iteratee` the created `_.matches` style
      * callback returns `true` for elements that have the properties of the given
      * object, else `false`.
      *
@@ -47806,13 +52774,35 @@ return jQuery;
      * _.min(users, function(chr) {
      *   return chr.age;
      * });
-     * // => { 'user': 'barney', 'age': 36 };
+     * // => { 'user': 'barney', 'age': 36 }
      *
      * // using the `_.property` callback shorthand
      * _.min(users, 'age');
-     * // => { 'user': 'barney', 'age': 36 };
+     * // => { 'user': 'barney', 'age': 36 }
      */
-    var min = createExtremum(arrayMin, true);
+    var min = createExtremum(lt, POSITIVE_INFINITY);
+
+    /**
+     * Calculates `n` rounded to `precision`.
+     *
+     * @static
+     * @memberOf _
+     * @category Math
+     * @param {number} n The number to round.
+     * @param {number} [precision=0] The precision to round to.
+     * @returns {number} Returns the rounded number.
+     * @example
+     *
+     * _.round(4.006);
+     * // => 4
+     *
+     * _.round(4.006, 2);
+     * // => 4.01
+     *
+     * _.round(4060, -2);
+     * // => 4100
+     */
+    var round = createRound('round');
 
     /**
      * Gets the sum of the values in `collection`.
@@ -47821,26 +52811,39 @@ return jQuery;
      * @memberOf _
      * @category Math
      * @param {Array|Object|string} collection The collection to iterate over.
+     * @param {Function|Object|string} [iteratee] The function invoked per iteration.
+     * @param {*} [thisArg] The `this` binding of `iteratee`.
      * @returns {number} Returns the sum.
      * @example
      *
-     * _.sum([4, 6, 2]);
-     * // => 12
+     * _.sum([4, 6]);
+     * // => 10
      *
-     * _.sum({ 'a': 4, 'b': 6, 'c': 2 });
-     * // => 12
+     * _.sum({ 'a': 4, 'b': 6 });
+     * // => 10
+     *
+     * var objects = [
+     *   { 'n': 4 },
+     *   { 'n': 6 }
+     * ];
+     *
+     * _.sum(objects, function(object) {
+     *   return object.n;
+     * });
+     * // => 10
+     *
+     * // using the `_.property` callback shorthand
+     * _.sum(objects, 'n');
+     * // => 10
      */
-    function sum(collection) {
-      if (!isArray(collection)) {
-        collection = toIterable(collection);
+    function sum(collection, iteratee, thisArg) {
+      if (thisArg && isIterateeCall(collection, iteratee, thisArg)) {
+        iteratee = undefined;
       }
-      var length = collection.length,
-          result = 0;
-
-      while (length--) {
-        result += +collection[length] || 0;
-      }
-      return result;
+      iteratee = getCallback(iteratee, thisArg, 3);
+      return iteratee.length == 1
+        ? arraySum(isArray(collection) ? collection : toIterable(collection), iteratee)
+        : baseSum(collection, iteratee);
     }
 
     /*------------------------------------------------------------------------*/
@@ -47886,6 +52889,7 @@ return jQuery;
     lodash.curryRight = curryRight;
     lodash.debounce = debounce;
     lodash.defaults = defaults;
+    lodash.defaultsDeep = defaultsDeep;
     lodash.defer = defer;
     lodash.delay = delay;
     lodash.difference = difference;
@@ -47915,12 +52919,16 @@ return jQuery;
     lodash.keys = keys;
     lodash.keysIn = keysIn;
     lodash.map = map;
+    lodash.mapKeys = mapKeys;
     lodash.mapValues = mapValues;
     lodash.matches = matches;
     lodash.matchesProperty = matchesProperty;
     lodash.memoize = memoize;
     lodash.merge = merge;
+    lodash.method = method;
+    lodash.methodOf = methodOf;
     lodash.mixin = mixin;
+    lodash.modArgs = modArgs;
     lodash.negate = negate;
     lodash.omit = omit;
     lodash.once = once;
@@ -47939,6 +52947,8 @@ return jQuery;
     lodash.reject = reject;
     lodash.remove = remove;
     lodash.rest = rest;
+    lodash.restParam = restParam;
+    lodash.set = set;
     lodash.shuffle = shuffle;
     lodash.slice = slice;
     lodash.sortBy = sortBy;
@@ -47959,6 +52969,7 @@ return jQuery;
     lodash.union = union;
     lodash.uniq = uniq;
     lodash.unzip = unzip;
+    lodash.unzipWith = unzipWith;
     lodash.values = values;
     lodash.valuesIn = valuesIn;
     lodash.where = where;
@@ -47967,6 +52978,7 @@ return jQuery;
     lodash.xor = xor;
     lodash.zip = zip;
     lodash.zipObject = zipObject;
+    lodash.zipWith = zipWith;
 
     // Add aliases.
     lodash.backflow = flowRight;
@@ -47992,6 +53004,7 @@ return jQuery;
     lodash.attempt = attempt;
     lodash.camelCase = camelCase;
     lodash.capitalize = capitalize;
+    lodash.ceil = ceil;
     lodash.clone = clone;
     lodash.cloneDeep = cloneDeep;
     lodash.deburr = deburr;
@@ -48007,6 +53020,10 @@ return jQuery;
     lodash.findLastKey = findLastKey;
     lodash.findWhere = findWhere;
     lodash.first = first;
+    lodash.floor = floor;
+    lodash.get = get;
+    lodash.gt = gt;
+    lodash.gte = gte;
     lodash.has = has;
     lodash.identity = identity;
     lodash.includes = includes;
@@ -48036,6 +53053,8 @@ return jQuery;
     lodash.kebabCase = kebabCase;
     lodash.last = last;
     lodash.lastIndexOf = lastIndexOf;
+    lodash.lt = lt;
+    lodash.lte = lte;
     lodash.max = max;
     lodash.min = min;
     lodash.noConflict = noConflict;
@@ -48050,6 +53069,7 @@ return jQuery;
     lodash.reduceRight = reduceRight;
     lodash.repeat = repeat;
     lodash.result = result;
+    lodash.round = round;
     lodash.runInContext = runInContext;
     lodash.size = size;
     lodash.snakeCase = snakeCase;
@@ -48072,6 +53092,7 @@ return jQuery;
     lodash.all = every;
     lodash.any = some;
     lodash.contains = includes;
+    lodash.eq = isEqual;
     lodash.detect = find;
     lodash.foldl = reduce;
     lodash.foldr = reduceRight;
@@ -48119,37 +53140,20 @@ return jQuery;
       lodash[methodName].placeholder = lodash;
     });
 
-    // Add `LazyWrapper` methods that accept an `iteratee` value.
-    arrayEach(['dropWhile', 'filter', 'map', 'takeWhile'], function(methodName, type) {
-      var isFilter = type != LAZY_MAP_FLAG,
-          isDropWhile = type == LAZY_DROP_WHILE_FLAG;
-
-      LazyWrapper.prototype[methodName] = function(iteratee, thisArg) {
-        var filtered = this.__filtered__,
-            result = (filtered && isDropWhile) ? new LazyWrapper(this) : this.clone(),
-            iteratees = result.__iteratees__ || (result.__iteratees__ = []);
-
-        result.__filtered__ = filtered || isFilter;
-        iteratees.push({ 'done': false, 'index': 0, 'iteratee': getCallback(iteratee, thisArg, 1), 'type': type });
-        return result;
-      };
-    });
-
     // Add `LazyWrapper` methods for `_.drop` and `_.take` variants.
     arrayEach(['drop', 'take'], function(methodName, index) {
-      var countName = '__' + methodName + 'Count__',
-          whileName = methodName + 'While';
-
       LazyWrapper.prototype[methodName] = function(n) {
-        n = n == null ? 1 : nativeMax(floor(n) || 0, 0);
+        var filtered = this.__filtered__;
+        if (filtered && !index) {
+          return new LazyWrapper(this);
+        }
+        n = n == null ? 1 : nativeMax(nativeFloor(n) || 0, 0);
 
         var result = this.clone();
-        if (result.__filtered__) {
-          var value = result[countName];
-          result[countName] = index ? nativeMin(value, n) : (value + n);
+        if (filtered) {
+          result.__takeCount__ = nativeMin(result.__takeCount__, n);
         } else {
-          var views = result.__views__ || (result.__views__ = []);
-          views.push({ 'size': n, 'type': methodName + (result.__dir__ < 0 ? 'Right' : '') });
+          result.__views__.push({ 'size': n, 'type': methodName + (result.__dir__ < 0 ? 'Right' : '') });
         }
         return result;
       };
@@ -48157,9 +53161,18 @@ return jQuery;
       LazyWrapper.prototype[methodName + 'Right'] = function(n) {
         return this.reverse()[methodName](n).reverse();
       };
+    });
 
-      LazyWrapper.prototype[methodName + 'RightWhile'] = function(predicate, thisArg) {
-        return this.reverse()[whileName](predicate, thisArg).reverse();
+    // Add `LazyWrapper` methods that accept an `iteratee` value.
+    arrayEach(['filter', 'map', 'takeWhile'], function(methodName, index) {
+      var type = index + 1,
+          isFilter = type != LAZY_MAP_FLAG;
+
+      LazyWrapper.prototype[methodName] = function(iteratee, thisArg) {
+        var result = this.clone();
+        result.__iteratees__.push({ 'iteratee': getCallback(iteratee, thisArg, 1), 'type': type });
+        result.__filtered__ = result.__filtered__ || isFilter;
+        return result;
       };
     });
 
@@ -48177,14 +53190,14 @@ return jQuery;
       var dropName = 'drop' + (index ? '' : 'Right');
 
       LazyWrapper.prototype[methodName] = function() {
-        return this[dropName](1);
+        return this.__filtered__ ? new LazyWrapper(this) : this[dropName](1);
       };
     });
 
     // Add `LazyWrapper` methods for `_.pluck` and `_.where`.
     arrayEach(['pluck', 'where'], function(methodName, index) {
       var operationName = index ? 'filter' : 'map',
-          createCallback = index ? baseMatches : baseProperty;
+          createCallback = index ? baseMatches : property;
 
       LazyWrapper.prototype[methodName] = function(value) {
         return this[operationName](createCallback(value));
@@ -48204,28 +53217,42 @@ return jQuery;
 
     LazyWrapper.prototype.slice = function(start, end) {
       start = start == null ? 0 : (+start || 0);
-      var result = start < 0 ? this.takeRight(-start) : this.drop(start);
 
-      if (typeof end != 'undefined') {
+      var result = this;
+      if (result.__filtered__ && (start > 0 || end < 0)) {
+        return new LazyWrapper(result);
+      }
+      if (start < 0) {
+        result = result.takeRight(-start);
+      } else if (start) {
+        result = result.drop(start);
+      }
+      if (end !== undefined) {
         end = (+end || 0);
         result = end < 0 ? result.dropRight(-end) : result.take(end - start);
       }
       return result;
     };
 
+    LazyWrapper.prototype.takeRightWhile = function(predicate, thisArg) {
+      return this.reverse().takeWhile(predicate, thisArg).reverse();
+    };
+
     LazyWrapper.prototype.toArray = function() {
-      return this.drop(0);
+      return this.take(POSITIVE_INFINITY);
     };
 
     // Add `LazyWrapper` methods to `lodash.prototype`.
     baseForOwn(LazyWrapper.prototype, function(func, methodName) {
-      var lodashFunc = lodash[methodName],
-          checkIteratee = /^(?:filter|map|reject)|While$/.test(methodName),
-          retUnwrapped = /^(?:first|last)$/.test(methodName);
+      var checkIteratee = /^(?:filter|map|reject)|While$/.test(methodName),
+          retUnwrapped = /^(?:first|last)$/.test(methodName),
+          lodashFunc = lodash[retUnwrapped ? ('take' + (methodName == 'last' ? 'Right' : '')) : methodName];
 
+      if (!lodashFunc) {
+        return;
+      }
       lodash.prototype[methodName] = function() {
-        var args = arguments,
-            length = args.length,
+        var args = retUnwrapped ? [1] : arguments,
             chainAll = this.__chain__,
             value = this.__wrapped__,
             isHybrid = !!this.__actions__.length,
@@ -48234,39 +53261,41 @@ return jQuery;
             useLazy = isLazy || isArray(value);
 
         if (useLazy && checkIteratee && typeof iteratee == 'function' && iteratee.length != 1) {
-          // avoid lazy use if the iteratee has a `length` other than `1`
+          // Avoid lazy use if the iteratee has a "length" value other than `1`.
           isLazy = useLazy = false;
         }
-        var onlyLazy = isLazy && !isHybrid;
-        if (retUnwrapped && !chainAll) {
-          return onlyLazy
-            ? func.call(value)
-            : lodashFunc.call(lodash, this.value());
-        }
         var interceptor = function(value) {
-          var otherArgs = [value];
-          push.apply(otherArgs, args);
-          return lodashFunc.apply(lodash, otherArgs);
+          return (retUnwrapped && chainAll)
+            ? lodashFunc(value, 1)[0]
+            : lodashFunc.apply(undefined, arrayPush([value], args));
         };
-        if (useLazy) {
-          var wrapper = onlyLazy ? value : new LazyWrapper(this),
-              result = func.apply(wrapper, args);
 
-          if (!retUnwrapped && (isHybrid || result.__actions__)) {
-            var actions = result.__actions__ || (result.__actions__ = []);
-            actions.push({ 'func': thru, 'args': [interceptor], 'thisArg': lodash });
+        var action = { 'func': thru, 'args': [interceptor], 'thisArg': undefined },
+            onlyLazy = isLazy && !isHybrid;
+
+        if (retUnwrapped && !chainAll) {
+          if (onlyLazy) {
+            value = value.clone();
+            value.__actions__.push(action);
+            return func.call(value);
           }
+          return lodashFunc.call(undefined, this.value())[0];
+        }
+        if (!retUnwrapped && useLazy) {
+          value = onlyLazy ? value : new LazyWrapper(this);
+          var result = func.apply(value, args);
+          result.__actions__.push(action);
           return new LodashWrapper(result, chainAll);
         }
         return this.thru(interceptor);
       };
     });
 
-    // Add `Array.prototype` functions to `lodash.prototype`.
-    arrayEach(['concat', 'join', 'pop', 'push', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {
-      var func = arrayProto[methodName],
+    // Add `Array` and `String` methods to `lodash.prototype`.
+    arrayEach(['join', 'pop', 'push', 'replace', 'shift', 'sort', 'splice', 'split', 'unshift'], function(methodName) {
+      var func = (/^(?:replace|split)$/.test(methodName) ? stringProto : arrayProto)[methodName],
           chainName = /^(?:push|sort|unshift)$/.test(methodName) ? 'tap' : 'thru',
-          retUnwrapped = /^(?:join|pop|shift)$/.test(methodName);
+          retUnwrapped = /^(?:join|pop|replace|shift)$/.test(methodName);
 
       lodash.prototype[methodName] = function() {
         var args = arguments;
@@ -48279,6 +53308,19 @@ return jQuery;
       };
     });
 
+    // Map minified function names to their real names.
+    baseForOwn(LazyWrapper.prototype, function(func, methodName) {
+      var lodashFunc = lodash[methodName];
+      if (lodashFunc) {
+        var key = (lodashFunc.name + ''),
+            names = realNames[key] || (realNames[key] = []);
+
+        names.push({ 'name': methodName, 'func': lodashFunc });
+      }
+    });
+
+    realNames[createHybridWrapper(undefined, BIND_KEY_FLAG).name] = [{ 'name': 'wrapper', 'func': undefined }];
+
     // Add functions to the lazy wrapper.
     LazyWrapper.prototype.clone = lazyClone;
     LazyWrapper.prototype.reverse = lazyReverse;
@@ -48287,6 +53329,7 @@ return jQuery;
     // Add chaining functions to the `lodash` wrapper.
     lodash.prototype.chain = wrapperChain;
     lodash.prototype.commit = wrapperCommit;
+    lodash.prototype.concat = wrapperConcat;
     lodash.prototype.plant = wrapperPlant;
     lodash.prototype.reverse = wrapperReverse;
     lodash.prototype.toString = wrapperToString;
@@ -48326,7 +53369,7 @@ return jQuery;
     if (moduleExports) {
       (freeModule.exports = _)._ = _;
     }
-    // Export for Narwhal or Rhino -require.
+    // Export for Rhino with CommonJS support.
     else {
       freeExports._ = _;
     }
@@ -48342,3860 +53385,40 @@ return jQuery;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
-(function (global){
-;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
-// MarionetteJS (Backbone.Marionette)
-// ----------------------------------
-// v2.4.1
-//
-// Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
-// Distributed under MIT license
-//
-// http://marionettejs.com
-
-
-/*!
- * Includes BabySitter
- * https://github.com/marionettejs/backbone.babysitter/
- *
- * Includes Wreqr
- * https://github.com/marionettejs/backbone.wreqr/
- */
-
-
-(function(root, factory) {
-
-  /* istanbul ignore next */
-  if (typeof define === 'function' && define.amd) {
-    define(['../../backbone/backbone', 'underscore'], function(Backbone, _) {
-      return (root.Marionette = root.Mn = factory(root, Backbone, _));
-    });
-  } else if (typeof exports !== 'undefined') {
-    var Backbone = __browserify_shim_require__('backbone');
-    var _ = __browserify_shim_require__('underscore');
-    module.exports = factory(root, Backbone, _);
-  } else {
-    root.Marionette = root.Mn = factory(root, root.Backbone, root._);
-  }
-
-}(this, function(root, Backbone, _) {
-  'use strict';
-
-  /* istanbul ignore next */
-  // Backbone.BabySitter
-  // -------------------
-  // v0.1.6
-  //
-  // Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
-  // Distributed under MIT license
-  //
-  // http://github.com/marionettejs/backbone.babysitter
-  (function(Backbone, _) {
-    "use strict";
-    var previousChildViewContainer = Backbone.ChildViewContainer;
-    // BabySitter.ChildViewContainer
-    // -----------------------------
-    //
-    // Provide a container to store, retrieve and
-    // shut down child views.
-    Backbone.ChildViewContainer = function(Backbone, _) {
-      // Container Constructor
-      // ---------------------
-      var Container = function(views) {
-        this._views = {};
-        this._indexByModel = {};
-        this._indexByCustom = {};
-        this._updateLength();
-        _.each(views, this.add, this);
-      };
-      // Container Methods
-      // -----------------
-      _.extend(Container.prototype, {
-        // Add a view to this container. Stores the view
-        // by `cid` and makes it searchable by the model
-        // cid (and model itself). Optionally specify
-        // a custom key to store an retrieve the view.
-        add: function(view, customIndex) {
-          var viewCid = view.cid;
-          // store the view
-          this._views[viewCid] = view;
-          // index it by model
-          if (view.model) {
-            this._indexByModel[view.model.cid] = viewCid;
-          }
-          // index by custom
-          if (customIndex) {
-            this._indexByCustom[customIndex] = viewCid;
-          }
-          this._updateLength();
-          return this;
-        },
-        // Find a view by the model that was attached to
-        // it. Uses the model's `cid` to find it.
-        findByModel: function(model) {
-          return this.findByModelCid(model.cid);
-        },
-        // Find a view by the `cid` of the model that was attached to
-        // it. Uses the model's `cid` to find the view `cid` and
-        // retrieve the view using it.
-        findByModelCid: function(modelCid) {
-          var viewCid = this._indexByModel[modelCid];
-          return this.findByCid(viewCid);
-        },
-        // Find a view by a custom indexer.
-        findByCustom: function(index) {
-          var viewCid = this._indexByCustom[index];
-          return this.findByCid(viewCid);
-        },
-        // Find by index. This is not guaranteed to be a
-        // stable index.
-        findByIndex: function(index) {
-          return _.values(this._views)[index];
-        },
-        // retrieve a view by its `cid` directly
-        findByCid: function(cid) {
-          return this._views[cid];
-        },
-        // Remove a view
-        remove: function(view) {
-          var viewCid = view.cid;
-          // delete model index
-          if (view.model) {
-            delete this._indexByModel[view.model.cid];
-          }
-          // delete custom index
-          _.any(this._indexByCustom, function(cid, key) {
-            if (cid === viewCid) {
-              delete this._indexByCustom[key];
-              return true;
-            }
-          }, this);
-          // remove the view from the container
-          delete this._views[viewCid];
-          // update the length
-          this._updateLength();
-          return this;
-        },
-        // Call a method on every view in the container,
-        // passing parameters to the call method one at a
-        // time, like `function.call`.
-        call: function(method) {
-          this.apply(method, _.tail(arguments));
-        },
-        // Apply a method on every view in the container,
-        // passing parameters to the call method one at a
-        // time, like `function.apply`.
-        apply: function(method, args) {
-          _.each(this._views, function(view) {
-            if (_.isFunction(view[method])) {
-              view[method].apply(view, args || []);
-            }
-          });
-        },
-        // Update the `.length` attribute on this container
-        _updateLength: function() {
-          this.length = _.size(this._views);
-        }
-      });
-      // Borrowing this code from Backbone.Collection:
-      // http://backbonejs.org/docs/backbone.html#section-106
-      //
-      // Mix in methods from Underscore, for iteration, and other
-      // collection related features.
-      var methods = [ "forEach", "each", "map", "find", "detect", "filter", "select", "reject", "every", "all", "some", "any", "include", "contains", "invoke", "toArray", "first", "initial", "rest", "last", "without", "isEmpty", "pluck", "reduce" ];
-      _.each(methods, function(method) {
-        Container.prototype[method] = function() {
-          var views = _.values(this._views);
-          var args = [ views ].concat(_.toArray(arguments));
-          return _[method].apply(_, args);
-        };
-      });
-      // return the public API
-      return Container;
-    }(Backbone, _);
-    Backbone.ChildViewContainer.VERSION = "0.1.6";
-    Backbone.ChildViewContainer.noConflict = function() {
-      Backbone.ChildViewContainer = previousChildViewContainer;
-      return this;
-    };
-    return Backbone.ChildViewContainer;
-  })(Backbone, _);
-
-  /* istanbul ignore next */
-  // Backbone.Wreqr (Backbone.Marionette)
-  // ----------------------------------
-  // v1.3.1
-  //
-  // Copyright (c)2014 Derick Bailey, Muted Solutions, LLC.
-  // Distributed under MIT license
-  //
-  // http://github.com/marionettejs/backbone.wreqr
-  (function(Backbone, _) {
-    "use strict";
-    var previousWreqr = Backbone.Wreqr;
-    var Wreqr = Backbone.Wreqr = {};
-    Backbone.Wreqr.VERSION = "1.3.1";
-    Backbone.Wreqr.noConflict = function() {
-      Backbone.Wreqr = previousWreqr;
-      return this;
-    };
-    // Handlers
-    // --------
-    // A registry of functions to call, given a name
-    Wreqr.Handlers = function(Backbone, _) {
-      "use strict";
-      // Constructor
-      // -----------
-      var Handlers = function(options) {
-        this.options = options;
-        this._wreqrHandlers = {};
-        if (_.isFunction(this.initialize)) {
-          this.initialize(options);
-        }
-      };
-      Handlers.extend = Backbone.Model.extend;
-      // Instance Members
-      // ----------------
-      _.extend(Handlers.prototype, Backbone.Events, {
-        // Add multiple handlers using an object literal configuration
-        setHandlers: function(handlers) {
-          _.each(handlers, function(handler, name) {
-            var context = null;
-            if (_.isObject(handler) && !_.isFunction(handler)) {
-              context = handler.context;
-              handler = handler.callback;
-            }
-            this.setHandler(name, handler, context);
-          }, this);
-        },
-        // Add a handler for the given name, with an
-        // optional context to run the handler within
-        setHandler: function(name, handler, context) {
-          var config = {
-            callback: handler,
-            context: context
-          };
-          this._wreqrHandlers[name] = config;
-          this.trigger("handler:add", name, handler, context);
-        },
-        // Determine whether or not a handler is registered
-        hasHandler: function(name) {
-          return !!this._wreqrHandlers[name];
-        },
-        // Get the currently registered handler for
-        // the specified name. Throws an exception if
-        // no handler is found.
-        getHandler: function(name) {
-          var config = this._wreqrHandlers[name];
-          if (!config) {
-            return;
-          }
-          return function() {
-            var args = Array.prototype.slice.apply(arguments);
-            return config.callback.apply(config.context, args);
-          };
-        },
-        // Remove a handler for the specified name
-        removeHandler: function(name) {
-          delete this._wreqrHandlers[name];
-        },
-        // Remove all handlers from this registry
-        removeAllHandlers: function() {
-          this._wreqrHandlers = {};
-        }
-      });
-      return Handlers;
-    }(Backbone, _);
-    // Wreqr.CommandStorage
-    // --------------------
-    //
-    // Store and retrieve commands for execution.
-    Wreqr.CommandStorage = function() {
-      "use strict";
-      // Constructor function
-      var CommandStorage = function(options) {
-        this.options = options;
-        this._commands = {};
-        if (_.isFunction(this.initialize)) {
-          this.initialize(options);
-        }
-      };
-      // Instance methods
-      _.extend(CommandStorage.prototype, Backbone.Events, {
-        // Get an object literal by command name, that contains
-        // the `commandName` and the `instances` of all commands
-        // represented as an array of arguments to process
-        getCommands: function(commandName) {
-          var commands = this._commands[commandName];
-          // we don't have it, so add it
-          if (!commands) {
-            // build the configuration
-            commands = {
-              command: commandName,
-              instances: []
-            };
-            // store it
-            this._commands[commandName] = commands;
-          }
-          return commands;
-        },
-        // Add a command by name, to the storage and store the
-        // args for the command
-        addCommand: function(commandName, args) {
-          var command = this.getCommands(commandName);
-          command.instances.push(args);
-        },
-        // Clear all commands for the given `commandName`
-        clearCommands: function(commandName) {
-          var command = this.getCommands(commandName);
-          command.instances = [];
-        }
-      });
-      return CommandStorage;
-    }();
-    // Wreqr.Commands
-    // --------------
-    //
-    // A simple command pattern implementation. Register a command
-    // handler and execute it.
-    Wreqr.Commands = function(Wreqr) {
-      "use strict";
-      return Wreqr.Handlers.extend({
-        // default storage type
-        storageType: Wreqr.CommandStorage,
-        constructor: function(options) {
-          this.options = options || {};
-          this._initializeStorage(this.options);
-          this.on("handler:add", this._executeCommands, this);
-          var args = Array.prototype.slice.call(arguments);
-          Wreqr.Handlers.prototype.constructor.apply(this, args);
-        },
-        // Execute a named command with the supplied args
-        execute: function(name, args) {
-          name = arguments[0];
-          args = Array.prototype.slice.call(arguments, 1);
-          if (this.hasHandler(name)) {
-            this.getHandler(name).apply(this, args);
-          } else {
-            this.storage.addCommand(name, args);
-          }
-        },
-        // Internal method to handle bulk execution of stored commands
-        _executeCommands: function(name, handler, context) {
-          var command = this.storage.getCommands(name);
-          // loop through and execute all the stored command instances
-          _.each(command.instances, function(args) {
-            handler.apply(context, args);
-          });
-          this.storage.clearCommands(name);
-        },
-        // Internal method to initialize storage either from the type's
-        // `storageType` or the instance `options.storageType`.
-        _initializeStorage: function(options) {
-          var storage;
-          var StorageType = options.storageType || this.storageType;
-          if (_.isFunction(StorageType)) {
-            storage = new StorageType();
-          } else {
-            storage = StorageType;
-          }
-          this.storage = storage;
-        }
-      });
-    }(Wreqr);
-    // Wreqr.RequestResponse
-    // ---------------------
-    //
-    // A simple request/response implementation. Register a
-    // request handler, and return a response from it
-    Wreqr.RequestResponse = function(Wreqr) {
-      "use strict";
-      return Wreqr.Handlers.extend({
-        request: function() {
-          var name = arguments[0];
-          var args = Array.prototype.slice.call(arguments, 1);
-          if (this.hasHandler(name)) {
-            return this.getHandler(name).apply(this, args);
-          }
-        }
-      });
-    }(Wreqr);
-    // Event Aggregator
-    // ----------------
-    // A pub-sub object that can be used to decouple various parts
-    // of an application through event-driven architecture.
-    Wreqr.EventAggregator = function(Backbone, _) {
-      "use strict";
-      var EA = function() {};
-      // Copy the `extend` function used by Backbone's classes
-      EA.extend = Backbone.Model.extend;
-      // Copy the basic Backbone.Events on to the event aggregator
-      _.extend(EA.prototype, Backbone.Events);
-      return EA;
-    }(Backbone, _);
-    // Wreqr.Channel
-    // --------------
-    //
-    // An object that wraps the three messaging systems:
-    // EventAggregator, RequestResponse, Commands
-    Wreqr.Channel = function(Wreqr) {
-      "use strict";
-      var Channel = function(channelName) {
-        this.vent = new Backbone.Wreqr.EventAggregator();
-        this.reqres = new Backbone.Wreqr.RequestResponse();
-        this.commands = new Backbone.Wreqr.Commands();
-        this.channelName = channelName;
-      };
-      _.extend(Channel.prototype, {
-        // Remove all handlers from the messaging systems of this channel
-        reset: function() {
-          this.vent.off();
-          this.vent.stopListening();
-          this.reqres.removeAllHandlers();
-          this.commands.removeAllHandlers();
-          return this;
-        },
-        // Connect a hash of events; one for each messaging system
-        connectEvents: function(hash, context) {
-          this._connect("vent", hash, context);
-          return this;
-        },
-        connectCommands: function(hash, context) {
-          this._connect("commands", hash, context);
-          return this;
-        },
-        connectRequests: function(hash, context) {
-          this._connect("reqres", hash, context);
-          return this;
-        },
-        // Attach the handlers to a given message system `type`
-        _connect: function(type, hash, context) {
-          if (!hash) {
-            return;
-          }
-          context = context || this;
-          var method = type === "vent" ? "on" : "setHandler";
-          _.each(hash, function(fn, eventName) {
-            this[type][method](eventName, _.bind(fn, context));
-          }, this);
-        }
-      });
-      return Channel;
-    }(Wreqr);
-    // Wreqr.Radio
-    // --------------
-    //
-    // An object that lets you communicate with many channels.
-    Wreqr.radio = function(Wreqr) {
-      "use strict";
-      var Radio = function() {
-        this._channels = {};
-        this.vent = {};
-        this.commands = {};
-        this.reqres = {};
-        this._proxyMethods();
-      };
-      _.extend(Radio.prototype, {
-        channel: function(channelName) {
-          if (!channelName) {
-            throw new Error("Channel must receive a name");
-          }
-          return this._getChannel(channelName);
-        },
-        _getChannel: function(channelName) {
-          var channel = this._channels[channelName];
-          if (!channel) {
-            channel = new Wreqr.Channel(channelName);
-            this._channels[channelName] = channel;
-          }
-          return channel;
-        },
-        _proxyMethods: function() {
-          _.each([ "vent", "commands", "reqres" ], function(system) {
-            _.each(messageSystems[system], function(method) {
-              this[system][method] = proxyMethod(this, system, method);
-            }, this);
-          }, this);
-        }
-      });
-      var messageSystems = {
-        vent: [ "on", "off", "trigger", "once", "stopListening", "listenTo", "listenToOnce" ],
-        commands: [ "execute", "setHandler", "setHandlers", "removeHandler", "removeAllHandlers" ],
-        reqres: [ "request", "setHandler", "setHandlers", "removeHandler", "removeAllHandlers" ]
-      };
-      var proxyMethod = function(radio, system, method) {
-        return function(channelName) {
-          var messageSystem = radio._getChannel(channelName)[system];
-          var args = Array.prototype.slice.call(arguments, 1);
-          return messageSystem[method].apply(messageSystem, args);
-        };
-      };
-      return new Radio();
-    }(Wreqr);
-    return Backbone.Wreqr;
-  })(Backbone, _);
-
-  var previousMarionette = root.Marionette;
-  var previousMn = root.Mn;
-
-  var Marionette = Backbone.Marionette = {};
-
-  Marionette.VERSION = '2.4.1';
-
-  Marionette.noConflict = function() {
-    root.Marionette = previousMarionette;
-    root.Mn = previousMn;
-    return this;
-  };
-
-  Backbone.Marionette = Marionette;
-
-  // Get the Deferred creator for later use
-  Marionette.Deferred = Backbone.$.Deferred;
-
-  /* jshint unused: false *//* global console */
-  
-  // Helpers
-  // -------
-  
-  // Marionette.extend
-  // -----------------
-  
-  // Borrow the Backbone `extend` method so we can use it as needed
-  Marionette.extend = Backbone.Model.extend;
-  
-  // Marionette.isNodeAttached
-  // -------------------------
-  
-  // Determine if `el` is a child of the document
-  Marionette.isNodeAttached = function(el) {
-    return Backbone.$.contains(document.documentElement, el);
-  };
-  
-  // Merge `keys` from `options` onto `this`
-  Marionette.mergeOptions = function(options, keys) {
-    if (!options) { return; }
-    _.extend(this, _.pick(options, keys));
-  };
-  
-  // Marionette.getOption
-  // --------------------
-  
-  // Retrieve an object, function or other value from a target
-  // object or its `options`, with `options` taking precedence.
-  Marionette.getOption = function(target, optionName) {
-    if (!target || !optionName) { return; }
-    if (target.options && (target.options[optionName] !== undefined)) {
-      return target.options[optionName];
-    } else {
-      return target[optionName];
-    }
-  };
-  
-  // Proxy `Marionette.getOption`
-  Marionette.proxyGetOption = function(optionName) {
-    return Marionette.getOption(this, optionName);
-  };
-  
-  // Similar to `_.result`, this is a simple helper
-  // If a function is provided we call it with context
-  // otherwise just return the value. If the value is
-  // undefined return a default value
-  Marionette._getValue = function(value, context, params) {
-    if (_.isFunction(value)) {
-      value = params ? value.apply(context, params) : value.call(context);
-    }
-    return value;
-  };
-  
-  // Marionette.normalizeMethods
-  // ----------------------
-  
-  // Pass in a mapping of events => functions or function names
-  // and return a mapping of events => functions
-  Marionette.normalizeMethods = function(hash) {
-    return _.reduce(hash, function(normalizedHash, method, name) {
-      if (!_.isFunction(method)) {
-        method = this[method];
-      }
-      if (method) {
-        normalizedHash[name] = method;
-      }
-      return normalizedHash;
-    }, {}, this);
-  };
-  
-  // utility method for parsing @ui. syntax strings
-  // into associated selector
-  Marionette.normalizeUIString = function(uiString, ui) {
-    return uiString.replace(/@ui\.[a-zA-Z_$0-9]*/g, function(r) {
-      return ui[r.slice(4)];
-    });
-  };
-  
-  // allows for the use of the @ui. syntax within
-  // a given key for triggers and events
-  // swaps the @ui with the associated selector.
-  // Returns a new, non-mutated, parsed events hash.
-  Marionette.normalizeUIKeys = function(hash, ui) {
-    return _.reduce(hash, function(memo, val, key) {
-      var normalizedKey = Marionette.normalizeUIString(key, ui);
-      memo[normalizedKey] = val;
-      return memo;
-    }, {});
-  };
-  
-  // allows for the use of the @ui. syntax within
-  // a given value for regions
-  // swaps the @ui with the associated selector
-  Marionette.normalizeUIValues = function(hash, ui, properties) {
-    _.each(hash, function(val, key) {
-      if (_.isString(val)) {
-        hash[key] = Marionette.normalizeUIString(val, ui);
-      } else if (_.isObject(val) && _.isArray(properties)) {
-        _.extend(val, Marionette.normalizeUIValues(_.pick(val, properties), ui));
-        /* Value is an object, and we got an array of embedded property names to normalize. */
-        _.each(properties, function(property) {
-          var propertyVal = val[property];
-          if (_.isString(propertyVal)) {
-            val[property] = Marionette.normalizeUIString(propertyVal, ui);
-          }
-        });
-      }
-    });
-    return hash;
-  };
-  
-  // Mix in methods from Underscore, for iteration, and other
-  // collection related features.
-  // Borrowing this code from Backbone.Collection:
-  // http://backbonejs.org/docs/backbone.html#section-121
-  Marionette.actAsCollection = function(object, listProperty) {
-    var methods = ['forEach', 'each', 'map', 'find', 'detect', 'filter',
-      'select', 'reject', 'every', 'all', 'some', 'any', 'include',
-      'contains', 'invoke', 'toArray', 'first', 'initial', 'rest',
-      'last', 'without', 'isEmpty', 'pluck'];
-  
-    _.each(methods, function(method) {
-      object[method] = function() {
-        var list = _.values(_.result(this, listProperty));
-        var args = [list].concat(_.toArray(arguments));
-        return _[method].apply(_, args);
-      };
-    });
-  };
-  
-  var deprecate = Marionette.deprecate = function(message, test) {
-    if (_.isObject(message)) {
-      message = (
-        message.prev + ' is going to be removed in the future. ' +
-        'Please use ' + message.next + ' instead.' +
-        (message.url ? ' See: ' + message.url : '')
-      );
-    }
-  
-    if ((test === undefined || !test) && !deprecate._cache[message]) {
-      deprecate._warn('Deprecation warning: ' + message);
-      deprecate._cache[message] = true;
-    }
-  };
-  
-  deprecate._warn = typeof console !== 'undefined' && (console.warn || console.log) || function() {};
-  deprecate._cache = {};
-  
-  /* jshint maxstatements: 14, maxcomplexity: 7 */
-  
-  // Trigger Method
-  // --------------
-  
-  Marionette._triggerMethod = (function() {
-    // split the event name on the ":"
-    var splitter = /(^|:)(\w)/gi;
-  
-    // take the event section ("section1:section2:section3")
-    // and turn it in to uppercase name
-    function getEventName(match, prefix, eventName) {
-      return eventName.toUpperCase();
-    }
-  
-    return function(context, event, args) {
-      var noEventArg = arguments.length < 3;
-      if (noEventArg) {
-        args = event;
-        event = args[0];
-      }
-  
-      // get the method name from the event name
-      var methodName = 'on' + event.replace(splitter, getEventName);
-      var method = context[methodName];
-      var result;
-  
-      // call the onMethodName if it exists
-      if (_.isFunction(method)) {
-        // pass all args, except the event name
-        result = method.apply(context, noEventArg ? _.rest(args) : args);
-      }
-  
-      // trigger the event, if a trigger method exists
-      if (_.isFunction(context.trigger)) {
-        if (noEventArg + args.length > 1) {
-          context.trigger.apply(context, noEventArg ? args : [event].concat(_.drop(args, 0)));
-        } else {
-          context.trigger(event);
-        }
-      }
-  
-      return result;
-    };
-  })();
-  
-  // Trigger an event and/or a corresponding method name. Examples:
-  //
-  // `this.triggerMethod("foo")` will trigger the "foo" event and
-  // call the "onFoo" method.
-  //
-  // `this.triggerMethod("foo:bar")` will trigger the "foo:bar" event and
-  // call the "onFooBar" method.
-  Marionette.triggerMethod = function(event) {
-    return Marionette._triggerMethod(this, arguments);
-  };
-  
-  // triggerMethodOn invokes triggerMethod on a specific context
-  //
-  // e.g. `Marionette.triggerMethodOn(view, 'show')`
-  // will trigger a "show" event or invoke onShow the view.
-  Marionette.triggerMethodOn = function(context) {
-    var fnc = _.isFunction(context.triggerMethod) ?
-                  context.triggerMethod :
-                  Marionette.triggerMethod;
-  
-    return fnc.apply(context, _.rest(arguments));
-  };
-  
-  // DOM Refresh
-  // -----------
-  
-  // Monitor a view's state, and after it has been rendered and shown
-  // in the DOM, trigger a "dom:refresh" event every time it is
-  // re-rendered.
-  
-  Marionette.MonitorDOMRefresh = function(view) {
-  
-    // track when the view has been shown in the DOM,
-    // using a Marionette.Region (or by other means of triggering "show")
-    function handleShow() {
-      view._isShown = true;
-      triggerDOMRefresh();
-    }
-  
-    // track when the view has been rendered
-    function handleRender() {
-      view._isRendered = true;
-      triggerDOMRefresh();
-    }
-  
-    // Trigger the "dom:refresh" event and corresponding "onDomRefresh" method
-    function triggerDOMRefresh() {
-      if (view._isShown && view._isRendered && Marionette.isNodeAttached(view.el)) {
-        if (_.isFunction(view.triggerMethod)) {
-          view.triggerMethod('dom:refresh');
-        }
-      }
-    }
-  
-    view.on({
-      show: handleShow,
-      render: handleRender
-    });
-  };
-  
-  /* jshint maxparams: 5 */
-  
-  // Bind Entity Events & Unbind Entity Events
-  // -----------------------------------------
-  //
-  // These methods are used to bind/unbind a backbone "entity" (e.g. collection/model)
-  // to methods on a target object.
-  //
-  // The first parameter, `target`, must have the Backbone.Events module mixed in.
-  //
-  // The second parameter is the `entity` (Backbone.Model, Backbone.Collection or
-  // any object that has Backbone.Events mixed in) to bind the events from.
-  //
-  // The third parameter is a hash of { "event:name": "eventHandler" }
-  // configuration. Multiple handlers can be separated by a space. A
-  // function can be supplied instead of a string handler name.
-  
-  (function(Marionette) {
-    'use strict';
-  
-    // Bind the event to handlers specified as a string of
-    // handler names on the target object
-    function bindFromStrings(target, entity, evt, methods) {
-      var methodNames = methods.split(/\s+/);
-  
-      _.each(methodNames, function(methodName) {
-  
-        var method = target[methodName];
-        if (!method) {
-          throw new Marionette.Error('Method "' + methodName +
-            '" was configured as an event handler, but does not exist.');
-        }
-  
-        target.listenTo(entity, evt, method);
-      });
-    }
-  
-    // Bind the event to a supplied callback function
-    function bindToFunction(target, entity, evt, method) {
-      target.listenTo(entity, evt, method);
-    }
-  
-    // Bind the event to handlers specified as a string of
-    // handler names on the target object
-    function unbindFromStrings(target, entity, evt, methods) {
-      var methodNames = methods.split(/\s+/);
-  
-      _.each(methodNames, function(methodName) {
-        var method = target[methodName];
-        target.stopListening(entity, evt, method);
-      });
-    }
-  
-    // Bind the event to a supplied callback function
-    function unbindToFunction(target, entity, evt, method) {
-      target.stopListening(entity, evt, method);
-    }
-  
-    // generic looping function
-    function iterateEvents(target, entity, bindings, functionCallback, stringCallback) {
-      if (!entity || !bindings) { return; }
-  
-      // type-check bindings
-      if (!_.isObject(bindings)) {
-        throw new Marionette.Error({
-          message: 'Bindings must be an object or function.',
-          url: 'marionette.functions.html#marionettebindentityevents'
-        });
-      }
-  
-      // allow the bindings to be a function
-      bindings = Marionette._getValue(bindings, target);
-  
-      // iterate the bindings and bind them
-      _.each(bindings, function(methods, evt) {
-  
-        // allow for a function as the handler,
-        // or a list of event names as a string
-        if (_.isFunction(methods)) {
-          functionCallback(target, entity, evt, methods);
-        } else {
-          stringCallback(target, entity, evt, methods);
-        }
-  
-      });
-    }
-  
-    // Export Public API
-    Marionette.bindEntityEvents = function(target, entity, bindings) {
-      iterateEvents(target, entity, bindings, bindToFunction, bindFromStrings);
-    };
-  
-    Marionette.unbindEntityEvents = function(target, entity, bindings) {
-      iterateEvents(target, entity, bindings, unbindToFunction, unbindFromStrings);
-    };
-  
-    // Proxy `bindEntityEvents`
-    Marionette.proxyBindEntityEvents = function(entity, bindings) {
-      return Marionette.bindEntityEvents(this, entity, bindings);
-    };
-  
-    // Proxy `unbindEntityEvents`
-    Marionette.proxyUnbindEntityEvents = function(entity, bindings) {
-      return Marionette.unbindEntityEvents(this, entity, bindings);
-    };
-  })(Marionette);
-  
-
-  // Error
-  // -----
-  
-  var errorProps = ['description', 'fileName', 'lineNumber', 'name', 'message', 'number'];
-  
-  Marionette.Error = Marionette.extend.call(Error, {
-    urlRoot: 'http://marionettejs.com/docs/v' + Marionette.VERSION + '/',
-  
-    constructor: function(message, options) {
-      if (_.isObject(message)) {
-        options = message;
-        message = options.message;
-      } else if (!options) {
-        options = {};
-      }
-  
-      var error = Error.call(this, message);
-      _.extend(this, _.pick(error, errorProps), _.pick(options, errorProps));
-  
-      this.captureStackTrace();
-  
-      if (options.url) {
-        this.url = this.urlRoot + options.url;
-      }
-    },
-  
-    captureStackTrace: function() {
-      if (Error.captureStackTrace) {
-        Error.captureStackTrace(this, Marionette.Error);
-      }
-    },
-  
-    toString: function() {
-      return this.name + ': ' + this.message + (this.url ? ' See: ' + this.url : '');
-    }
-  });
-  
-  Marionette.Error.extend = Marionette.extend;
-  
-  // Callbacks
-  // ---------
-  
-  // A simple way of managing a collection of callbacks
-  // and executing them at a later point in time, using jQuery's
-  // `Deferred` object.
-  Marionette.Callbacks = function() {
-    this._deferred = Marionette.Deferred();
-    this._callbacks = [];
-  };
-  
-  _.extend(Marionette.Callbacks.prototype, {
-  
-    // Add a callback to be executed. Callbacks added here are
-    // guaranteed to execute, even if they are added after the
-    // `run` method is called.
-    add: function(callback, contextOverride) {
-      var promise = _.result(this._deferred, 'promise');
-  
-      this._callbacks.push({cb: callback, ctx: contextOverride});
-  
-      promise.then(function(args) {
-        if (contextOverride) { args.context = contextOverride; }
-        callback.call(args.context, args.options);
-      });
-    },
-  
-    // Run all registered callbacks with the context specified.
-    // Additional callbacks can be added after this has been run
-    // and they will still be executed.
-    run: function(options, context) {
-      this._deferred.resolve({
-        options: options,
-        context: context
-      });
-    },
-  
-    // Resets the list of callbacks to be run, allowing the same list
-    // to be run multiple times - whenever the `run` method is called.
-    reset: function() {
-      var callbacks = this._callbacks;
-      this._deferred = Marionette.Deferred();
-      this._callbacks = [];
-  
-      _.each(callbacks, function(cb) {
-        this.add(cb.cb, cb.ctx);
-      }, this);
-    }
-  });
-  
-  // Controller
-  // ----------
-  
-  // A multi-purpose object to use as a controller for
-  // modules and routers, and as a mediator for workflow
-  // and coordination of other objects, views, and more.
-  Marionette.Controller = function(options) {
-    this.options = options || {};
-  
-    if (_.isFunction(this.initialize)) {
-      this.initialize(this.options);
-    }
-  };
-  
-  Marionette.Controller.extend = Marionette.extend;
-  
-  // Controller Methods
-  // --------------
-  
-  // Ensure it can trigger events with Backbone.Events
-  _.extend(Marionette.Controller.prototype, Backbone.Events, {
-    destroy: function() {
-      Marionette._triggerMethod(this, 'before:destroy', arguments);
-      Marionette._triggerMethod(this, 'destroy', arguments);
-  
-      this.stopListening();
-      this.off();
-      return this;
-    },
-  
-    // import the `triggerMethod` to trigger events with corresponding
-    // methods if the method exists
-    triggerMethod: Marionette.triggerMethod,
-  
-    // A handy way to merge options onto the instance
-    mergeOptions: Marionette.mergeOptions,
-  
-    // Proxy `getOption` to enable getting options from this or this.options by name.
-    getOption: Marionette.proxyGetOption
-  
-  });
-  
-  // Object
-  // ------
-  
-  // A Base Class that other Classes should descend from.
-  // Object borrows many conventions and utilities from Backbone.
-  Marionette.Object = function(options) {
-    this.options = _.extend({}, _.result(this, 'options'), options);
-  
-    this.initialize.apply(this, arguments);
-  };
-  
-  Marionette.Object.extend = Marionette.extend;
-  
-  // Object Methods
-  // --------------
-  
-  // Ensure it can trigger events with Backbone.Events
-  _.extend(Marionette.Object.prototype, Backbone.Events, {
-  
-    //this is a noop method intended to be overridden by classes that extend from this base
-    initialize: function() {},
-  
-    destroy: function() {
-      this.triggerMethod('before:destroy');
-      this.triggerMethod('destroy');
-      this.stopListening();
-  
-      return this;
-    },
-  
-    // Import the `triggerMethod` to trigger events with corresponding
-    // methods if the method exists
-    triggerMethod: Marionette.triggerMethod,
-  
-    // A handy way to merge options onto the instance
-    mergeOptions: Marionette.mergeOptions,
-  
-    // Proxy `getOption` to enable getting options from this or this.options by name.
-    getOption: Marionette.proxyGetOption,
-  
-    // Proxy `bindEntityEvents` to enable binding view's events from another entity.
-    bindEntityEvents: Marionette.proxyBindEntityEvents,
-  
-    // Proxy `unbindEntityEvents` to enable unbinding view's events from another entity.
-    unbindEntityEvents: Marionette.proxyUnbindEntityEvents
-  });
-  
-  /* jshint maxcomplexity: 16, maxstatements: 45, maxlen: 120 */
-  
-  // Region
-  // ------
-  
-  // Manage the visual regions of your composite application. See
-  // http://lostechies.com/derickbailey/2011/12/12/composite-js-apps-regions-and-region-managers/
-  
-  Marionette.Region = Marionette.Object.extend({
-    constructor: function(options) {
-  
-      // set options temporarily so that we can get `el`.
-      // options will be overriden by Object.constructor
-      this.options = options || {};
-      this.el = this.getOption('el');
-  
-      // Handle when this.el is passed in as a $ wrapped element.
-      this.el = this.el instanceof Backbone.$ ? this.el[0] : this.el;
-  
-      if (!this.el) {
-        throw new Marionette.Error({
-          name: 'NoElError',
-          message: 'An "el" must be specified for a region.'
-        });
-      }
-  
-      this.$el = this.getEl(this.el);
-      Marionette.Object.call(this, options);
-    },
-  
-    // Displays a backbone view instance inside of the region.
-    // Handles calling the `render` method for you. Reads content
-    // directly from the `el` attribute. Also calls an optional
-    // `onShow` and `onDestroy` method on your view, just after showing
-    // or just before destroying the view, respectively.
-    // The `preventDestroy` option can be used to prevent a view from
-    // the old view being destroyed on show.
-    // The `forceShow` option can be used to force a view to be
-    // re-rendered if it's already shown in the region.
-    show: function(view, options) {
-      if (!this._ensureElement()) {
-        return;
-      }
-  
-      this._ensureViewIsIntact(view);
-  
-      var showOptions     = options || {};
-      var isDifferentView = view !== this.currentView;
-      var preventDestroy  = !!showOptions.preventDestroy;
-      var forceShow       = !!showOptions.forceShow;
-  
-      // We are only changing the view if there is a current view to change to begin with
-      var isChangingView = !!this.currentView;
-  
-      // Only destroy the current view if we don't want to `preventDestroy` and if
-      // the view given in the first argument is different than `currentView`
-      var _shouldDestroyView = isDifferentView && !preventDestroy;
-  
-      // Only show the view given in the first argument if it is different than
-      // the current view or if we want to re-show the view. Note that if
-      // `_shouldDestroyView` is true, then `_shouldShowView` is also necessarily true.
-      var _shouldShowView = isDifferentView || forceShow;
-  
-      if (isChangingView) {
-        this.triggerMethod('before:swapOut', this.currentView, this, options);
-      }
-  
-      if (this.currentView) {
-        delete this.currentView._parent;
-      }
-  
-      if (_shouldDestroyView) {
-        this.empty();
-  
-      // A `destroy` event is attached to the clean up manually removed views.
-      // We need to detach this event when a new view is going to be shown as it
-      // is no longer relevant.
-      } else if (isChangingView && _shouldShowView) {
-        this.currentView.off('destroy', this.empty, this);
-      }
-  
-      if (_shouldShowView) {
-  
-        // We need to listen for if a view is destroyed
-        // in a way other than through the region.
-        // If this happens we need to remove the reference
-        // to the currentView since once a view has been destroyed
-        // we can not reuse it.
-        view.once('destroy', this.empty, this);
-        view.render();
-  
-        view._parent = this;
-  
-        if (isChangingView) {
-          this.triggerMethod('before:swap', view, this, options);
-        }
-  
-        this.triggerMethod('before:show', view, this, options);
-        Marionette.triggerMethodOn(view, 'before:show', view, this, options);
-  
-        if (isChangingView) {
-          this.triggerMethod('swapOut', this.currentView, this, options);
-        }
-  
-        // An array of views that we're about to display
-        var attachedRegion = Marionette.isNodeAttached(this.el);
-  
-        // The views that we're about to attach to the document
-        // It's important that we prevent _getNestedViews from being executed unnecessarily
-        // as it's a potentially-slow method
-        var displayedViews = [];
-  
-        var triggerBeforeAttach = showOptions.triggerBeforeAttach || this.triggerBeforeAttach;
-        var triggerAttach = showOptions.triggerAttach || this.triggerAttach;
-  
-        if (attachedRegion && triggerBeforeAttach) {
-          displayedViews = this._displayedViews(view);
-          this._triggerAttach(displayedViews, 'before:');
-        }
-  
-        this.attachHtml(view);
-        this.currentView = view;
-  
-        if (attachedRegion && triggerAttach) {
-          displayedViews = this._displayedViews(view);
-          this._triggerAttach(displayedViews);
-        }
-  
-        if (isChangingView) {
-          this.triggerMethod('swap', view, this, options);
-        }
-  
-        this.triggerMethod('show', view, this, options);
-        Marionette.triggerMethodOn(view, 'show', view, this, options);
-  
-        return this;
-      }
-  
-      return this;
-    },
-  
-    triggerBeforeAttach: true,
-    triggerAttach: true,
-  
-    _triggerAttach: function(views, prefix) {
-      var eventName = (prefix || '') + 'attach';
-      _.each(views, function(view) {
-        Marionette.triggerMethodOn(view, eventName, view, this);
-      }, this);
-    },
-  
-    _displayedViews: function(view) {
-      return _.union([view], _.result(view, '_getNestedViews') || []);
-    },
-  
-    _ensureElement: function() {
-      if (!_.isObject(this.el)) {
-        this.$el = this.getEl(this.el);
-        this.el = this.$el[0];
-      }
-  
-      if (!this.$el || this.$el.length === 0) {
-        if (this.getOption('allowMissingEl')) {
-          return false;
-        } else {
-          throw new Marionette.Error('An "el" ' + this.$el.selector + ' must exist in DOM');
-        }
-      }
-      return true;
-    },
-  
-    _ensureViewIsIntact: function(view) {
-      if (!view) {
-        throw new Marionette.Error({
-          name: 'ViewNotValid',
-          message: 'The view passed is undefined and therefore invalid. You must pass a view instance to show.'
-        });
-      }
-  
-      if (view.isDestroyed) {
-        throw new Marionette.Error({
-          name: 'ViewDestroyedError',
-          message: 'View (cid: "' + view.cid + '") has already been destroyed and cannot be used.'
-        });
-      }
-    },
-  
-    // Override this method to change how the region finds the DOM
-    // element that it manages. Return a jQuery selector object scoped
-    // to a provided parent el or the document if none exists.
-    getEl: function(el) {
-      return Backbone.$(el, Marionette._getValue(this.options.parentEl, this));
-    },
-  
-    // Override this method to change how the new view is
-    // appended to the `$el` that the region is managing
-    attachHtml: function(view) {
-      this.$el.contents().detach();
-  
-      this.el.appendChild(view.el);
-    },
-  
-    // Destroy the current view, if there is one. If there is no
-    // current view, it does nothing and returns immediately.
-    empty: function(options) {
-      var view = this.currentView;
-  
-      var preventDestroy = Marionette._getValue(options, 'preventDestroy', this);
-      // If there is no view in the region
-      // we should not remove anything
-      if (!view) { return; }
-  
-      view.off('destroy', this.empty, this);
-      this.triggerMethod('before:empty', view);
-      if (!preventDestroy) {
-        this._destroyView();
-      }
-      this.triggerMethod('empty', view);
-  
-      // Remove region pointer to the currentView
-      delete this.currentView;
-  
-      if (preventDestroy) {
-        this.$el.contents().detach();
-      }
-  
-      return this;
-    },
-  
-    // call 'destroy' or 'remove', depending on which is found
-    // on the view (if showing a raw Backbone view or a Marionette View)
-    _destroyView: function() {
-      var view = this.currentView;
-  
-      if (view.destroy && !view.isDestroyed) {
-        view.destroy();
-      } else if (view.remove) {
-        view.remove();
-  
-        // appending isDestroyed to raw Backbone View allows regions
-        // to throw a ViewDestroyedError for this view
-        view.isDestroyed = true;
-      }
-    },
-  
-    // Attach an existing view to the region. This
-    // will not call `render` or `onShow` for the new view,
-    // and will not replace the current HTML for the `el`
-    // of the region.
-    attachView: function(view) {
-      this.currentView = view;
-      return this;
-    },
-  
-    // Checks whether a view is currently present within
-    // the region. Returns `true` if there is and `false` if
-    // no view is present.
-    hasView: function() {
-      return !!this.currentView;
-    },
-  
-    // Reset the region by destroying any existing view and
-    // clearing out the cached `$el`. The next time a view
-    // is shown via this region, the region will re-query the
-    // DOM for the region's `el`.
-    reset: function() {
-      this.empty();
-  
-      if (this.$el) {
-        this.el = this.$el.selector;
-      }
-  
-      delete this.$el;
-      return this;
-    }
-  
-  },
-  
-  // Static Methods
-  {
-  
-    // Build an instance of a region by passing in a configuration object
-    // and a default region class to use if none is specified in the config.
-    //
-    // The config object should either be a string as a jQuery DOM selector,
-    // a Region class directly, or an object literal that specifies a selector,
-    // a custom regionClass, and any options to be supplied to the region:
-    //
-    // ```js
-    // {
-    //   selector: "#foo",
-    //   regionClass: MyCustomRegion,
-    //   allowMissingEl: false
-    // }
-    // ```
-    //
-    buildRegion: function(regionConfig, DefaultRegionClass) {
-      if (_.isString(regionConfig)) {
-        return this._buildRegionFromSelector(regionConfig, DefaultRegionClass);
-      }
-  
-      if (regionConfig.selector || regionConfig.el || regionConfig.regionClass) {
-        return this._buildRegionFromObject(regionConfig, DefaultRegionClass);
-      }
-  
-      if (_.isFunction(regionConfig)) {
-        return this._buildRegionFromRegionClass(regionConfig);
-      }
-  
-      throw new Marionette.Error({
-        message: 'Improper region configuration type.',
-        url: 'marionette.region.html#region-configuration-types'
-      });
-    },
-  
-    // Build the region from a string selector like '#foo-region'
-    _buildRegionFromSelector: function(selector, DefaultRegionClass) {
-      return new DefaultRegionClass({el: selector});
-    },
-  
-    // Build the region from a configuration object
-    // ```js
-    // { selector: '#foo', regionClass: FooRegion, allowMissingEl: false }
-    // ```
-    _buildRegionFromObject: function(regionConfig, DefaultRegionClass) {
-      var RegionClass = regionConfig.regionClass || DefaultRegionClass;
-      var options = _.omit(regionConfig, 'selector', 'regionClass');
-  
-      if (regionConfig.selector && !options.el) {
-        options.el = regionConfig.selector;
-      }
-  
-      return new RegionClass(options);
-    },
-  
-    // Build the region directly from a given `RegionClass`
-    _buildRegionFromRegionClass: function(RegionClass) {
-      return new RegionClass();
-    }
-  });
-  
-  // Region Manager
-  // --------------
-  
-  // Manage one or more related `Marionette.Region` objects.
-  Marionette.RegionManager = Marionette.Controller.extend({
-    constructor: function(options) {
-      this._regions = {};
-      this.length = 0;
-  
-      Marionette.Controller.call(this, options);
-  
-      this.addRegions(this.getOption('regions'));
-    },
-  
-    // Add multiple regions using an object literal or a
-    // function that returns an object literal, where
-    // each key becomes the region name, and each value is
-    // the region definition.
-    addRegions: function(regionDefinitions, defaults) {
-      regionDefinitions = Marionette._getValue(regionDefinitions, this, arguments);
-  
-      return _.reduce(regionDefinitions, function(regions, definition, name) {
-        if (_.isString(definition)) {
-          definition = {selector: definition};
-        }
-        if (definition.selector) {
-          definition = _.defaults({}, definition, defaults);
-        }
-  
-        regions[name] = this.addRegion(name, definition);
-        return regions;
-      }, {}, this);
-    },
-  
-    // Add an individual region to the region manager,
-    // and return the region instance
-    addRegion: function(name, definition) {
-      var region;
-  
-      if (definition instanceof Marionette.Region) {
-        region = definition;
-      } else {
-        region = Marionette.Region.buildRegion(definition, Marionette.Region);
-      }
-  
-      this.triggerMethod('before:add:region', name, region);
-  
-      region._parent = this;
-      this._store(name, region);
-  
-      this.triggerMethod('add:region', name, region);
-      return region;
-    },
-  
-    // Get a region by name
-    get: function(name) {
-      return this._regions[name];
-    },
-  
-    // Gets all the regions contained within
-    // the `regionManager` instance.
-    getRegions: function() {
-      return _.clone(this._regions);
-    },
-  
-    // Remove a region by name
-    removeRegion: function(name) {
-      var region = this._regions[name];
-      this._remove(name, region);
-  
-      return region;
-    },
-  
-    // Empty all regions in the region manager, and
-    // remove them
-    removeRegions: function() {
-      var regions = this.getRegions();
-      _.each(this._regions, function(region, name) {
-        this._remove(name, region);
-      }, this);
-  
-      return regions;
-    },
-  
-    // Empty all regions in the region manager, but
-    // leave them attached
-    emptyRegions: function() {
-      var regions = this.getRegions();
-      _.invoke(regions, 'empty');
-      return regions;
-    },
-  
-    // Destroy all regions and shut down the region
-    // manager entirely
-    destroy: function() {
-      this.removeRegions();
-      return Marionette.Controller.prototype.destroy.apply(this, arguments);
-    },
-  
-    // internal method to store regions
-    _store: function(name, region) {
-      if (!this._regions[name]) {
-        this.length++;
-      }
-  
-      this._regions[name] = region;
-    },
-  
-    // internal method to remove a region
-    _remove: function(name, region) {
-      this.triggerMethod('before:remove:region', name, region);
-      region.empty();
-      region.stopListening();
-  
-      delete region._parent;
-      delete this._regions[name];
-      this.length--;
-      this.triggerMethod('remove:region', name, region);
-    }
-  });
-  
-  Marionette.actAsCollection(Marionette.RegionManager.prototype, '_regions');
-  
-
-  // Template Cache
-  // --------------
-  
-  // Manage templates stored in `<script>` blocks,
-  // caching them for faster access.
-  Marionette.TemplateCache = function(templateId) {
-    this.templateId = templateId;
-  };
-  
-  // TemplateCache object-level methods. Manage the template
-  // caches from these method calls instead of creating
-  // your own TemplateCache instances
-  _.extend(Marionette.TemplateCache, {
-    templateCaches: {},
-  
-    // Get the specified template by id. Either
-    // retrieves the cached version, or loads it
-    // from the DOM.
-    get: function(templateId, options) {
-      var cachedTemplate = this.templateCaches[templateId];
-  
-      if (!cachedTemplate) {
-        cachedTemplate = new Marionette.TemplateCache(templateId);
-        this.templateCaches[templateId] = cachedTemplate;
-      }
-  
-      return cachedTemplate.load(options);
-    },
-  
-    // Clear templates from the cache. If no arguments
-    // are specified, clears all templates:
-    // `clear()`
-    //
-    // If arguments are specified, clears each of the
-    // specified templates from the cache:
-    // `clear("#t1", "#t2", "...")`
-    clear: function() {
-      var i;
-      var args = _.toArray(arguments);
-      var length = args.length;
-  
-      if (length > 0) {
-        for (i = 0; i < length; i++) {
-          delete this.templateCaches[args[i]];
-        }
-      } else {
-        this.templateCaches = {};
-      }
-    }
-  });
-  
-  // TemplateCache instance methods, allowing each
-  // template cache object to manage its own state
-  // and know whether or not it has been loaded
-  _.extend(Marionette.TemplateCache.prototype, {
-  
-    // Internal method to load the template
-    load: function(options) {
-      // Guard clause to prevent loading this template more than once
-      if (this.compiledTemplate) {
-        return this.compiledTemplate;
-      }
-  
-      // Load the template and compile it
-      var template = this.loadTemplate(this.templateId, options);
-      this.compiledTemplate = this.compileTemplate(template, options);
-  
-      return this.compiledTemplate;
-    },
-  
-    // Load a template from the DOM, by default. Override
-    // this method to provide your own template retrieval
-    // For asynchronous loading with AMD/RequireJS, consider
-    // using a template-loader plugin as described here:
-    // https://github.com/marionettejs/backbone.marionette/wiki/Using-marionette-with-requirejs
-    loadTemplate: function(templateId, options) {
-      var template = Backbone.$(templateId).html();
-  
-      if (!template || template.length === 0) {
-        throw new Marionette.Error({
-          name: 'NoTemplateError',
-          message: 'Could not find template: "' + templateId + '"'
-        });
-      }
-  
-      return template;
-    },
-  
-    // Pre-compile the template before caching it. Override
-    // this method if you do not need to pre-compile a template
-    // (JST / RequireJS for example) or if you want to change
-    // the template engine used (Handebars, etc).
-    compileTemplate: function(rawTemplate, options) {
-      return _.template(rawTemplate, options);
-    }
-  });
-  
-  // Renderer
-  // --------
-  
-  // Render a template with data by passing in the template
-  // selector and the data to render.
-  Marionette.Renderer = {
-  
-    // Render a template with data. The `template` parameter is
-    // passed to the `TemplateCache` object to retrieve the
-    // template function. Override this method to provide your own
-    // custom rendering and template handling for all of Marionette.
-    render: function(template, data) {
-      if (!template) {
-        throw new Marionette.Error({
-          name: 'TemplateNotFoundError',
-          message: 'Cannot render the template since its false, null or undefined.'
-        });
-      }
-  
-      var templateFunc = _.isFunction(template) ? template : Marionette.TemplateCache.get(template);
-  
-      return templateFunc(data);
-    }
-  };
-  
-
-  /* jshint maxlen: 114, nonew: false */
-  // View
-  // ----
-  
-  // The core view class that other Marionette views extend from.
-  Marionette.View = Backbone.View.extend({
-    isDestroyed: false,
-  
-    constructor: function(options) {
-      _.bindAll(this, 'render');
-  
-      options = Marionette._getValue(options, this);
-  
-      // this exposes view options to the view initializer
-      // this is a backfill since backbone removed the assignment
-      // of this.options
-      // at some point however this may be removed
-      this.options = _.extend({}, _.result(this, 'options'), options);
-  
-      this._behaviors = Marionette.Behaviors(this);
-  
-      Backbone.View.call(this, this.options);
-  
-      Marionette.MonitorDOMRefresh(this);
-    },
-  
-    // Get the template for this view
-    // instance. You can set a `template` attribute in the view
-    // definition or pass a `template: "whatever"` parameter in
-    // to the constructor options.
-    getTemplate: function() {
-      return this.getOption('template');
-    },
-  
-    // Serialize a model by returning its attributes. Clones
-    // the attributes to allow modification.
-    serializeModel: function(model) {
-      return model.toJSON.apply(model, _.rest(arguments));
-    },
-  
-    // Mix in template helper methods. Looks for a
-    // `templateHelpers` attribute, which can either be an
-    // object literal, or a function that returns an object
-    // literal. All methods and attributes from this object
-    // are copies to the object passed in.
-    mixinTemplateHelpers: function(target) {
-      target = target || {};
-      var templateHelpers = this.getOption('templateHelpers');
-      templateHelpers = Marionette._getValue(templateHelpers, this);
-      return _.extend(target, templateHelpers);
-    },
-  
-    // normalize the keys of passed hash with the views `ui` selectors.
-    // `{"@ui.foo": "bar"}`
-    normalizeUIKeys: function(hash) {
-      var uiBindings = _.result(this, '_uiBindings');
-      return Marionette.normalizeUIKeys(hash, uiBindings || _.result(this, 'ui'));
-    },
-  
-    // normalize the values of passed hash with the views `ui` selectors.
-    // `{foo: "@ui.bar"}`
-    normalizeUIValues: function(hash, properties) {
-      var ui = _.result(this, 'ui');
-      var uiBindings = _.result(this, '_uiBindings');
-      return Marionette.normalizeUIValues(hash, uiBindings || ui, properties);
-    },
-  
-    // Configure `triggers` to forward DOM events to view
-    // events. `triggers: {"click .foo": "do:foo"}`
-    configureTriggers: function() {
-      if (!this.triggers) { return; }
-  
-      // Allow `triggers` to be configured as a function
-      var triggers = this.normalizeUIKeys(_.result(this, 'triggers'));
-  
-      // Configure the triggers, prevent default
-      // action and stop propagation of DOM events
-      return _.reduce(triggers, function(events, value, key) {
-        events[key] = this._buildViewTrigger(value);
-        return events;
-      }, {}, this);
-    },
-  
-    // Overriding Backbone.View's delegateEvents to handle
-    // the `triggers`, `modelEvents`, and `collectionEvents` configuration
-    delegateEvents: function(events) {
-      this._delegateDOMEvents(events);
-      this.bindEntityEvents(this.model, this.getOption('modelEvents'));
-      this.bindEntityEvents(this.collection, this.getOption('collectionEvents'));
-  
-      _.each(this._behaviors, function(behavior) {
-        behavior.bindEntityEvents(this.model, behavior.getOption('modelEvents'));
-        behavior.bindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
-      }, this);
-  
-      return this;
-    },
-  
-    // internal method to delegate DOM events and triggers
-    _delegateDOMEvents: function(eventsArg) {
-      var events = Marionette._getValue(eventsArg || this.events, this);
-  
-      // normalize ui keys
-      events = this.normalizeUIKeys(events);
-      if (_.isUndefined(eventsArg)) {this.events = events;}
-  
-      var combinedEvents = {};
-  
-      // look up if this view has behavior events
-      var behaviorEvents = _.result(this, 'behaviorEvents') || {};
-      var triggers = this.configureTriggers();
-      var behaviorTriggers = _.result(this, 'behaviorTriggers') || {};
-  
-      // behavior events will be overriden by view events and or triggers
-      _.extend(combinedEvents, behaviorEvents, events, triggers, behaviorTriggers);
-  
-      Backbone.View.prototype.delegateEvents.call(this, combinedEvents);
-    },
-  
-    // Overriding Backbone.View's undelegateEvents to handle unbinding
-    // the `triggers`, `modelEvents`, and `collectionEvents` config
-    undelegateEvents: function() {
-      Backbone.View.prototype.undelegateEvents.apply(this, arguments);
-  
-      this.unbindEntityEvents(this.model, this.getOption('modelEvents'));
-      this.unbindEntityEvents(this.collection, this.getOption('collectionEvents'));
-  
-      _.each(this._behaviors, function(behavior) {
-        behavior.unbindEntityEvents(this.model, behavior.getOption('modelEvents'));
-        behavior.unbindEntityEvents(this.collection, behavior.getOption('collectionEvents'));
-      }, this);
-  
-      return this;
-    },
-  
-    // Internal helper method to verify whether the view hasn't been destroyed
-    _ensureViewIsIntact: function() {
-      if (this.isDestroyed) {
-        throw new Marionette.Error({
-          name: 'ViewDestroyedError',
-          message: 'View (cid: "' + this.cid + '") has already been destroyed and cannot be used.'
-        });
-      }
-    },
-  
-    // Default `destroy` implementation, for removing a view from the
-    // DOM and unbinding it. Regions will call this method
-    // for you. You can specify an `onDestroy` method in your view to
-    // add custom code that is called after the view is destroyed.
-    destroy: function() {
-      if (this.isDestroyed) { return this; }
-  
-      var args = _.toArray(arguments);
-  
-      this.triggerMethod.apply(this, ['before:destroy'].concat(args));
-  
-      // mark as destroyed before doing the actual destroy, to
-      // prevent infinite loops within "destroy" event handlers
-      // that are trying to destroy other views
-      this.isDestroyed = true;
-      this.triggerMethod.apply(this, ['destroy'].concat(args));
-  
-      // unbind UI elements
-      this.unbindUIElements();
-  
-      this.isRendered = false;
-  
-      // remove the view from the DOM
-      this.remove();
-  
-      // Call destroy on each behavior after
-      // destroying the view.
-      // This unbinds event listeners
-      // that behaviors have registered for.
-      _.invoke(this._behaviors, 'destroy', args);
-  
-      return this;
-    },
-  
-    bindUIElements: function() {
-      this._bindUIElements();
-      _.invoke(this._behaviors, this._bindUIElements);
-    },
-  
-    // This method binds the elements specified in the "ui" hash inside the view's code with
-    // the associated jQuery selectors.
-    _bindUIElements: function() {
-      if (!this.ui) { return; }
-  
-      // store the ui hash in _uiBindings so they can be reset later
-      // and so re-rendering the view will be able to find the bindings
-      if (!this._uiBindings) {
-        this._uiBindings = this.ui;
-      }
-  
-      // get the bindings result, as a function or otherwise
-      var bindings = _.result(this, '_uiBindings');
-  
-      // empty the ui so we don't have anything to start with
-      this.ui = {};
-  
-      // bind each of the selectors
-      _.each(bindings, function(selector, key) {
-        this.ui[key] = this.$(selector);
-      }, this);
-    },
-  
-    // This method unbinds the elements specified in the "ui" hash
-    unbindUIElements: function() {
-      this._unbindUIElements();
-      _.invoke(this._behaviors, this._unbindUIElements);
-    },
-  
-    _unbindUIElements: function() {
-      if (!this.ui || !this._uiBindings) { return; }
-  
-      // delete all of the existing ui bindings
-      _.each(this.ui, function($el, name) {
-        delete this.ui[name];
-      }, this);
-  
-      // reset the ui element to the original bindings configuration
-      this.ui = this._uiBindings;
-      delete this._uiBindings;
-    },
-  
-    // Internal method to create an event handler for a given `triggerDef` like
-    // 'click:foo'
-    _buildViewTrigger: function(triggerDef) {
-      var hasOptions = _.isObject(triggerDef);
-  
-      var options = _.defaults({}, (hasOptions ? triggerDef : {}), {
-        preventDefault: true,
-        stopPropagation: true
-      });
-  
-      var eventName = hasOptions ? options.event : triggerDef;
-  
-      return function(e) {
-        if (e) {
-          if (e.preventDefault && options.preventDefault) {
-            e.preventDefault();
-          }
-  
-          if (e.stopPropagation && options.stopPropagation) {
-            e.stopPropagation();
-          }
-        }
-  
-        var args = {
-          view: this,
-          model: this.model,
-          collection: this.collection
-        };
-  
-        this.triggerMethod(eventName, args);
-      };
-    },
-  
-    setElement: function() {
-      var ret = Backbone.View.prototype.setElement.apply(this, arguments);
-  
-      // proxy behavior $el to the view's $el.
-      // This is needed because a view's $el proxy
-      // is not set until after setElement is called.
-      _.invoke(this._behaviors, 'proxyViewProperties', this);
-  
-      return ret;
-    },
-  
-    // import the `triggerMethod` to trigger events with corresponding
-    // methods if the method exists
-    triggerMethod: function() {
-      var ret = Marionette._triggerMethod(this, arguments);
-  
-      this._triggerEventOnBehaviors(arguments);
-      this._triggerEventOnParentLayout(arguments[0], _.rest(arguments));
-  
-      return ret;
-    },
-  
-    _triggerEventOnBehaviors: function(args) {
-      var triggerMethod = Marionette._triggerMethod;
-      var behaviors = this._behaviors;
-      // Use good ol' for as this is a very hot function
-      for (var i = 0, length = behaviors && behaviors.length; i < length; i++) {
-        triggerMethod(behaviors[i], args);
-      }
-    },
-  
-    _triggerEventOnParentLayout: function(eventName, args) {
-      var layoutView = this._parentLayoutView();
-      if (!layoutView) {
-        return;
-      }
-  
-      // invoke triggerMethod on parent view
-      var eventPrefix = Marionette.getOption(layoutView, 'childViewEventPrefix');
-      var prefixedEventName = eventPrefix + ':' + eventName;
-  
-      Marionette._triggerMethod(layoutView, [prefixedEventName, this].concat(args));
-  
-      // call the parent view's childEvents handler
-      var childEvents = Marionette.getOption(layoutView, 'childEvents');
-      var normalizedChildEvents = layoutView.normalizeMethods(childEvents);
-  
-      if (!!normalizedChildEvents && _.isFunction(normalizedChildEvents[eventName])) {
-        normalizedChildEvents[eventName].apply(layoutView, [this].concat(args));
-      }
-    },
-  
-    // This method returns any views that are immediate
-    // children of this view
-    _getImmediateChildren: function() {
-      return [];
-    },
-  
-    // Returns an array of every nested view within this view
-    _getNestedViews: function() {
-      var children = this._getImmediateChildren();
-  
-      if (!children.length) { return children; }
-  
-      return _.reduce(children, function(memo, view) {
-        if (!view._getNestedViews) { return memo; }
-        return memo.concat(view._getNestedViews());
-      }, children);
-    },
-  
-    // Internal utility for building an ancestor
-    // view tree list.
-    _getAncestors: function() {
-      var ancestors = [];
-      var parent  = this._parent;
-  
-      while (parent) {
-        ancestors.push(parent);
-        parent = parent._parent;
-      }
-  
-      return ancestors;
-    },
-  
-    // Returns the containing parent view.
-    _parentLayoutView: function() {
-      var ancestors = this._getAncestors();
-      return _.find(ancestors, function(parent) {
-        return parent instanceof Marionette.LayoutView;
-      });
-    },
-  
-    // Imports the "normalizeMethods" to transform hashes of
-    // events=>function references/names to a hash of events=>function references
-    normalizeMethods: Marionette.normalizeMethods,
-  
-    // A handy way to merge passed-in options onto the instance
-    mergeOptions: Marionette.mergeOptions,
-  
-    // Proxy `getOption` to enable getting options from this or this.options by name.
-    getOption: Marionette.proxyGetOption,
-  
-    // Proxy `bindEntityEvents` to enable binding view's events from another entity.
-    bindEntityEvents: Marionette.proxyBindEntityEvents,
-  
-    // Proxy `unbindEntityEvents` to enable unbinding view's events from another entity.
-    unbindEntityEvents: Marionette.proxyUnbindEntityEvents
-  });
-  
-  // Item View
-  // ---------
-  
-  // A single item view implementation that contains code for rendering
-  // with underscore.js templates, serializing the view's model or collection,
-  // and calling several methods on extended views, such as `onRender`.
-  Marionette.ItemView = Marionette.View.extend({
-  
-    // Setting up the inheritance chain which allows changes to
-    // Marionette.View.prototype.constructor which allows overriding
-    constructor: function() {
-      Marionette.View.apply(this, arguments);
-    },
-  
-    // Serialize the model or collection for the view. If a model is
-    // found, the view's `serializeModel` is called. If a collection is found,
-    // each model in the collection is serialized by calling
-    // the view's `serializeCollection` and put into an `items` array in
-    // the resulting data. If both are found, defaults to the model.
-    // You can override the `serializeData` method in your own view definition,
-    // to provide custom serialization for your view's data.
-    serializeData: function() {
-      if (!this.model && !this.collection) {
-        return {};
-      }
-  
-      var args = [this.model || this.collection];
-      if (arguments.length) {
-        args.push.apply(args, arguments);
-      }
-  
-      if (this.model) {
-        return this.serializeModel.apply(this, args);
-      } else {
-        return {
-          items: this.serializeCollection.apply(this, args)
-        };
-      }
-    },
-  
-    // Serialize a collection by serializing each of its models.
-    serializeCollection: function(collection) {
-      return collection.toJSON.apply(collection, _.rest(arguments));
-    },
-  
-    // Render the view, defaulting to underscore.js templates.
-    // You can override this in your view definition to provide
-    // a very specific rendering for your view. In general, though,
-    // you should override the `Marionette.Renderer` object to
-    // change how Marionette renders views.
-    render: function() {
-      this._ensureViewIsIntact();
-  
-      this.triggerMethod('before:render', this);
-  
-      this._renderTemplate();
-      this.isRendered = true;
-      this.bindUIElements();
-  
-      this.triggerMethod('render', this);
-  
-      return this;
-    },
-  
-    // Internal method to render the template with the serialized data
-    // and template helpers via the `Marionette.Renderer` object.
-    // Throws an `UndefinedTemplateError` error if the template is
-    // any falsely value but literal `false`.
-    _renderTemplate: function() {
-      var template = this.getTemplate();
-  
-      // Allow template-less item views
-      if (template === false) {
-        return;
-      }
-  
-      if (!template) {
-        throw new Marionette.Error({
-          name: 'UndefinedTemplateError',
-          message: 'Cannot render the template since it is null or undefined.'
-        });
-      }
-  
-      // Add in entity data and template helpers
-      var data = this.mixinTemplateHelpers(this.serializeData());
-  
-      // Render and add to el
-      var html = Marionette.Renderer.render(template, data, this);
-      this.attachElContent(html);
-  
-      return this;
-    },
-  
-    // Attaches the content of a given view.
-    // This method can be overridden to optimize rendering,
-    // or to render in a non standard way.
-    //
-    // For example, using `innerHTML` instead of `$el.html`
-    //
-    // ```js
-    // attachElContent: function(html) {
-    //   this.el.innerHTML = html;
-    //   return this;
-    // }
-    // ```
-    attachElContent: function(html) {
-      this.$el.html(html);
-  
-      return this;
-    }
-  });
-  
-  /* jshint maxstatements: 14 */
-  
-  // Collection View
-  // ---------------
-  
-  // A view that iterates over a Backbone.Collection
-  // and renders an individual child view for each model.
-  Marionette.CollectionView = Marionette.View.extend({
-  
-    // used as the prefix for child view events
-    // that are forwarded through the collectionview
-    childViewEventPrefix: 'childview',
-  
-    // flag for maintaining the sorted order of the collection
-    sort: true,
-  
-    // constructor
-    // option to pass `{sort: false}` to prevent the `CollectionView` from
-    // maintaining the sorted order of the collection.
-    // This will fallback onto appending childView's to the end.
-    //
-    // option to pass `{comparator: compFunction()}` to allow the `CollectionView`
-    // to use a custom sort order for the collection.
-    constructor: function(options) {
-  
-      this.once('render', this._initialEvents);
-      this._initChildViewStorage();
-  
-      Marionette.View.apply(this, arguments);
-  
-      this.on('show', this._onShowCalled);
-  
-      this.initRenderBuffer();
-    },
-  
-    // Instead of inserting elements one by one into the page,
-    // it's much more performant to insert elements into a document
-    // fragment and then insert that document fragment into the page
-    initRenderBuffer: function() {
-      this._bufferedChildren = [];
-    },
-  
-    startBuffering: function() {
-      this.initRenderBuffer();
-      this.isBuffering = true;
-    },
-  
-    endBuffering: function() {
-      this.isBuffering = false;
-      this._triggerBeforeShowBufferedChildren();
-  
-      this.attachBuffer(this);
-  
-      this._triggerShowBufferedChildren();
-      this.initRenderBuffer();
-    },
-  
-    _triggerBeforeShowBufferedChildren: function() {
-      if (this._isShown) {
-        _.each(this._bufferedChildren, _.partial(this._triggerMethodOnChild, 'before:show'));
-      }
-    },
-  
-    _triggerShowBufferedChildren: function() {
-      if (this._isShown) {
-        _.each(this._bufferedChildren, _.partial(this._triggerMethodOnChild, 'show'));
-  
-        this._bufferedChildren = [];
-      }
-    },
-  
-    // Internal method for _.each loops to call `Marionette.triggerMethodOn` on
-    // a child view
-    _triggerMethodOnChild: function(event, childView) {
-      Marionette.triggerMethodOn(childView, event);
-    },
-  
-    // Configured the initial events that the collection view
-    // binds to.
-    _initialEvents: function() {
-      if (this.collection) {
-        this.listenTo(this.collection, 'add', this._onCollectionAdd);
-        this.listenTo(this.collection, 'remove', this._onCollectionRemove);
-        this.listenTo(this.collection, 'reset', this.render);
-  
-        if (this.getOption('sort')) {
-          this.listenTo(this.collection, 'sort', this._sortViews);
-        }
-      }
-    },
-  
-    // Handle a child added to the collection
-    _onCollectionAdd: function(child, collection, opts) {
-      var index;
-      if (opts.at !== undefined) {
-        index = opts.at;
-      } else {
-        index = _.indexOf(this._filteredSortedModels(), child);
-      }
-  
-      if (this._shouldAddChild(child, index)) {
-        this.destroyEmptyView();
-        var ChildView = this.getChildView(child);
-        this.addChild(child, ChildView, index);
-      }
-    },
-  
-    // get the child view by model it holds, and remove it
-    _onCollectionRemove: function(model) {
-      var view = this.children.findByModel(model);
-      this.removeChildView(view);
-      this.checkEmpty();
-    },
-  
-    _onShowCalled: function() {
-      this.children.each(_.partial(this._triggerMethodOnChild, 'show'));
-    },
-  
-    // Render children views. Override this method to
-    // provide your own implementation of a render function for
-    // the collection view.
-    render: function() {
-      this._ensureViewIsIntact();
-      this.triggerMethod('before:render', this);
-      this._renderChildren();
-      this.isRendered = true;
-      this.triggerMethod('render', this);
-      return this;
-    },
-  
-    // Reorder DOM after sorting. When your element's rendering
-    // do not use their index, you can pass reorderOnSort: true
-    // to only reorder the DOM after a sort instead of rendering
-    // all the collectionView
-    reorder: function() {
-      var children = this.children;
-      var models = this._filteredSortedModels();
-      var modelsChanged = _.find(models, function(model) {
-        return !children.findByModel(model);
-      });
-  
-      // If the models we're displaying have changed due to filtering
-      // We need to add and/or remove child views
-      // So render as normal
-      if (modelsChanged) {
-        this.render();
-      } else {
-        // get the DOM nodes in the same order as the models
-        var els = _.map(models, function(model) {
-          return children.findByModel(model).el;
-        });
-  
-        // since append moves elements that are already in the DOM,
-        // appending the elements will effectively reorder them
-        this.triggerMethod('before:reorder');
-        this._appendReorderedChildren(els);
-        this.triggerMethod('reorder');
-      }
-    },
-  
-    // Render view after sorting. Override this method to
-    // change how the view renders after a `sort` on the collection.
-    // An example of this would be to only `renderChildren` in a `CompositeView`
-    // rather than the full view.
-    resortView: function() {
-      if (Marionette.getOption(this, 'reorderOnSort')) {
-        this.reorder();
-      } else {
-        this.render();
-      }
-    },
-  
-    // Internal method. This checks for any changes in the order of the collection.
-    // If the index of any view doesn't match, it will render.
-    _sortViews: function() {
-      var models = this._filteredSortedModels();
-  
-      // check for any changes in sort order of views
-      var orderChanged = _.find(models, function(item, index) {
-        var view = this.children.findByModel(item);
-        return !view || view._index !== index;
-      }, this);
-  
-      if (orderChanged) {
-        this.resortView();
-      }
-    },
-  
-    // Internal reference to what index a `emptyView` is.
-    _emptyViewIndex: -1,
-  
-    // Internal method. Separated so that CompositeView can append to the childViewContainer
-    // if necessary
-    _appendReorderedChildren: function(children) {
-      this.$el.append(children);
-    },
-  
-    // Internal method. Separated so that CompositeView can have
-    // more control over events being triggered, around the rendering
-    // process
-    _renderChildren: function() {
-      this.destroyEmptyView();
-      this.destroyChildren();
-  
-      if (this.isEmpty(this.collection)) {
-        this.showEmptyView();
-      } else {
-        this.triggerMethod('before:render:collection', this);
-        this.startBuffering();
-        this.showCollection();
-        this.endBuffering();
-        this.triggerMethod('render:collection', this);
-  
-        // If we have shown children and none have passed the filter, show the empty view
-        if (this.children.isEmpty()) {
-          this.showEmptyView();
-        }
-      }
-    },
-  
-    // Internal method to loop through collection and show each child view.
-    showCollection: function() {
-      var ChildView;
-  
-      var models = this._filteredSortedModels();
-  
-      _.each(models, function(child, index) {
-        ChildView = this.getChildView(child);
-        this.addChild(child, ChildView, index);
-      }, this);
-    },
-  
-    // Allow the collection to be sorted by a custom view comparator
-    _filteredSortedModels: function() {
-      var models;
-      var viewComparator = this.getViewComparator();
-  
-      if (viewComparator) {
-        if (_.isString(viewComparator) || viewComparator.length === 1) {
-          models = this.collection.sortBy(viewComparator, this);
-        } else {
-          models = _.clone(this.collection.models).sort(_.bind(viewComparator, this));
-        }
-      } else {
-        models = this.collection.models;
-      }
-  
-      // Filter after sorting in case the filter uses the index
-      if (this.getOption('filter')) {
-        models = _.filter(models, function(model, index) {
-          return this._shouldAddChild(model, index);
-        }, this);
-      }
-  
-      return models;
-    },
-  
-    // Internal method to show an empty view in place of
-    // a collection of child views, when the collection is empty
-    showEmptyView: function() {
-      var EmptyView = this.getEmptyView();
-  
-      if (EmptyView && !this._showingEmptyView) {
-        this.triggerMethod('before:render:empty');
-  
-        this._showingEmptyView = true;
-        var model = new Backbone.Model();
-        this.addEmptyView(model, EmptyView);
-  
-        this.triggerMethod('render:empty');
-      }
-    },
-  
-    // Internal method to destroy an existing emptyView instance
-    // if one exists. Called when a collection view has been
-    // rendered empty, and then a child is added to the collection.
-    destroyEmptyView: function() {
-      if (this._showingEmptyView) {
-        this.triggerMethod('before:remove:empty');
-  
-        this.destroyChildren();
-        delete this._showingEmptyView;
-  
-        this.triggerMethod('remove:empty');
-      }
-    },
-  
-    // Retrieve the empty view class
-    getEmptyView: function() {
-      return this.getOption('emptyView');
-    },
-  
-    // Render and show the emptyView. Similar to addChild method
-    // but "add:child" events are not fired, and the event from
-    // emptyView are not forwarded
-    addEmptyView: function(child, EmptyView) {
-  
-      // get the emptyViewOptions, falling back to childViewOptions
-      var emptyViewOptions = this.getOption('emptyViewOptions') ||
-                            this.getOption('childViewOptions');
-  
-      if (_.isFunction(emptyViewOptions)) {
-        emptyViewOptions = emptyViewOptions.call(this, child, this._emptyViewIndex);
-      }
-  
-      // build the empty view
-      var view = this.buildChildView(child, EmptyView, emptyViewOptions);
-  
-      view._parent = this;
-  
-      // Proxy emptyView events
-      this.proxyChildEvents(view);
-  
-      // trigger the 'before:show' event on `view` if the collection view
-      // has already been shown
-      if (this._isShown) {
-        Marionette.triggerMethodOn(view, 'before:show');
-      }
-  
-      // Store the `emptyView` like a `childView` so we can properly
-      // remove and/or close it later
-      this.children.add(view);
-  
-      // Render it and show it
-      this.renderChildView(view, this._emptyViewIndex);
-  
-      // call the 'show' method if the collection view
-      // has already been shown
-      if (this._isShown) {
-        Marionette.triggerMethodOn(view, 'show');
-      }
-    },
-  
-    // Retrieve the `childView` class, either from `this.options.childView`
-    // or from the `childView` in the object definition. The "options"
-    // takes precedence.
-    // This method receives the model that will be passed to the instance
-    // created from this `childView`. Overriding methods may use the child
-    // to determine what `childView` class to return.
-    getChildView: function(child) {
-      var childView = this.getOption('childView');
-  
-      if (!childView) {
-        throw new Marionette.Error({
-          name: 'NoChildViewError',
-          message: 'A "childView" must be specified'
-        });
-      }
-  
-      return childView;
-    },
-  
-    // Render the child's view and add it to the
-    // HTML for the collection view at a given index.
-    // This will also update the indices of later views in the collection
-    // in order to keep the children in sync with the collection.
-    addChild: function(child, ChildView, index) {
-      var childViewOptions = this.getOption('childViewOptions');
-      childViewOptions = Marionette._getValue(childViewOptions, this, [child, index]);
-  
-      var view = this.buildChildView(child, ChildView, childViewOptions);
-  
-      // increment indices of views after this one
-      this._updateIndices(view, true, index);
-  
-      this._addChildView(view, index);
-  
-      view._parent = this;
-  
-      return view;
-    },
-  
-    // Internal method. This decrements or increments the indices of views after the
-    // added/removed view to keep in sync with the collection.
-    _updateIndices: function(view, increment, index) {
-      if (!this.getOption('sort')) {
-        return;
-      }
-  
-      if (increment) {
-        // assign the index to the view
-        view._index = index;
-      }
-  
-      // update the indexes of views after this one
-      this.children.each(function(laterView) {
-        if (laterView._index >= view._index) {
-          laterView._index += increment ? 1 : -1;
-        }
-      });
-    },
-  
-    // Internal Method. Add the view to children and render it at
-    // the given index.
-    _addChildView: function(view, index) {
-      // set up the child view event forwarding
-      this.proxyChildEvents(view);
-  
-      this.triggerMethod('before:add:child', view);
-  
-      // trigger the 'before:show' event on `view` if the collection view
-      // has already been shown
-      if (this._isShown && !this.isBuffering) {
-        Marionette.triggerMethodOn(view, 'before:show');
-      }
-  
-      // Store the child view itself so we can properly
-      // remove and/or destroy it later
-      this.children.add(view);
-      this.renderChildView(view, index);
-  
-      if (this._isShown && !this.isBuffering) {
-        Marionette.triggerMethodOn(view, 'show');
-      }
-  
-      this.triggerMethod('add:child', view);
-    },
-  
-    // render the child view
-    renderChildView: function(view, index) {
-      view.render();
-      this.attachHtml(this, view, index);
-      return view;
-    },
-  
-    // Build a `childView` for a model in the collection.
-    buildChildView: function(child, ChildViewClass, childViewOptions) {
-      var options = _.extend({model: child}, childViewOptions);
-      return new ChildViewClass(options);
-    },
-  
-    // Remove the child view and destroy it.
-    // This function also updates the indices of
-    // later views in the collection in order to keep
-    // the children in sync with the collection.
-    removeChildView: function(view) {
-  
-      if (view) {
-        this.triggerMethod('before:remove:child', view);
-  
-        // call 'destroy' or 'remove', depending on which is found
-        if (view.destroy) {
-          view.destroy();
-        } else if (view.remove) {
-          view.remove();
-        }
-  
-        delete view._parent;
-        this.stopListening(view);
-        this.children.remove(view);
-        this.triggerMethod('remove:child', view);
-  
-        // decrement the index of views after this one
-        this._updateIndices(view, false);
-      }
-  
-      return view;
-    },
-  
-    // check if the collection is empty
-    isEmpty: function() {
-      return !this.collection || this.collection.length === 0;
-    },
-  
-    // If empty, show the empty view
-    checkEmpty: function() {
-      if (this.isEmpty(this.collection)) {
-        this.showEmptyView();
-      }
-    },
-  
-    // You might need to override this if you've overridden attachHtml
-    attachBuffer: function(collectionView) {
-      collectionView.$el.append(this._createBuffer(collectionView));
-    },
-  
-    // Create a fragment buffer from the currently buffered children
-    _createBuffer: function(collectionView) {
-      var elBuffer = document.createDocumentFragment();
-      _.each(collectionView._bufferedChildren, function(b) {
-        elBuffer.appendChild(b.el);
-      });
-      return elBuffer;
-    },
-  
-    // Append the HTML to the collection's `el`.
-    // Override this method to do something other
-    // than `.append`.
-    attachHtml: function(collectionView, childView, index) {
-      if (collectionView.isBuffering) {
-        // buffering happens on reset events and initial renders
-        // in order to reduce the number of inserts into the
-        // document, which are expensive.
-        collectionView._bufferedChildren.splice(index, 0, childView);
-      } else {
-        // If we've already rendered the main collection, append
-        // the new child into the correct order if we need to. Otherwise
-        // append to the end.
-        if (!collectionView._insertBefore(childView, index)) {
-          collectionView._insertAfter(childView);
-        }
-      }
-    },
-  
-    // Internal method. Check whether we need to insert the view into
-    // the correct position.
-    _insertBefore: function(childView, index) {
-      var currentView;
-      var findPosition = this.getOption('sort') && (index < this.children.length - 1);
-      if (findPosition) {
-        // Find the view after this one
-        currentView = this.children.find(function(view) {
-          return view._index === index + 1;
-        });
-      }
-  
-      if (currentView) {
-        currentView.$el.before(childView.el);
-        return true;
-      }
-  
-      return false;
-    },
-  
-    // Internal method. Append a view to the end of the $el
-    _insertAfter: function(childView) {
-      this.$el.append(childView.el);
-    },
-  
-    // Internal method to set up the `children` object for
-    // storing all of the child views
-    _initChildViewStorage: function() {
-      this.children = new Backbone.ChildViewContainer();
-    },
-  
-    // Handle cleanup and other destroying needs for the collection of views
-    destroy: function() {
-      if (this.isDestroyed) { return this; }
-  
-      this.triggerMethod('before:destroy:collection');
-      this.destroyChildren();
-      this.triggerMethod('destroy:collection');
-  
-      return Marionette.View.prototype.destroy.apply(this, arguments);
-    },
-  
-    // Destroy the child views that this collection view
-    // is holding on to, if any
-    destroyChildren: function() {
-      var childViews = this.children.map(_.identity);
-      this.children.each(this.removeChildView, this);
-      this.checkEmpty();
-      return childViews;
-    },
-  
-    // Return true if the given child should be shown
-    // Return false otherwise
-    // The filter will be passed (child, index, collection)
-    // Where
-    //  'child' is the given model
-    //  'index' is the index of that model in the collection
-    //  'collection' is the collection referenced by this CollectionView
-    _shouldAddChild: function(child, index) {
-      var filter = this.getOption('filter');
-      return !_.isFunction(filter) || filter.call(this, child, index, this.collection);
-    },
-  
-    // Set up the child view event forwarding. Uses a "childview:"
-    // prefix in front of all forwarded events.
-    proxyChildEvents: function(view) {
-      var prefix = this.getOption('childViewEventPrefix');
-  
-      // Forward all child view events through the parent,
-      // prepending "childview:" to the event name
-      this.listenTo(view, 'all', function() {
-        var args = _.toArray(arguments);
-        var rootEvent = args[0];
-        var childEvents = this.normalizeMethods(_.result(this, 'childEvents'));
-  
-        args[0] = prefix + ':' + rootEvent;
-        args.splice(1, 0, view);
-  
-        // call collectionView childEvent if defined
-        if (typeof childEvents !== 'undefined' && _.isFunction(childEvents[rootEvent])) {
-          childEvents[rootEvent].apply(this, args.slice(1));
-        }
-  
-        this.triggerMethod.apply(this, args);
-      });
-    },
-  
-    _getImmediateChildren: function() {
-      return _.values(this.children._views);
-    },
-  
-    getViewComparator: function() {
-      return this.getOption('viewComparator');
-    }
-  });
-  
-  /* jshint maxstatements: 17, maxlen: 117 */
-  
-  // Composite View
-  // --------------
-  
-  // Used for rendering a branch-leaf, hierarchical structure.
-  // Extends directly from CollectionView and also renders an
-  // a child view as `modelView`, for the top leaf
-  Marionette.CompositeView = Marionette.CollectionView.extend({
-  
-    // Setting up the inheritance chain which allows changes to
-    // Marionette.CollectionView.prototype.constructor which allows overriding
-    // option to pass '{sort: false}' to prevent the CompositeView from
-    // maintaining the sorted order of the collection.
-    // This will fallback onto appending childView's to the end.
-    constructor: function() {
-      Marionette.CollectionView.apply(this, arguments);
-    },
-  
-    // Configured the initial events that the composite view
-    // binds to. Override this method to prevent the initial
-    // events, or to add your own initial events.
-    _initialEvents: function() {
-  
-      // Bind only after composite view is rendered to avoid adding child views
-      // to nonexistent childViewContainer
-  
-      if (this.collection) {
-        this.listenTo(this.collection, 'add', this._onCollectionAdd);
-        this.listenTo(this.collection, 'remove', this._onCollectionRemove);
-        this.listenTo(this.collection, 'reset', this._renderChildren);
-  
-        if (this.getOption('sort')) {
-          this.listenTo(this.collection, 'sort', this._sortViews);
-        }
-      }
-    },
-  
-    // Retrieve the `childView` to be used when rendering each of
-    // the items in the collection. The default is to return
-    // `this.childView` or Marionette.CompositeView if no `childView`
-    // has been defined
-    getChildView: function(child) {
-      var childView = this.getOption('childView') || this.constructor;
-  
-      return childView;
-    },
-  
-    // Serialize the model for the view.
-    // You can override the `serializeData` method in your own view
-    // definition, to provide custom serialization for your view's data.
-    serializeData: function() {
-      var data = {};
-  
-      if (this.model) {
-        data = _.partial(this.serializeModel, this.model).apply(this, arguments);
-      }
-  
-      return data;
-    },
-  
-    // Renders the model and the collection.
-    render: function() {
-      this._ensureViewIsIntact();
-      this._isRendering = true;
-      this.resetChildViewContainer();
-  
-      this.triggerMethod('before:render', this);
-  
-      this._renderTemplate();
-      this._renderChildren();
-  
-      this._isRendering = false;
-      this.isRendered = true;
-      this.triggerMethod('render', this);
-      return this;
-    },
-  
-    _renderChildren: function() {
-      if (this.isRendered || this._isRendering) {
-        Marionette.CollectionView.prototype._renderChildren.call(this);
-      }
-    },
-  
-    // Render the root template that the children
-    // views are appended to
-    _renderTemplate: function() {
-      var data = {};
-      data = this.serializeData();
-      data = this.mixinTemplateHelpers(data);
-  
-      this.triggerMethod('before:render:template');
-  
-      var template = this.getTemplate();
-      var html = Marionette.Renderer.render(template, data, this);
-      this.attachElContent(html);
-  
-      // the ui bindings is done here and not at the end of render since they
-      // will not be available until after the model is rendered, but should be
-      // available before the collection is rendered.
-      this.bindUIElements();
-      this.triggerMethod('render:template');
-    },
-  
-    // Attaches the content of the root.
-    // This method can be overridden to optimize rendering,
-    // or to render in a non standard way.
-    //
-    // For example, using `innerHTML` instead of `$el.html`
-    //
-    // ```js
-    // attachElContent: function(html) {
-    //   this.el.innerHTML = html;
-    //   return this;
-    // }
-    // ```
-    attachElContent: function(html) {
-      this.$el.html(html);
-  
-      return this;
-    },
-  
-    // You might need to override this if you've overridden attachHtml
-    attachBuffer: function(compositeView) {
-      var $container = this.getChildViewContainer(compositeView);
-      $container.append(this._createBuffer(compositeView));
-    },
-  
-    // Internal method. Append a view to the end of the $el.
-    // Overidden from CollectionView to ensure view is appended to
-    // childViewContainer
-    _insertAfter: function(childView) {
-      var $container = this.getChildViewContainer(this, childView);
-      $container.append(childView.el);
-    },
-  
-    // Internal method. Append reordered childView'.
-    // Overidden from CollectionView to ensure reordered views
-    // are appended to childViewContainer
-    _appendReorderedChildren: function(children) {
-      var $container = this.getChildViewContainer(this);
-      $container.append(children);
-    },
-  
-    // Internal method to ensure an `$childViewContainer` exists, for the
-    // `attachHtml` method to use.
-    getChildViewContainer: function(containerView, childView) {
-      if ('$childViewContainer' in containerView) {
-        return containerView.$childViewContainer;
-      }
-  
-      var container;
-      var childViewContainer = Marionette.getOption(containerView, 'childViewContainer');
-      if (childViewContainer) {
-  
-        var selector = Marionette._getValue(childViewContainer, containerView);
-  
-        if (selector.charAt(0) === '@' && containerView.ui) {
-          container = containerView.ui[selector.substr(4)];
-        } else {
-          container = containerView.$(selector);
-        }
-  
-        if (container.length <= 0) {
-          throw new Marionette.Error({
-            name: 'ChildViewContainerMissingError',
-            message: 'The specified "childViewContainer" was not found: ' + containerView.childViewContainer
-          });
-        }
-  
-      } else {
-        container = containerView.$el;
-      }
-  
-      containerView.$childViewContainer = container;
-      return container;
-    },
-  
-    // Internal method to reset the `$childViewContainer` on render
-    resetChildViewContainer: function() {
-      if (this.$childViewContainer) {
-        delete this.$childViewContainer;
-      }
-    }
-  });
-  
-  // Layout View
-  // -----------
-  
-  // Used for managing application layoutViews, nested layoutViews and
-  // multiple regions within an application or sub-application.
-  //
-  // A specialized view class that renders an area of HTML and then
-  // attaches `Region` instances to the specified `regions`.
-  // Used for composite view management and sub-application areas.
-  Marionette.LayoutView = Marionette.ItemView.extend({
-    regionClass: Marionette.Region,
-  
-    options: {
-      destroyImmediate: false
-    },
-  
-    // used as the prefix for child view events
-    // that are forwarded through the layoutview
-    childViewEventPrefix: 'childview',
-  
-    // Ensure the regions are available when the `initialize` method
-    // is called.
-    constructor: function(options) {
-      options = options || {};
-  
-      this._firstRender = true;
-      this._initializeRegions(options);
-  
-      Marionette.ItemView.call(this, options);
-    },
-  
-    // LayoutView's render will use the existing region objects the
-    // first time it is called. Subsequent calls will destroy the
-    // views that the regions are showing and then reset the `el`
-    // for the regions to the newly rendered DOM elements.
-    render: function() {
-      this._ensureViewIsIntact();
-  
-      if (this._firstRender) {
-        // if this is the first render, don't do anything to
-        // reset the regions
-        this._firstRender = false;
-      } else {
-        // If this is not the first render call, then we need to
-        // re-initialize the `el` for each region
-        this._reInitializeRegions();
-      }
-  
-      return Marionette.ItemView.prototype.render.apply(this, arguments);
-    },
-  
-    // Handle destroying regions, and then destroy the view itself.
-    destroy: function() {
-      if (this.isDestroyed) { return this; }
-      // #2134: remove parent element before destroying the child views, so
-      // removing the child views doesn't retrigger repaints
-      if (this.getOption('destroyImmediate') === true) {
-        this.$el.remove();
-      }
-      this.regionManager.destroy();
-      return Marionette.ItemView.prototype.destroy.apply(this, arguments);
-    },
-  
-    showChildView: function(regionName, view) {
-      return this.getRegion(regionName).show(view);
-    },
-  
-    getChildView: function(regionName) {
-      return this.getRegion(regionName).currentView;
-    },
-  
-    // Add a single region, by name, to the layoutView
-    addRegion: function(name, definition) {
-      var regions = {};
-      regions[name] = definition;
-      return this._buildRegions(regions)[name];
-    },
-  
-    // Add multiple regions as a {name: definition, name2: def2} object literal
-    addRegions: function(regions) {
-      this.regions = _.extend({}, this.regions, regions);
-      return this._buildRegions(regions);
-    },
-  
-    // Remove a single region from the LayoutView, by name
-    removeRegion: function(name) {
-      delete this.regions[name];
-      return this.regionManager.removeRegion(name);
-    },
-  
-    // Provides alternative access to regions
-    // Accepts the region name
-    // getRegion('main')
-    getRegion: function(region) {
-      return this.regionManager.get(region);
-    },
-  
-    // Get all regions
-    getRegions: function() {
-      return this.regionManager.getRegions();
-    },
-  
-    // internal method to build regions
-    _buildRegions: function(regions) {
-      var defaults = {
-        regionClass: this.getOption('regionClass'),
-        parentEl: _.partial(_.result, this, 'el')
-      };
-  
-      return this.regionManager.addRegions(regions, defaults);
-    },
-  
-    // Internal method to initialize the regions that have been defined in a
-    // `regions` attribute on this layoutView.
-    _initializeRegions: function(options) {
-      var regions;
-      this._initRegionManager();
-  
-      regions = Marionette._getValue(this.regions, this, [options]) || {};
-  
-      // Enable users to define `regions` as instance options.
-      var regionOptions = this.getOption.call(options, 'regions');
-  
-      // enable region options to be a function
-      regionOptions = Marionette._getValue(regionOptions, this, [options]);
-  
-      _.extend(regions, regionOptions);
-  
-      // Normalize region selectors hash to allow
-      // a user to use the @ui. syntax.
-      regions = this.normalizeUIValues(regions, ['selector', 'el']);
-  
-      this.addRegions(regions);
-    },
-  
-    // Internal method to re-initialize all of the regions by updating the `el` that
-    // they point to
-    _reInitializeRegions: function() {
-      this.regionManager.invoke('reset');
-    },
-  
-    // Enable easy overriding of the default `RegionManager`
-    // for customized region interactions and business specific
-    // view logic for better control over single regions.
-    getRegionManager: function() {
-      return new Marionette.RegionManager();
-    },
-  
-    // Internal method to initialize the region manager
-    // and all regions in it
-    _initRegionManager: function() {
-      this.regionManager = this.getRegionManager();
-      this.regionManager._parent = this;
-  
-      this.listenTo(this.regionManager, 'before:add:region', function(name) {
-        this.triggerMethod('before:add:region', name);
-      });
-  
-      this.listenTo(this.regionManager, 'add:region', function(name, region) {
-        this[name] = region;
-        this.triggerMethod('add:region', name, region);
-      });
-  
-      this.listenTo(this.regionManager, 'before:remove:region', function(name) {
-        this.triggerMethod('before:remove:region', name);
-      });
-  
-      this.listenTo(this.regionManager, 'remove:region', function(name, region) {
-        delete this[name];
-        this.triggerMethod('remove:region', name, region);
-      });
-    },
-  
-    _getImmediateChildren: function() {
-      return _.chain(this.regionManager.getRegions())
-        .pluck('currentView')
-        .compact()
-        .value();
-    }
-  });
-  
-
-  // Behavior
-  // --------
-  
-  // A Behavior is an isolated set of DOM /
-  // user interactions that can be mixed into any View.
-  // Behaviors allow you to blackbox View specific interactions
-  // into portable logical chunks, keeping your views simple and your code DRY.
-  
-  Marionette.Behavior = Marionette.Object.extend({
-    constructor: function(options, view) {
-      // Setup reference to the view.
-      // this comes in handle when a behavior
-      // wants to directly talk up the chain
-      // to the view.
-      this.view = view;
-      this.defaults = _.result(this, 'defaults') || {};
-      this.options  = _.extend({}, this.defaults, options);
-      // Construct an internal UI hash using
-      // the views UI hash and then the behaviors UI hash.
-      // This allows the user to use UI hash elements
-      // defined in the parent view as well as those
-      // defined in the given behavior.
-      this.ui = _.extend({}, _.result(view, 'ui'), _.result(this, 'ui'));
-  
-      Marionette.Object.apply(this, arguments);
-    },
-  
-    // proxy behavior $ method to the view
-    // this is useful for doing jquery DOM lookups
-    // scoped to behaviors view.
-    $: function() {
-      return this.view.$.apply(this.view, arguments);
-    },
-  
-    // Stops the behavior from listening to events.
-    // Overrides Object#destroy to prevent additional events from being triggered.
-    destroy: function() {
-      this.stopListening();
-  
-      return this;
-    },
-  
-    proxyViewProperties: function(view) {
-      this.$el = view.$el;
-      this.el = view.el;
-    }
-  });
-  
-  /* jshint maxlen: 143 */
-  // Behaviors
-  // ---------
-  
-  // Behaviors is a utility class that takes care of
-  // gluing your behavior instances to their given View.
-  // The most important part of this class is that you
-  // **MUST** override the class level behaviorsLookup
-  // method for things to work properly.
-  
-  Marionette.Behaviors = (function(Marionette, _) {
-    // Borrow event splitter from Backbone
-    var delegateEventSplitter = /^(\S+)\s*(.*)$/;
-  
-    function Behaviors(view, behaviors) {
-  
-      if (!_.isObject(view.behaviors)) {
-        return {};
-      }
-  
-      // Behaviors defined on a view can be a flat object literal
-      // or it can be a function that returns an object.
-      behaviors = Behaviors.parseBehaviors(view, behaviors || _.result(view, 'behaviors'));
-  
-      // Wraps several of the view's methods
-      // calling the methods first on each behavior
-      // and then eventually calling the method on the view.
-      Behaviors.wrap(view, behaviors, _.keys(methods));
-      return behaviors;
-    }
-  
-    var methods = {
-      behaviorTriggers: function(behaviorTriggers, behaviors) {
-        var triggerBuilder = new BehaviorTriggersBuilder(this, behaviors);
-        return triggerBuilder.buildBehaviorTriggers();
-      },
-  
-      behaviorEvents: function(behaviorEvents, behaviors) {
-        var _behaviorsEvents = {};
-  
-        _.each(behaviors, function(b, i) {
-          var _events = {};
-          var behaviorEvents = _.clone(_.result(b, 'events')) || {};
-  
-          // Normalize behavior events hash to allow
-          // a user to use the @ui. syntax.
-          behaviorEvents = Marionette.normalizeUIKeys(behaviorEvents, getBehaviorsUI(b));
-  
-          var j = 0;
-          _.each(behaviorEvents, function(behaviour, key) {
-            var match     = key.match(delegateEventSplitter);
-  
-            // Set event name to be namespaced using the view cid,
-            // the behavior index, and the behavior event index
-            // to generate a non colliding event namespace
-            // http://api.jquery.com/event.namespace/
-            var eventName = match[1] + '.' + [this.cid, i, j++, ' '].join('');
-            var selector  = match[2];
-  
-            var eventKey  = eventName + selector;
-            var handler   = _.isFunction(behaviour) ? behaviour : b[behaviour];
-  
-            _events[eventKey] = _.bind(handler, b);
-          }, this);
-  
-          _behaviorsEvents = _.extend(_behaviorsEvents, _events);
-        }, this);
-  
-        return _behaviorsEvents;
-      }
-    };
-  
-    _.extend(Behaviors, {
-  
-      // Placeholder method to be extended by the user.
-      // The method should define the object that stores the behaviors.
-      // i.e.
-      //
-      // ```js
-      // Marionette.Behaviors.behaviorsLookup: function() {
-      //   return App.Behaviors
-      // }
-      // ```
-      behaviorsLookup: function() {
-        throw new Marionette.Error({
-          message: 'You must define where your behaviors are stored.',
-          url: 'marionette.behaviors.html#behaviorslookup'
-        });
-      },
-  
-      // Takes care of getting the behavior class
-      // given options and a key.
-      // If a user passes in options.behaviorClass
-      // default to using that. Otherwise delegate
-      // the lookup to the users `behaviorsLookup` implementation.
-      getBehaviorClass: function(options, key) {
-        if (options.behaviorClass) {
-          return options.behaviorClass;
-        }
-  
-        // Get behavior class can be either a flat object or a method
-        return Marionette._getValue(Behaviors.behaviorsLookup, this, [options, key])[key];
-      },
-  
-      // Iterate over the behaviors object, for each behavior
-      // instantiate it and get its grouped behaviors.
-      parseBehaviors: function(view, behaviors) {
-        return _.chain(behaviors).map(function(options, key) {
-          var BehaviorClass = Behaviors.getBehaviorClass(options, key);
-  
-          var behavior = new BehaviorClass(options, view);
-          var nestedBehaviors = Behaviors.parseBehaviors(view, _.result(behavior, 'behaviors'));
-  
-          return [behavior].concat(nestedBehaviors);
-        }).flatten().value();
-      },
-  
-      // Wrap view internal methods so that they delegate to behaviors. For example,
-      // `onDestroy` should trigger destroy on all of the behaviors and then destroy itself.
-      // i.e.
-      //
-      // `view.delegateEvents = _.partial(methods.delegateEvents, view.delegateEvents, behaviors);`
-      wrap: function(view, behaviors, methodNames) {
-        _.each(methodNames, function(methodName) {
-          view[methodName] = _.partial(methods[methodName], view[methodName], behaviors);
-        });
-      }
-    });
-  
-    // Class to build handlers for `triggers` on behaviors
-    // for views
-    function BehaviorTriggersBuilder(view, behaviors) {
-      this._view      = view;
-      this._behaviors = behaviors;
-      this._triggers  = {};
-    }
-  
-    _.extend(BehaviorTriggersBuilder.prototype, {
-      // Main method to build the triggers hash with event keys and handlers
-      buildBehaviorTriggers: function() {
-        _.each(this._behaviors, this._buildTriggerHandlersForBehavior, this);
-        return this._triggers;
-      },
-  
-      // Internal method to build all trigger handlers for a given behavior
-      _buildTriggerHandlersForBehavior: function(behavior, i) {
-        var triggersHash = _.clone(_.result(behavior, 'triggers')) || {};
-  
-        triggersHash = Marionette.normalizeUIKeys(triggersHash, getBehaviorsUI(behavior));
-  
-        _.each(triggersHash, _.bind(this._setHandlerForBehavior, this, behavior, i));
-      },
-  
-      // Internal method to create and assign the trigger handler for a given
-      // behavior
-      _setHandlerForBehavior: function(behavior, i, eventName, trigger) {
-        // Unique identifier for the `this._triggers` hash
-        var triggerKey = trigger.replace(/^\S+/, function(triggerName) {
-          return triggerName + '.' + 'behaviortriggers' + i;
-        });
-  
-        this._triggers[triggerKey] = this._view._buildViewTrigger(eventName);
-      }
-    });
-  
-    function getBehaviorsUI(behavior) {
-      return behavior._uiBindings || behavior.ui;
-    }
-  
-    return Behaviors;
-  
-  })(Marionette, _);
-  
-
-  // App Router
-  // ----------
-  
-  // Reduce the boilerplate code of handling route events
-  // and then calling a single method on another object.
-  // Have your routers configured to call the method on
-  // your object, directly.
-  //
-  // Configure an AppRouter with `appRoutes`.
-  //
-  // App routers can only take one `controller` object.
-  // It is recommended that you divide your controller
-  // objects in to smaller pieces of related functionality
-  // and have multiple routers / controllers, instead of
-  // just one giant router and controller.
-  //
-  // You can also add standard routes to an AppRouter.
-  
-  Marionette.AppRouter = Backbone.Router.extend({
-  
-    constructor: function(options) {
-      this.options = options || {};
-  
-      Backbone.Router.apply(this, arguments);
-  
-      var appRoutes = this.getOption('appRoutes');
-      var controller = this._getController();
-      this.processAppRoutes(controller, appRoutes);
-      this.on('route', this._processOnRoute, this);
-    },
-  
-    // Similar to route method on a Backbone Router but
-    // method is called on the controller
-    appRoute: function(route, methodName) {
-      var controller = this._getController();
-      this._addAppRoute(controller, route, methodName);
-    },
-  
-    // process the route event and trigger the onRoute
-    // method call, if it exists
-    _processOnRoute: function(routeName, routeArgs) {
-      // make sure an onRoute before trying to call it
-      if (_.isFunction(this.onRoute)) {
-        // find the path that matches the current route
-        var routePath = _.invert(this.getOption('appRoutes'))[routeName];
-        this.onRoute(routeName, routePath, routeArgs);
-      }
-    },
-  
-    // Internal method to process the `appRoutes` for the
-    // router, and turn them in to routes that trigger the
-    // specified method on the specified `controller`.
-    processAppRoutes: function(controller, appRoutes) {
-      if (!appRoutes) { return; }
-  
-      var routeNames = _.keys(appRoutes).reverse(); // Backbone requires reverted order of routes
-  
-      _.each(routeNames, function(route) {
-        this._addAppRoute(controller, route, appRoutes[route]);
-      }, this);
-    },
-  
-    _getController: function() {
-      return this.getOption('controller');
-    },
-  
-    _addAppRoute: function(controller, route, methodName) {
-      var method = controller[methodName];
-  
-      if (!method) {
-        throw new Marionette.Error('Method "' + methodName + '" was not found on the controller');
-      }
-  
-      this.route(route, methodName, _.bind(method, controller));
-    },
-  
-    mergeOptions: Marionette.mergeOptions,
-  
-    // Proxy `getOption` to enable getting options from this or this.options by name.
-    getOption: Marionette.proxyGetOption,
-  
-    triggerMethod: Marionette.triggerMethod,
-  
-    bindEntityEvents: Marionette.proxyBindEntityEvents,
-  
-    unbindEntityEvents: Marionette.proxyUnbindEntityEvents
-  });
-  
-  // Application
-  // -----------
-  
-  // Contain and manage the composite application as a whole.
-  // Stores and starts up `Region` objects, includes an
-  // event aggregator as `app.vent`
-  Marionette.Application = Marionette.Object.extend({
-    constructor: function(options) {
-      this._initializeRegions(options);
-      this._initCallbacks = new Marionette.Callbacks();
-      this.submodules = {};
-      _.extend(this, options);
-      this._initChannel();
-      Marionette.Object.call(this, options);
-    },
-  
-    // Command execution, facilitated by Backbone.Wreqr.Commands
-    execute: function() {
-      this.commands.execute.apply(this.commands, arguments);
-    },
-  
-    // Request/response, facilitated by Backbone.Wreqr.RequestResponse
-    request: function() {
-      return this.reqres.request.apply(this.reqres, arguments);
-    },
-  
-    // Add an initializer that is either run at when the `start`
-    // method is called, or run immediately if added after `start`
-    // has already been called.
-    addInitializer: function(initializer) {
-      this._initCallbacks.add(initializer);
-    },
-  
-    // kick off all of the application's processes.
-    // initializes all of the regions that have been added
-    // to the app, and runs all of the initializer functions
-    start: function(options) {
-      this.triggerMethod('before:start', options);
-      this._initCallbacks.run(options, this);
-      this.triggerMethod('start', options);
-    },
-  
-    // Add regions to your app.
-    // Accepts a hash of named strings or Region objects
-    // addRegions({something: "#someRegion"})
-    // addRegions({something: Region.extend({el: "#someRegion"}) });
-    addRegions: function(regions) {
-      return this._regionManager.addRegions(regions);
-    },
-  
-    // Empty all regions in the app, without removing them
-    emptyRegions: function() {
-      return this._regionManager.emptyRegions();
-    },
-  
-    // Removes a region from your app, by name
-    // Accepts the regions name
-    // removeRegion('myRegion')
-    removeRegion: function(region) {
-      return this._regionManager.removeRegion(region);
-    },
-  
-    // Provides alternative access to regions
-    // Accepts the region name
-    // getRegion('main')
-    getRegion: function(region) {
-      return this._regionManager.get(region);
-    },
-  
-    // Get all the regions from the region manager
-    getRegions: function() {
-      return this._regionManager.getRegions();
-    },
-  
-    // Create a module, attached to the application
-    module: function(moduleNames, moduleDefinition) {
-  
-      // Overwrite the module class if the user specifies one
-      var ModuleClass = Marionette.Module.getClass(moduleDefinition);
-  
-      var args = _.toArray(arguments);
-      args.unshift(this);
-  
-      // see the Marionette.Module object for more information
-      return ModuleClass.create.apply(ModuleClass, args);
-    },
-  
-    // Enable easy overriding of the default `RegionManager`
-    // for customized region interactions and business-specific
-    // view logic for better control over single regions.
-    getRegionManager: function() {
-      return new Marionette.RegionManager();
-    },
-  
-    // Internal method to initialize the regions that have been defined in a
-    // `regions` attribute on the application instance
-    _initializeRegions: function(options) {
-      var regions = _.isFunction(this.regions) ? this.regions(options) : this.regions || {};
-  
-      this._initRegionManager();
-  
-      // Enable users to define `regions` in instance options.
-      var optionRegions = Marionette.getOption(options, 'regions');
-  
-      // Enable region options to be a function
-      if (_.isFunction(optionRegions)) {
-        optionRegions = optionRegions.call(this, options);
-      }
-  
-      // Overwrite current regions with those passed in options
-      _.extend(regions, optionRegions);
-  
-      this.addRegions(regions);
-  
-      return this;
-    },
-  
-    // Internal method to set up the region manager
-    _initRegionManager: function() {
-      this._regionManager = this.getRegionManager();
-      this._regionManager._parent = this;
-  
-      this.listenTo(this._regionManager, 'before:add:region', function() {
-        Marionette._triggerMethod(this, 'before:add:region', arguments);
-      });
-  
-      this.listenTo(this._regionManager, 'add:region', function(name, region) {
-        this[name] = region;
-        Marionette._triggerMethod(this, 'add:region', arguments);
-      });
-  
-      this.listenTo(this._regionManager, 'before:remove:region', function() {
-        Marionette._triggerMethod(this, 'before:remove:region', arguments);
-      });
-  
-      this.listenTo(this._regionManager, 'remove:region', function(name) {
-        delete this[name];
-        Marionette._triggerMethod(this, 'remove:region', arguments);
-      });
-    },
-  
-    // Internal method to setup the Wreqr.radio channel
-    _initChannel: function() {
-      this.channelName = _.result(this, 'channelName') || 'global';
-      this.channel = _.result(this, 'channel') || Backbone.Wreqr.radio.channel(this.channelName);
-      this.vent = _.result(this, 'vent') || this.channel.vent;
-      this.commands = _.result(this, 'commands') || this.channel.commands;
-      this.reqres = _.result(this, 'reqres') || this.channel.reqres;
-    }
-  });
-  
-  /* jshint maxparams: 9 */
-  
-  // Module
-  // ------
-  
-  // A simple module system, used to create privacy and encapsulation in
-  // Marionette applications
-  Marionette.Module = function(moduleName, app, options) {
-    this.moduleName = moduleName;
-    this.options = _.extend({}, this.options, options);
-    // Allow for a user to overide the initialize
-    // for a given module instance.
-    this.initialize = options.initialize || this.initialize;
-  
-    // Set up an internal store for sub-modules.
-    this.submodules = {};
-  
-    this._setupInitializersAndFinalizers();
-  
-    // Set an internal reference to the app
-    // within a module.
-    this.app = app;
-  
-    if (_.isFunction(this.initialize)) {
-      this.initialize(moduleName, app, this.options);
-    }
-  };
-  
-  Marionette.Module.extend = Marionette.extend;
-  
-  // Extend the Module prototype with events / listenTo, so that the module
-  // can be used as an event aggregator or pub/sub.
-  _.extend(Marionette.Module.prototype, Backbone.Events, {
-  
-    // By default modules start with their parents.
-    startWithParent: true,
-  
-    // Initialize is an empty function by default. Override it with your own
-    // initialization logic when extending Marionette.Module.
-    initialize: function() {},
-  
-    // Initializer for a specific module. Initializers are run when the
-    // module's `start` method is called.
-    addInitializer: function(callback) {
-      this._initializerCallbacks.add(callback);
-    },
-  
-    // Finalizers are run when a module is stopped. They are used to teardown
-    // and finalize any variables, references, events and other code that the
-    // module had set up.
-    addFinalizer: function(callback) {
-      this._finalizerCallbacks.add(callback);
-    },
-  
-    // Start the module, and run all of its initializers
-    start: function(options) {
-      // Prevent re-starting a module that is already started
-      if (this._isInitialized) { return; }
-  
-      // start the sub-modules (depth-first hierarchy)
-      _.each(this.submodules, function(mod) {
-        // check to see if we should start the sub-module with this parent
-        if (mod.startWithParent) {
-          mod.start(options);
-        }
-      });
-  
-      // run the callbacks to "start" the current module
-      this.triggerMethod('before:start', options);
-  
-      this._initializerCallbacks.run(options, this);
-      this._isInitialized = true;
-  
-      this.triggerMethod('start', options);
-    },
-  
-    // Stop this module by running its finalizers and then stop all of
-    // the sub-modules for this module
-    stop: function() {
-      // if we are not initialized, don't bother finalizing
-      if (!this._isInitialized) { return; }
-      this._isInitialized = false;
-  
-      this.triggerMethod('before:stop');
-  
-      // stop the sub-modules; depth-first, to make sure the
-      // sub-modules are stopped / finalized before parents
-      _.invoke(this.submodules, 'stop');
-  
-      // run the finalizers
-      this._finalizerCallbacks.run(undefined, this);
-  
-      // reset the initializers and finalizers
-      this._initializerCallbacks.reset();
-      this._finalizerCallbacks.reset();
-  
-      this.triggerMethod('stop');
-    },
-  
-    // Configure the module with a definition function and any custom args
-    // that are to be passed in to the definition function
-    addDefinition: function(moduleDefinition, customArgs) {
-      this._runModuleDefinition(moduleDefinition, customArgs);
-    },
-  
-    // Internal method: run the module definition function with the correct
-    // arguments
-    _runModuleDefinition: function(definition, customArgs) {
-      // If there is no definition short circut the method.
-      if (!definition) { return; }
-  
-      // build the correct list of arguments for the module definition
-      var args = _.flatten([
-        this,
-        this.app,
-        Backbone,
-        Marionette,
-        Backbone.$, _,
-        customArgs
-      ]);
-  
-      definition.apply(this, args);
-    },
-  
-    // Internal method: set up new copies of initializers and finalizers.
-    // Calling this method will wipe out all existing initializers and
-    // finalizers.
-    _setupInitializersAndFinalizers: function() {
-      this._initializerCallbacks = new Marionette.Callbacks();
-      this._finalizerCallbacks = new Marionette.Callbacks();
-    },
-  
-    // import the `triggerMethod` to trigger events with corresponding
-    // methods if the method exists
-    triggerMethod: Marionette.triggerMethod
-  });
-  
-  // Class methods to create modules
-  _.extend(Marionette.Module, {
-  
-    // Create a module, hanging off the app parameter as the parent object.
-    create: function(app, moduleNames, moduleDefinition) {
-      var module = app;
-  
-      // get the custom args passed in after the module definition and
-      // get rid of the module name and definition function
-      var customArgs = _.drop(arguments, 3);
-  
-      // Split the module names and get the number of submodules.
-      // i.e. an example module name of `Doge.Wow.Amaze` would
-      // then have the potential for 3 module definitions.
-      moduleNames = moduleNames.split('.');
-      var length = moduleNames.length;
-  
-      // store the module definition for the last module in the chain
-      var moduleDefinitions = [];
-      moduleDefinitions[length - 1] = moduleDefinition;
-  
-      // Loop through all the parts of the module definition
-      _.each(moduleNames, function(moduleName, i) {
-        var parentModule = module;
-        module = this._getModule(parentModule, moduleName, app, moduleDefinition);
-        this._addModuleDefinition(parentModule, module, moduleDefinitions[i], customArgs);
-      }, this);
-  
-      // Return the last module in the definition chain
-      return module;
-    },
-  
-    _getModule: function(parentModule, moduleName, app, def, args) {
-      var options = _.extend({}, def);
-      var ModuleClass = this.getClass(def);
-  
-      // Get an existing module of this name if we have one
-      var module = parentModule[moduleName];
-  
-      if (!module) {
-        // Create a new module if we don't have one
-        module = new ModuleClass(moduleName, app, options);
-        parentModule[moduleName] = module;
-        // store the module on the parent
-        parentModule.submodules[moduleName] = module;
-      }
-  
-      return module;
-    },
-  
-    // ## Module Classes
-    //
-    // Module classes can be used as an alternative to the define pattern.
-    // The extend function of a Module is identical to the extend functions
-    // on other Backbone and Marionette classes.
-    // This allows module lifecyle events like `onStart` and `onStop` to be called directly.
-    getClass: function(moduleDefinition) {
-      var ModuleClass = Marionette.Module;
-  
-      if (!moduleDefinition) {
-        return ModuleClass;
-      }
-  
-      // If all of the module's functionality is defined inside its class,
-      // then the class can be passed in directly. `MyApp.module("Foo", FooModule)`.
-      if (moduleDefinition.prototype instanceof ModuleClass) {
-        return moduleDefinition;
-      }
-  
-      return moduleDefinition.moduleClass || ModuleClass;
-    },
-  
-    // Add the module definition and add a startWithParent initializer function.
-    // This is complicated because module definitions are heavily overloaded
-    // and support an anonymous function, module class, or options object
-    _addModuleDefinition: function(parentModule, module, def, args) {
-      var fn = this._getDefine(def);
-      var startWithParent = this._getStartWithParent(def, module);
-  
-      if (fn) {
-        module.addDefinition(fn, args);
-      }
-  
-      this._addStartWithParent(parentModule, module, startWithParent);
-    },
-  
-    _getStartWithParent: function(def, module) {
-      var swp;
-  
-      if (_.isFunction(def) && (def.prototype instanceof Marionette.Module)) {
-        swp = module.constructor.prototype.startWithParent;
-        return _.isUndefined(swp) ? true : swp;
-      }
-  
-      if (_.isObject(def)) {
-        swp = def.startWithParent;
-        return _.isUndefined(swp) ? true : swp;
-      }
-  
-      return true;
-    },
-  
-    _getDefine: function(def) {
-      if (_.isFunction(def) && !(def.prototype instanceof Marionette.Module)) {
-        return def;
-      }
-  
-      if (_.isObject(def)) {
-        return def.define;
-      }
-  
-      return null;
-    },
-  
-    _addStartWithParent: function(parentModule, module, startWithParent) {
-      module.startWithParent = module.startWithParent && startWithParent;
-  
-      if (!module.startWithParent || !!module.startWithParentIsConfigured) {
-        return;
-      }
-  
-      module.startWithParentIsConfigured = true;
-  
-      parentModule.addInitializer(function(options) {
-        if (module.startWithParent) {
-          module.start(options);
-        }
-      });
-    }
-  });
-  
-
-  return Marionette;
-}));
-
-; browserify_shim__define__module__export__(typeof Marionette != "undefined" ? Marionette : window.Marionette);
-
-}).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],11:[function(require,module,exports){
 var OEModules = {};
 OEModules.alterties = require('./oe_modules/control-alter-ties/client-index');
 OEModules.basicnameinterpret = require('./oe_modules/control-basic-nameinterpret/client-index');
+    OEModules.boilerplate = require('./oe_modules/control-boilerplate/client-index');
 OEModules.checklist = require('./oe_modules/control-checklist/client-index');
+    OEModules.consent = require('./oe_modules/control-consent/client-index');
 OEModules.basicnamegen = require('./oe_modules/control-namegen/client-index');
 OEModules.namepick = require('./oe_modules/control-namepick/client-index');
+    OEModules.niBoxpop = require('./oe_modules/control-ni-boxpop/client-index');
 OEModules.nodelink = require('./oe_modules/control-nodelink/client-index');
 OEModules.radiolist = require('./oe_modules/control-radiolist/client-index');
+OEModules.select = require('./oe_modules/control-select/client-index');
 OEModules.shorttext = require('./oe_modules/control-shorttext/client-index');
 OEModules.oeslider = require('./oe_modules/control-slider/client-index');
 OEModules.namelist = require('./oe_modules/model-namelist/client-index');
 module.exports = OEModules;
 
-    }, {
-        "./oe_modules/control-alter-ties/client-index": 85,
-        "./oe_modules/control-basic-nameinterpret/client-index": 90,
-        "./oe_modules/control-checklist/client-index": 95,
-        "./oe_modules/control-namegen/client-index": 103,
-        "./oe_modules/control-namepick/client-index": 109,
-        "./oe_modules/control-nodelink/client-index": 114,
-        "./oe_modules/control-radiolist/client-index": 116,
-        "./oe_modules/control-shorttext/client-index": 120,
-        "./oe_modules/control-slider/client-index": 124,
-        "./oe_modules/model-namelist/client-index": 131
-    }],
+}, {
+    "./oe_modules/control-alter-ties/client-index": 86,
+    "./oe_modules/control-basic-nameinterpret/client-index": 92,
+    "./oe_modules/control-boilerplate/client-index": 97,
+    "./oe_modules/control-checklist/client-index": 100,
+    "./oe_modules/control-consent/client-index": 103,
+    "./oe_modules/control-namegen/client-index": 111,
+    "./oe_modules/control-namepick/client-index": 117,
+    "./oe_modules/control-ni-boxpop/client-index": 120,
+    "./oe_modules/control-nodelink/client-index": 125,
+    "./oe_modules/control-radiolist/client-index": 127,
+    "./oe_modules/control-select/client-index": 130,
+    "./oe_modules/control-shorttext/client-index": 134,
+    "./oe_modules/control-slider/client-index": 138,
+    "./oe_modules/model-namelist/client-index": 145
+}],
     12: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/7/15.
@@ -52371,6 +53594,7 @@ var App = Marionette.Application.extend({
     },
 
     loadPool: function (e) {
+
         if (e.poolid) {
             app.appState.set('poolid', e.poolid);
         }
@@ -52378,8 +53602,8 @@ var App = Marionette.Application.extend({
         // If the load-pool-sheet command was complied with, then there will be a sheetid property
         if(e.sheetid) {
             app.appState.set({sheetid: e.sheetid});
-            app.appState.save();
         }
+        app.appState.save();
 
         // Once the pool is ready, launch it
         app.channels.pool.once('load-pool-ready', _.bind(this.poolLaunch, this));
@@ -52477,7 +53701,17 @@ var App = Marionette.Application.extend({
             app.currentPool.set('poolstatus', poolstatus);
             app.currentPool.set('sheetindex', idx);
             app.currentPool.save();
+            app.appState.save();
         }
+    },
+
+    //TODO: create a 'goto location' function that will scroll or move to any arbtrary location on
+    // the pool. But for now, this will just scroll to a certain eddi.
+    gotoEddi: function (eid) {
+        // Find what sheet the eddi is on
+        // Load that sheet
+        // Scroll down to that eddi location
+        app.currentPool;
     },
 
     getCurrentSheetIndex: function () {
@@ -52597,20 +53831,9 @@ var App = Marionette.Application.extend({
 module.exports = App;
 
 
-    }, {
-        "./collections/collection-pool-listings": 20,
-        "./helpers/guid": 22,
-        "./layouts/layout-admin": 24,
-        "./layouts/layout-landing": 26,
-        "./layouts/layout-pool": 27,
-        "./layouts/layout-sheet": 28,
-        "./models/model-pool": 36,
-        "./models/model-user": 38,
-        "./views/view-landing-login": 80,
-        "./views/view-landing-pool-listings": 82,
-        "async": 2
-    }],
-    13: [function (require, module, exports) {
+
+
+},{"./collections/collection-pool-listings":20,"./helpers/guid":22,"./layouts/layout-admin":24,"./layouts/layout-landing":26,"./layouts/layout-pool":27,"./layouts/layout-sheet":28,"./models/model-pool":36,"./models/model-user":38,"./views/view-landing-login":80,"./views/view-landing-pool-listings":82,"async":2}],13:[function(require,module,exports){
 // Generated by CoffeeScript 1.9.0
 
 /*
@@ -53102,7 +54325,7 @@ dualsync = function(method, model, options) {
 
 Backbone.sync = dualsync;
 
-},{"backbone":7,"lodash":9}],14:[function(require,module,exports){
+},{"backbone":8,"lodash":10}],14:[function(require,module,exports){
 /**
  * Created by jfagan on 3/24/15.
  *
@@ -53140,7 +54363,7 @@ Store.prototype.totalClear = function () {
 };
 
 
-},{"backbone":7,"lodash":9}],15:[function(require,module,exports){
+},{"backbone":8,"lodash":10}],15:[function(require,module,exports){
 /**
  * Created by jfagan on 6/23/15.
  * oe/oe_client/collections/collection-admin-design-eddi-list.js
@@ -53153,44 +54376,42 @@ var ModelAdminDesignEddi = Backbone.Model.extend({
     }
 });
 
-        var CollectionAdminDesignEddiList = Backbone.Collection.extend({
-            model: ModelAdminDesignEddi,
-            initialize: function (opts) {
+var CollectionAdminDesignEddiList = Backbone.Collection.extend({
+    model: ModelAdminDesignEddi,
+    initialize: function (opts) {
 
-            }
-        });
-        module.exports = CollectionAdminDesignEddiList;
-    }, {}],
-    16: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
+    }
+});
+module.exports = CollectionAdminDesignEddiList;
+},{}],16:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
  * oe/oe_client/collections/collection-admin-design-sheet-list.js
  */
-        var ModelAdminDesignSheet = Backbone.Model.extend({
-            initialize: function () {
-                // doing stuff like this since I only want to work from one real model:
-                // the pooldesign model attached to the pool design layout.
-                // this is just a temporary model for rendering purposes
-                var oe = {
-                    title: this.get('title'),
-                    sheetid: this.get('sheetid'),
-                    description: this.get('description')
-                };
-                this.set('oe', oe);
-            }
-        });
+var ModelAdminDesignSheet = Backbone.Model.extend({
+    initialize: function () {
+        // doing stuff like this since I only want to work from one real model:
+        // the pooldesign model attached to the pool design layout.
+        // this is just a temporary model for rendering purposes
+        var oe = {
+            title: this.get('title'),
+            sheetid: this.get('sheetid'),
+            description: this.get('description')
+        };
+        this.set('oe', oe);
+    }
+});
 
 
-        var CollectionAdminDesignSheetList = Backbone.Collection.extend({
-            model: ModelAdminDesignSheet,
-            initialize: function (opts) {
-            }
-        });
-        module.exports = CollectionAdminDesignSheetList;
+var CollectionAdminDesignSheetList = Backbone.Collection.extend({
+    model: ModelAdminDesignSheet,
+    initialize: function (opts) {
+    }
+});
+module.exports = CollectionAdminDesignSheetList;
 
-    }, {}],
-    17: [function (require, module, exports) {
-        /**
+},{}],17:[function(require,module,exports){
+/**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/collections/collection-admin-pool-listings.js:3
  */
@@ -53201,8 +54422,7 @@ module.exports = Backbone.Collection.extend({
     model: AdminPoolListing
 });
 
-    }, {"../models/model-admin-pool-listing": 29}],
-    18: [function (require, module, exports) {
+},{"../models/model-admin-pool-listing":29}],18:[function(require,module,exports){
 /**
  * Created by jfagan on 6/15/15.
  * oe/oe_client/collections/collection-admin-response-table-summary.js
@@ -53218,8 +54438,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-    }, {}],
-    19: [function (require, module, exports) {
+},{}],19:[function(require,module,exports){
 /**
  * Created by jfagan on 3/24/15.
  * collection-pool-eddis.js
@@ -53240,12 +54459,15 @@ module.exports = Backbone.Collection.extend({
         this.puid = currentPool.get('puid');
         this.poolid = currentPool.get('poolid');
         this.createStore();
+    },
+
+    comparator: function (e) {
+        return e.get('sortIndex');
     }
 
 });
 
-    }, {"../models/model-eddi": 34}],
-    20: [function (require, module, exports) {
+},{"../models/model-eddi":34}],20:[function(require,module,exports){
 /**
  * Created by jfagan on 3/9/15.
  * collection-pool-listings.js
@@ -53258,8 +54480,9 @@ module.exports = Backbone.Collection.extend({
 });
 
 
-    }, {"../models/model-pool-listing": 35}],
-    21: [function (require, module, exports) {
+
+
+},{"../models/model-pool-listing":35}],21:[function(require,module,exports){
 /**
  * Created by jfagan on 3/24/15.
  * collection-pool-sheets.js
@@ -53275,8 +54498,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-    }, {"../models/model-sheet": 37}],
-    22: [function (require, module, exports) {
+},{"../models/model-sheet":37}],22:[function(require,module,exports){
 /**
  * Created by jfagan on 3/13/15.
  */
@@ -53295,132 +54517,120 @@ function guid() {
 }
 
 module.exports = guid;
-    }, {}],
-    23: [function (require, module, exports) {
+},{}],23:[function(require,module,exports){
 /**
  * Created by jfagan on 6/21/15.
  * oe/oe_client/layouts/layout-admin-design.js
  */
 
 var template = require('../templates/template-layout-admin-design.ejs');
-        var ModelPoolDesign = require('../models/model-admin-pooldesign');
-        var ViewPoolDetails = require('../views/view-admin-design-pooldetails');
-        var ViewSheetsLayout = require('../views/view-admin-design-sheets-layout');
-        var ViewEddisLayout = require('../views/view-admin-design-eddis-layout');
+var ModelPoolDesign = require('../models/model-admin-pooldesign');
+var ViewPoolDetails = require('../views/view-admin-design-pooldetails');
+var ViewSheetsLayout = require('../views/view-admin-design-sheets-layout');
+var ViewEddisLayout = require('../views/view-admin-design-eddis-layout');
 
-        var LayoutAdminDesign = Mn.LayoutView.extend({
-            template: template,
-            regions: {
-                "main": "#admin-layout-design-main",
-                "sheets": "#admin-layout-design-sheets",
-                "eddis": "#admin-layout-design-eddis"
-            },
-            initialize: function (opts) {
-                this.opts = opts || {};
-                this.page = opts.page || 'pooldetails';
+var LayoutAdminDesign = Mn.LayoutView.extend({
+    template: template,
+    regions: {
+        "main": "#admin-layout-design-main",
+        "sheets": "#admin-layout-design-sheets",
+        "eddis": "#admin-layout-design-eddis"
+    },
+    initialize: function (opts) {
+        this.opts = opts || {};
+        this.page = opts.page || 'pooldetails';
 
-                app.channels.pool.comply('save-pool-design', this.savePoolDesign, this);
-                app.channels.pool.comply('push-pool', this.pushPool, this);
-                app.channels.pool.comply('create-new-sheet', this.createNewSheet, this);
-                app.channels.pool.comply('create-new-eddi', this.createNewEddi, this);
-                app.channels.pool.reply('get-pool-design-model', this.giveDesignModel, this);
+        app.channels.pool.comply('save-pool-design', this.savePoolDesign, this);
+        app.channels.pool.comply('push-pool', this.pushPool, this);
+        app.channels.pool.comply('create-new-sheet', this.createNewSheet, this);
+        app.channels.pool.comply('create-new-eddi', this.createNewEddi, this);
+        app.channels.pool.reply('get-pool-design-model', this.giveDesignModel, this);
 
-            },
-            onShow: function () {
-                var self = this;
-                // if we don't have the model, then fetch it
-                if (!this.model) {
-                    this.model = new ModelPoolDesign({poolid: this.opts.poolid});
-                    this.model.fetch({
-                        success: function () {
-                            self.showMain();
+    },
+    onShow: function () {
+        var self = this;
+        // if we don't have the model, then fetch it
+        if (!this.model) {
+            this.model = new ModelPoolDesign({poolid: this.opts.poolid});
+            this.model.fetch({
+                success: function () {
+                    self.showMain();
                 }
-                    })
-                } else {
-                    this.showMain();
-                }
-            },
-            showMain: function () {
-                // For now, I'm just putting everything on one page
-                // I will probably reorganize it later
-                // switch(this.page) {
-                //    case 'pooldetails':
-                //        this.showPoolDetails();
-                //        break;
-                //    default:
-                //        this.showPoolDetails();
-                //        break;
-                //}
-                this.showPoolDetails();
-                this.showSheets();
-                this.showEddis();
-            },
-            showPoolDetails: function () {
-                var pd = new ViewPoolDetails({model: this.model});
-                this.main.show(pd);
-            },
-            savePoolDesign: function () {
-                this.model.save();
-            },
-            showSheets: function () {
-                var v = new ViewSheetsLayout({model: this.model});
-                this.sheets.show(v);
-            },
-            showEddis: function () {
-                var v = new ViewEddisLayout({model: this.model});
-                this.eddis.show(v);
-            },
-            createNewSheet: function (sheet) {
-                var poollogic = _.clone(this.model.get('poollogic'));
-                poollogic.sheetlogic.push(sheet);
-                poollogic.poollogic.sheetOrder.push(sheet.sheetid);
-                this.model.set('poollogic', poollogic);
-                this.model.save();
-            },
-            createNewEddi: function (eddi) {
-                var poollogic = _.clone(this.model.get('poollogic'));
-                poollogic.eddilogic.push(eddi);
-                this.model.set('poollogic', poollogic);
-                this.model.save();
-            },
-            pushPool: function () {
-                this.model.push();
-            },
-            giveDesignModel: function () {
-                return (this.model);
-            }
+            })
+        } else {
+            this.showMain();
+        }
+    },
+    showMain: function () {
+        // For now, I'm just putting everything on one page
+        // I will probably reorganize it later
+        // switch(this.page) {
+        //    case 'pooldetails':
+        //        this.showPoolDetails();
+        //        break;
+        //    default:
+        //        this.showPoolDetails();
+        //        break;
+        //}
+        this.showPoolDetails();
+        this.showSheets();
+        this.showEddis();
+    },
+    showPoolDetails: function () {
+        var pd = new ViewPoolDetails({model: this.model});
+        this.main.show(pd);
+    },
+    savePoolDesign: function () {
+        this.model.save();
+    },
+    showSheets: function () {
+        var v = new ViewSheetsLayout({model: this.model});
+        this.sheets.show(v);
+    },
+    showEddis: function () {
+        var v = new ViewEddisLayout({model: this.model});
+        this.eddis.show(v);
+    },
+    createNewSheet: function (sheet) {
+        var poollogic = _.clone(this.model.get('poollogic'));
+        poollogic.sheetlogic.push(sheet);
+        poollogic.poollogic.sheetOrder.push(sheet.sheetid);
+        this.model.set('poollogic', poollogic);
+        this.model.save();
+    },
+    createNewEddi: function (eddi) {
+        var poollogic = _.clone(this.model.get('poollogic'));
+        poollogic.eddilogic.push(eddi);
+        this.model.set('poollogic', poollogic);
+        this.model.save();
+    },
+    pushPool: function () {
+        this.model.push();
+    },
+    giveDesignModel: function () {
+        return (this.model);
+    }
 
-        });
-        module.exports = LayoutAdminDesign;
-    }, {
-        "../models/model-admin-pooldesign": 30,
-        "../templates/template-layout-admin-design.ejs": 51,
-        "../views/view-admin-design-eddis-layout": 61,
-        "../views/view-admin-design-pooldetails": 64,
-        "../views/view-admin-design-sheets-layout": 66
-    }],
-    24: [function (require, module, exports) {
-        /**
+});
+module.exports = LayoutAdminDesign;
+},{"../models/model-admin-pooldesign":30,"../templates/template-layout-admin-design.ejs":51,"../views/view-admin-design-eddis-layout":61,"../views/view-admin-design-pooldetails":64,"../views/view-admin-design-sheets-layout":66}],24:[function(require,module,exports){
+/**
  * Created by jfagan on 6/3/15.
  * oe/oe_client/layouts/layout-admin.js:3
  */
 
 var template = require('../templates/template-admin-layout.ejs');
 var AdminHeader = require('../views/view-admin-header');
-        var PoolListingsLayout = require('../views/view-admin-pool-listing-layout');
+var PoolListingsLayout = require('../views/view-admin-pool-listing-layout');
 var PoolListingCollection = require('../collections/collection-admin-pool-listings');
 var ViewResponses = require('../views/view-admin-responses');
-        var LayoutDesign = require('../layouts/layout-admin-design');
-        var ModelPoolDesign = require('../models/model-admin-pooldesign');
+var LayoutDesign = require('../layouts/layout-admin-design');
+var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
-    tagName: 'core-drawer-panel',
-    attributes: {
-        'flex': '',
-        'layout': '',
-        'vertical': ''
-    },
+    tagName: 'paper-drawer-panel',
+    className: ['flex', 'layout', 'vertical'],
     regions: {
         header: "#oe-admin-header",
         main: "#oe-admin-main",
@@ -53548,16 +54758,7 @@ module.exports = Mn.LayoutView.extend({
 
 });
 
-    }, {
-        "../collections/collection-admin-pool-listings": 17,
-        "../layouts/layout-admin-design": 23,
-        "../models/model-admin-pooldesign": 30,
-        "../templates/template-admin-layout.ejs": 44,
-        "../views/view-admin-header": 70,
-        "../views/view-admin-pool-listing-layout": 72,
-        "../views/view-admin-responses": 76
-    }],
-    25: [function (require, module, exports) {
+},{"../collections/collection-admin-pool-listings":17,"../layouts/layout-admin-design":23,"../models/model-admin-pooldesign":30,"../templates/template-admin-layout.ejs":44,"../views/view-admin-header":70,"../views/view-admin-pool-listing-layout":72,"../views/view-admin-responses":76}],25:[function(require,module,exports){
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/layouts/layout-eddi.js
@@ -53589,8 +54790,7 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-    }, {"../templates/template-layout-eddi.ejs": 52, "../views/view-eddi-promptbar": 78}],
-    26: [function (require, module, exports) {
+},{"../templates/template-layout-eddi.ejs":52,"../views/view-eddi-promptbar":78}],26:[function(require,module,exports){
 /**
  * Created by jfagan on 3/7/15.
  * layout-landing.js
@@ -53601,14 +54801,8 @@ var template = require('../templates/template-layout-landing.ejs')();
 
 module.exports = Marionette.LayoutView.extend({
     template: _.template(template),
-    tagName: 'core-scroll-header-panel',
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    tagName: 'paper-scroll-header-panel',
+    className: "flex layout vertical",
     id: 'oeLandingContainer',
     regions: {
         header: '#oe-landing-header',
@@ -53620,8 +54814,7 @@ module.exports = Marionette.LayoutView.extend({
     }
 });
 
-    }, {"../templates/template-layout-landing.ejs": 53}],
-    27: [function (require, module, exports) {
+},{"../templates/template-layout-landing.ejs":53}],27:[function(require,module,exports){
 /**
  * Created by jfagan on 3/22/15.
  * oe/oe_client/layouts/layout-pool.js
@@ -53641,12 +54834,8 @@ module.exports = Marionette.LayoutView.extend({
 var template = require('../templates/template-layout-pool.ejs')();
 
 module.exports = Marionette.LayoutView.extend({
-    tagName: 'core-header-panel',
-    attributes: function () {
-        return ( {
-            'flex': ''
-        });
-    },
+    tagName: 'paper-header-panel',
+    className: 'flex',
     id: 'poolLayout',
     template: _.template(template),
     regions: {
@@ -53675,8 +54864,7 @@ module.exports = Marionette.LayoutView.extend({
 });
 
 
-    }, {"../templates/template-layout-pool.ejs": 55, "../views/view-pool-footer": 83, "../views/view-pool-header": 84}],
-    28: [function (require, module, exports) {
+},{"../templates/template-layout-pool.ejs":55,"../views/view-pool-footer":83,"../views/view-pool-header":84}],28:[function(require,module,exports){
 /**
  * Created by jfagan on 3/23/15.
  * layout-sheet.js
@@ -53691,7 +54879,7 @@ module.exports = Marionette.LayoutView.extend({
         eddispace: '#oe-sheet-eddi-space'
     },
 
-    initialize: function (opts) {
+    initialize: function () {
         this.sheetid = app.appState.get('sheetid');
 
         app.channels.media.on('window-resize', function () {
@@ -53719,8 +54907,7 @@ module.exports = Marionette.LayoutView.extend({
 
 
 });
-    }, {"../templates/template-layout-sheet.ejs": 56, "../views/view-eddis": 79}],
-    29: [function (require, module, exports) {
+},{"../templates/template-layout-sheet.ejs":56,"../views/view-eddis":79}],29:[function(require,module,exports){
 /**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/models/model-admin-pool-listing.js
@@ -53739,8 +54926,7 @@ module.exports = Backbone.Model.extend({
         }
     }
 });
-    }, {}],
-    30: [function (require, module, exports) {
+},{}],30:[function(require,module,exports){
 /**
  * Created by jfagan on 6/22/15.
  * oe/oe_client/models/model-admin-pooldesign.js
@@ -53776,10 +54962,9 @@ var ModelPoolDesign = Backbone.Model.extend({
         app.channels.pool.trigger('pool-design-change', this);
     }
 });
-        module.exports = ModelPoolDesign;
-    }, {}],
-    31: [function (require, module, exports) {
-        /**
+module.exports = ModelPoolDesign;
+},{}],31:[function(require,module,exports){
+/**
  * Created by jfagan on 6/18/15.
  *
  */
@@ -53792,12 +54977,12 @@ var ResponseTable = Backbone.Model.extend({
         this.opts = opts || {};
     }
 });
-        module.exports = ResponseTable;
-    }, {}],
-    32: [function (require, module, exports) {
-        /**
+module.exports = ResponseTable;
+},{}],32:[function(require,module,exports){
+/**
  * Created by jfagan on 3/12/15.
  * oe/oe_client/models/model-appstate.js:3
+ * Note, this should always be synced to local storage.
  */
 
 var guid = require('../helpers/guid');
@@ -53809,21 +54994,26 @@ module.exports = Backbone.Model.extend({
 
     defaults: function() {
         return {
-            user: 'new user',
             id: this.createID(),
-            page: 'landing',
-            sheetid: null,
-            poolid: null,
-            puid: null,
-            sheetindex: null
+            puid: this.defaultPUID(),
+            poolid: this.defaultPoolid(),
+            sheetid: this.defaultSheetid(),
+            sheetindex: null,
+            page: null,
+            user: null
         }
     },
 
     initialize: function() {
-        this.createID();
+        console.log('[appState] Initialize.');
+        var self = this;
         // Do this if we pulled an existing survey.
         this.on('change:sheetid', _.bind(this.updateSheetIndex, this));
         app.channels.pool.on('pool-synced', _.bind(this.setPoolLength, this));
+        this.on('change', function () {
+            // for debugging
+            console.log(self.toJSON());
+        });
     },
 
     setPoolLength: function () {
@@ -53832,35 +55022,60 @@ module.exports = Backbone.Model.extend({
 
     updateSheetIndex: function () {
         if (app.currentPool) {
-            var sheets = app.currentPool.get('sheetlogic');
-            var sids = _(sheets).pluck('sheetid').value();
+            //var sheets = app.currentPool.get('sheetlogic');
+            //var sids = _(sheets).pluck('sheetid').value();
+            var sids = app.currentPool.get('poollogic').sheetOrder;
             var sid = this.get('sheetid');
             var ix = _.indexOf(sids, sid);
             // if we can't find the sheetid in the array, set it to the first page
             this.set('sheetindex', ix < 0 ? 0 : ix);
-
         }
+    },
+
+    getLocalAppstate: function () {
+        var appstate;
+        var id = this.getLocalID();
+        if (id) {
+            appstate = localStorage.getItem(this.urlRoot + id);
+            appstate = JSON.parse(appstate);
+        }
+        return appstate;
+    },
+
+    defaultSheetid: function () {
+        var appstate = this.getLocalAppstate();
+        return appstate ? appstate.sheetid : null;
+    },
+
+    defaultPUID: function () {
+        var appstate = this.getLocalAppstate();
+        return appstate ? appstate.puid : null;
+    },
+
+    defaultPoolid: function () {
+        var appstate = this.getLocalAppstate();
+        return appstate ? appstate.poolid : null;
+    },
+
+    getLocalID: function () {
+        var appstate = localStorage.getItem(this.urlRoot);
+        if (!_.isNull(appstate)) {
+            return (appstate.split(',')[0]);
+        }
+        return null;
     },
 
     // Check the localstorage to see if there is an appstate model to use
     // I want to restore the appstate if possible
     createID: function() {
-        var appstate = localStorage.getItem(this.urlRoot);
-        var _id;
-        if(appstate) {
-            var appStateID = appstate.split(',')[0];
-            var lsJSON = localStorage.getItem(this.urlRoot + appStateID);
-            _id = JSON.parse(lsJSON).id;
-        } else {
-            _id = guid();
-        }
-        return _id;
+        console.log('[appState] Create id');
+        var _id = this.getLocalID();
+        return this.getLocalID() ? _id : guid();
     }
 });
 
 
-    }, {"../helpers/guid": 22}],
-    33: [function (require, module, exports) {
+},{"../helpers/guid":22}],33:[function(require,module,exports){
 /**
  * Created by jfagan on 4/4/15.
  * oe/oe_client/models/model-eddi-promptbar.js
@@ -53869,8 +55084,7 @@ module.exports = Backbone.Model.extend({
 module.exports = Backbone.Model.extend({
 
 });
-    }, {}],
-    34: [function (require, module, exports) {
+},{}],34:[function(require,module,exports){
 /**
  * Created by jfagan on 3/23/15.
  * oe/oe_client/models/model-eddi.js
@@ -53981,8 +55195,7 @@ module.exports = Backbone.Model.extend({
 });
 
 
-    }, {"../helpers/guid": 22}],
-    35: [function (require, module, exports) {
+},{"../helpers/guid":22}],35:[function(require,module,exports){
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -54005,8 +55218,7 @@ module.exports = Backbone.Model.extend({
 });
 
 
-    }, {"../helpers/guid": 22}],
-    36: [function (require, module, exports) {
+},{"../helpers/guid":22}],36:[function(require,module,exports){
 /**
  * Created by jfagan on 3/17/15.
  * oe/oe_client/models/model-pool.js
@@ -54079,6 +55291,12 @@ module.exports = Backbone.Model.extend({
             app.channels.pool.trigger('eddis-synced', self);
         } else {
             $.when(self.eddis.fetch()).done(function() {
+                // TODO: This needs to be more graceful, it's hacky right now
+                // I want some way to test if there's an existing pool with data before reaching this point
+                if (self.eddis.length === 0) {
+                    app.appState.set('newpool', true);
+                    self.buildPoolLogic();
+                }
                 self.eddis.each(function (e) {
                     e.restoreLogic();
                 });
@@ -54089,12 +55307,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-    }, {
-        "../collections/collection-pool-eddis": 19,
-        "../collections/collection-pool-sheets": 21,
-        "../helpers/guid": 22
-    }],
-    37: [function (require, module, exports) {
+},{"../collections/collection-pool-eddis":19,"../collections/collection-pool-sheets":21,"../helpers/guid":22}],37:[function(require,module,exports){
 /**
  * Created by jfagan on 3/19/15.
  * model-sheet.js
@@ -54112,8 +55325,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-    }, {}],
-    38: [function (require, module, exports) {
+},{}],38:[function(require,module,exports){
 /**
  * Created by jfagan on 5/31/15.
  * oe/oe_client/models/model-user.js:3
@@ -54227,9 +55439,9 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-    }, {}],
-    39: [function (require, module, exports) {
+},{}],39:[function(require,module,exports){
 /**
+ * oe/oe_client/routers/oe-router.js
  * Created by jfagan on 3/19/15.
  */
 
@@ -54298,164 +55510,131 @@ module.exports = Backbone.Router.extend({
 
 });
 
-    }, {}],
-    40: [function (require, module, exports) {
+},{}],40:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-    __p += '<div id="oe-admin-design-eddis-new-eddi" layout vertical flex></div><div id="oe-admin-design-eddis-list" layout vertical flex></div>';
-    return __p;
+__p+='<div id="oe-admin-design-eddis-new-eddi" class="layout vertical flex"></div><div id="oe-admin-design-eddis-list" class="layout vertical flex"></div>';
+return __p;
 };
 
-    }, {"lodash": 9}],
-    41: [function (require, module, exports) {
-        var _ = require('lodash');
-        module.exports = function (rc) {
-            var __t, __p = '', __j = Array.prototype.join, print = function () {
-                __p += __j.call(arguments, '');
-            };
-            __p += '<div id="oe-admin-design-sheets-new-sheet"></div><div id="oe-admin-design-sheets-list"></div>';
-            return __p;
-        };
+},{"lodash":10}],41:[function(require,module,exports){
+var _ = require('lodash');
+module.exports = function(rc){
+var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
+__p+='<div id="oe-admin-design-sheets-new-sheet"></div><div id="oe-admin-design-sheets-list"></div>';
+return __p;
+};
 
-    }, {"lodash": 9}],
-    42: [function (require, module, exports) {
-        var _ = require('lodash');
-        module.exports = function (rc) {
-            var __t, __p = '', __j = Array.prototype.join, print = function () {
-                __p += __j.call(arguments, '');
-            };
-            __p += '<div id="oe-admin-design-single-eddi-common"></div><div id="oe-admin-design-single-eddi-specific"></div>';
-            return __p;
-        };
+},{"lodash":10}],42:[function(require,module,exports){
+var _ = require('lodash');
+module.exports = function(rc){
+var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
+__p+='<div id="oe-admin-design-single-eddi-common"></div><div id="oe-admin-design-single-eddi-specific"></div>';
+return __p;
+};
 
-    }, {"lodash": 9}],
-    43: [function (require, module, exports) {
-        var _ = require('lodash');
-        module.exports = function (rc) {
-            var __t, __p = '', __j = Array.prototype.join, print = function () {
-                __p += __j.call(arguments, '');
-            };
+},{"lodash":10}],43:[function(require,module,exports){
+var _ = require('lodash');
+module.exports = function(rc){
+var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 __p+='';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    44: [function (require, module, exports) {
+},{"lodash":10}],44:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-    __p += '<core-header-panel main id="adminMainDrawer"><div id="oe-admin-header" class="core-header"></div><div id="oe-admin-main"></div><div id="oe-admin-footer"></div></core-header-panel><core-header-panel drawer id="adminMenuDrawer"><core-toolbar>Menu</core-toolbar><core-menu><core-item label="Not all"></core-item><core-item label="who wander"></core-item><core-item label="are lost."></core-item></core-menu></core-header-panel>';
+    __p += '<paper-header-panel id="adminMainDrawer" main><div id="oe-admin-header" class="paper-header"></div><div id="oe-admin-main"></div><div id="oe-admin-footer"></div></paper-header-panel><paper-header-panel id="adminMenuDrawer" drawer><paper-toolbar>Menu</paper-toolbar><paper-menu><paper-item label="Not all"></paper-item><paper-item label="who wander"></paper-item><paper-item label="are lost."></paper-item></paper-menu></paper-header-panel>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    45: [function (require, module, exports) {
+},{"lodash":10}],45:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-    __p += '<div id="adminPoolListing-newPool"></div><div id="adminPoolListing-poolListings"></div>';
-    return __p;
+__p+='<div id="adminPoolListing-newPool"></div><div id="adminPoolListing-poolListings"></div>';
+return __p;
 };
 
-    }, {"lodash": 9}],
-    46: [function (require, module, exports) {
-        var _ = require('lodash');
-        module.exports = function (rc) {
-            var __t, __p = '', __j = Array.prototype.join, print = function () {
-                __p += __j.call(arguments, '');
-            };
+},{"lodash":10}],46:[function(require,module,exports){
+var _ = require('lodash');
+module.exports = function(rc){
+var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 __p+='Admin-responses.<h2>'+
 ((__t=( rc.poolTitle ))==null?'':__t)+
-    '</h2><div id="oe-admin-responses-main"></div>';
+'</h2><div id="oe-admin-responses-main"></div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    47: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    48: [function (require, module, exports) {
+},{"lodash":10}],47:[function(require,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"dup":43,"lodash":10}],48:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<core-toolbar class="oe-eddi-promptbar"><div flex></div><div class="middle">'+
-((__t=( rc.oe.prompt ))==null?'':_.escape(__t))+
+__p+='<paper-toolbar class="oe-eddi-promptbar"><div class="flex"></div><div class="middle">'+
+    ((__t = ( rc.oe.prompt )) == null ? '' : __t) +
 '</div><div class="bottom oe-eddi-details">'+
 ((__t=( rc.oe.eid ))==null?'':_.escape(__t))+
 '&nbsp;-&nbsp;'+
 ((__t=( rc.oe.title ))==null?'':_.escape(__t))+
-'</div></core-toolbar><style>core-toolbar.oe-eddi-promptbar{\n        height: 128px;\n    }\n    .oe-eddi-details {\n        font-size: 10px;\n    }</style>';
+    '&nbsp;-&nbsp;' +
+    ((__t = ( rc.oe.sortIndex )) == null ? '' : _.escape(__t)) +
+'</div></paper-toolbar><style>paper-toolbar.oe-eddi-promptbar {\n        height: 128px;\n    }\n    .oe-eddi-details {\n        font-size: 10px;\n    }</style>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    49: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    50: [function (require, module, exports) {
+},{"lodash":10}],49:[function(require,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"dup":43,"lodash":10}],50:[function(require,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"dup":43,"lodash":10}],51:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+=''+
-((__t=( rc.poolTitle ))==null?'':__t)+
-'';
+__p+='<div id="admin-layout-design-main"></div><div id="admin-layout-design-sheets"></div><div id="admin-layout-design-eddis"></div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    51: [function (require, module, exports) {
+},{"lodash":10}],52:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-    __p += '<div id="admin-layout-design-main"></div><div id="admin-layout-design-sheets"></div><div id="admin-layout-design-eddis"></div>';
-    return __p;
-};
-
-    }, {"lodash": 9}],
-    52: [function (require, module, exports) {
-        var _ = require('lodash');
-        module.exports = function (rc) {
-            var __t, __p = '', __j = Array.prototype.join, print = function () {
-                __p += __j.call(arguments, '');
-            };
 __p+='<div id="oe-layout-eddi-promptbar">Eddi Promptbar</div><div id="oe-layout-eddi-controlspace">Eddi Controlspace</div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    53: [function (require, module, exports) {
+},{"lodash":10}],53:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<div id="oe-landing-header"><div class="oe-title-logo" layout center-justified><img src="/assets/oe-title-logo.svg" class="oe-title-logo" alt="OpenEddi Title Logo"></div></div><div id="oe-landing-content">OE Landing Content</div><oe-landing-footer layout horizontal layout></oe-landing-footer>';
+__p+='<div id="oe-landing-header"><div class="oe-title-logo layout center-justified"><img src="/assets/oe-title-logo.svg" class="oe-title-logo" alt="OpenEddi Title Logo"></div></div><div id="oe-landing-content">OE Landing Content</div><oe-landing-footer class="layout horizontal"></oe-landing-footer>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    54: [function (require, module, exports) {
+},{"lodash":10}],54:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<div id="oe-footer-prev-space"><paper-button raised>Prev</paper-button></div><div id="oe-footer-sheet-position" layout horizontal flex center-justified><div layout vertical><div style="text-align: center">Page&nbsp;'+
+__p+='<div id="oe-footer-prev-space"><paper-button raised>Prev</paper-button></div><div id="oe-footer-sheet-position" class="layout horizontal flex center-justified"><div layout vertical><div style="text-align: center">Page&nbsp;'+
 ((__t=( rc.sheetindex + 1 ))==null?'':__t)+
 '/'+
 ((__t=( rc.poolLength ))==null?'':__t)+
-'</div><div id="oe-footer-exit-button"><paper-button>Save & Exit</paper-button></div></div></div><div id="oe-footer-next-space"><paper-button raised>Next</paper-button></div>';
+'</div><div id="oe-footer-exit-button"><paper-button>Save & Exit</paper-button></div></div></div><div id="oe-footer-next-space"><paper-button class="raised">Next</paper-button></div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    55: [function (require, module, exports) {
+},{"lodash":10}],55:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<div id="oe-pool-header" class="core-header">Pool Header</div><div id="oe-sheet-space">Sheet Space</div><div id="oe-pool-footer">Pool Footer</div>';
+__p+='<div id="oe-pool-header" class="paper-header">Pool Header</div><div id="oe-sheet-space">Sheet Space</div><div id="oe-pool-footer">Pool Footer</div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    56: [function (require, module, exports) {
+},{"lodash":10}],56:[function(require,module,exports){
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -54463,11 +55642,9 @@ __p+='<div id="oe-sheet-eddi-space">Eddi Space</div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    57: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    58: [function (require, module, exports) {
+},{"lodash":10}],57:[function(require,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"dup":43,"lodash":10}],58:[function(require,module,exports){
 //Copyright (c) 2014, Jeremy Fairbank <elpapapollo@gmail.com>
 //
 //Permission to use, copy, modify, and/or distribute this software for any
@@ -54484,7 +55661,7 @@ return __p;
 
 module.exports = Marionette.ItemView.extend({
     constructor: function (options) {
-        console.log('[marionette.polymer] Constructing view');
+        console.log('[marionette.polymer] Constructing view: ' + this.tagName);
         Marionette.View.prototype.constructor.apply(this, arguments);
         // these methods presume a model exists
         if (this.model) {
@@ -54538,7 +55715,7 @@ module.exports = Marionette.ItemView.extend({
         var attributeNames = _.intersection(_.keys(attributes), this._publishedKeys);
         _.each(attributeNames, this._setElAttr, this);
         // This won't work under a polyfill. We will have to take another approach
-        //this.el.fire('attributes-updated', this.model);
+        this.el.fire('attributes-updated', this.model);
         app.channels.pool.trigger('attributes-updated', this.model);
         this.el['attrUpdate'] = new Date();
     },
@@ -54548,8 +55725,7 @@ module.exports = Marionette.ItemView.extend({
     }
 });
 
-    }, {}],
-    59: [function (require, module, exports) {
+},{}],59:[function(require,module,exports){
 /**
  * Created by jfagan on 6/22/15.
  * oe/oe_client/views/view-admin-create-new-pool.js:3
@@ -54557,318 +55733,297 @@ module.exports = Marionette.ItemView.extend({
 
 var template = require('../templates/template-blank-template.ejs');
 
-        var ViewAdminCreateNewPool = Mn.PolymerView.extend({
-            template: template,
-            tagName: 'oe-admin-new-pool'
+var ViewAdminCreateNewPool = Mn.PolymerView.extend({
+    template: template,
+    tagName: 'oe-admin-new-pool'
+});
+module.exports = ViewAdminCreateNewPool;
+
+},{"../templates/template-blank-template.ejs":47}],60:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-eddi-list.js:3
+ */
+
+var ViewAdminDesignSingleEddi = require('./view-admin-design-single-eddi');
+
+var ViewAdminDesignEddiList = Mn.CollectionView.extend({
+    attributes: {
+        "layout": "",
+        "vertical": "",
+        "flex": ""
+    },
+    childView: ViewAdminDesignSingleEddi
+});
+module.exports = ViewAdminDesignEddiList;
+},{"./view-admin-design-single-eddi":68}],61:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-eddis-layout.js
+ */
+
+var template = require('../templates/template-admin-design-eddis-layout.ejs');
+var ViewNewEddi = require('./view-admin-design-new-eddi');
+var ViewEddiList = require('./view-admin-design-eddi-list');
+var CollectionDesignEddiList = require('../collections/collection-admin-design-eddi-list');
+
+
+var ViewAdminDesignEddisLayout = Mn.LayoutView.extend({
+    template: template,
+    regions: {
+        "neweddi": "#oe-admin-design-eddis-new-eddi",
+        "eddilist": "#oe-admin-design-eddis-list"
+    },
+    initialize: function (opts) {
+        this.opts = opts || {};
+        this.sheetid = opts.sheetid;
+        this.model = app.channels.pool.request('get-pool-design-model');
+        app.channels.pool.comply('set-eddi-sheetid', this.setSheetID, this);
+        app.channels.pool.reply('get-eddi-sheetid', this.getSheetID, this);
+    },
+    onShow: function () {
+        this.showNewEddi();
+        this.showEddiList();
+        this.model.on('change', this.showEddiList(), this);
+    },
+    showNewEddi: function () {
+        var viewNewEddi = new ViewNewEddi({model: this.model});
+        this.neweddi.show(viewNewEddi);
+    },
+    showEddiList: function () {
+        var self = this;
+        var poollogic, eddis, eddiList;
+        var viewEddiList;
+
+        poollogic = this.model.get('poollogic');
+        eddis = _.filter(poollogic.eddilogic, function (e) {
+            return (e.sheetid === self.eddiSheetid);
         });
-        module.exports = ViewAdminCreateNewPool;
+        eddiList = new CollectionDesignEddiList(eddis);
+        viewEddiList = new ViewEddiList({collection: eddiList});
+        this.eddilist.show(viewEddiList);
+    },
+    setSheetID: function (sheetid) {
+        this.eddiSheetid = sheetid;
+        this.showEddiList();
+    },
+    getSheetID: function () {
+        return (this.eddiSheetid);
+    }
+});
+module.exports = ViewAdminDesignEddisLayout;
 
-    }, {"../templates/template-blank-template.ejs": 47}],
-    60: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-eddi-list.js:3
-         */
+},{"../collections/collection-admin-design-eddi-list":15,"../templates/template-admin-design-eddis-layout.ejs":40,"./view-admin-design-eddi-list":60,"./view-admin-design-new-eddi":62}],62:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/ViewAdminDesignNewSheet.js
+ */
 
-        var ViewAdminDesignSingleEddi = require('./view-admin-design-single-eddi');
-
-        var ViewAdminDesignEddiList = Mn.CollectionView.extend({
-            attributes: {
-                "layout": "",
-                "vertical": "",
-                "flex": ""
-            },
-            childView: ViewAdminDesignSingleEddi
-        });
-        module.exports = ViewAdminDesignEddiList;
-    }, {"./view-admin-design-single-eddi": 68}],
-    61: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-eddis-layout.js
-         */
-
-        var template = require('../templates/template-admin-design-eddis-layout.ejs');
-        var ViewNewEddi = require('./view-admin-design-new-eddi');
-        var ViewEddiList = require('./view-admin-design-eddi-list');
-        var CollectionDesignEddiList = require('../collections/collection-admin-design-eddi-list');
-
-
-        var ViewAdminDesignEddisLayout = Mn.LayoutView.extend({
-            template: template,
-            regions: {
-                "neweddi": "#oe-admin-design-eddis-new-eddi",
-                "eddilist": "#oe-admin-design-eddis-list"
-            },
-            initialize: function (opts) {
-                this.opts = opts || {};
-                this.sheetid = opts.sheetid;
-                this.model = app.channels.pool.request('get-pool-design-model');
-                app.channels.pool.comply('set-eddi-sheetid', this.setSheetID, this);
-                app.channels.pool.reply('get-eddi-sheetid', this.getSheetID, this);
-            },
-            onShow: function () {
-                this.showNewEddi();
-                this.showEddiList();
-                this.model.on('change', this.showEddiList(), this);
-            },
-            showNewEddi: function () {
-                var viewNewEddi = new ViewNewEddi({model: this.model});
-                this.neweddi.show(viewNewEddi);
-            },
-            showEddiList: function () {
-                var self = this;
-                var poollogic, eddis, eddiList;
-                var viewEddiList;
-
-                poollogic = this.model.get('poollogic');
-                eddis = _.filter(poollogic.eddilogic, function (e) {
-                    return (e.sheetid === self.eddiSheetid);
-        });
-                eddiList = new CollectionDesignEddiList(eddis);
-                viewEddiList = new ViewEddiList({collection: eddiList});
-                this.eddilist.show(viewEddiList);
-            },
-            setSheetID: function (sheetid) {
-                this.eddiSheetid = sheetid;
-                this.showEddiList();
-            },
-            getSheetID: function () {
-                return (this.eddiSheetid);
+var ViewAdminDesignNewEddi = Mn.PolymerView.extend({
+    template: require('../templates/template-blank-template.ejs'),
+    tagName: "oe-admin-design-new-eddi",
+    _publishedKeys: ['oe', 'poollogic', 'controlmodules'],
+    initialize: function (opts) {
+        this.prepControlModules();
+    },
+    prepControlModules: function () {
+        var controlmodules = [];
+        _.forIn(app.OEModules, function (value, oeModule) {
+            if (value.views && value.views.eddicontrol) {
+                controlmodules.push({modulename: oeModule});
             }
         });
-        module.exports = ViewAdminDesignEddisLayout;
+        this.model.set('controlmodules', controlmodules);
+    }
+});
+module.exports = ViewAdminDesignNewEddi;
+},{"../templates/template-blank-template.ejs":47}],63:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/ViewAdminDesignNewSheet.js:3
+ */
 
-    }, {
-        "../collections/collection-admin-design-eddi-list": 15,
-        "../templates/template-admin-design-eddis-layout.ejs": 40,
-        "./view-admin-design-eddi-list": 60,
-        "./view-admin-design-new-eddi": 62
-    }],
-    62: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/ViewAdminDesignNewSheet.js
-         */
+var ViewAdminDesignNewSheet = Mn.PolymerView.extend({
+    template: require('../templates/template-blank-template.ejs'),
+    tagName: "oe-admin-design-new-sheet",
+    _publishedKeys: ['oe', 'poollogic']
+});
+module.exports = ViewAdminDesignNewSheet;
+},{"../templates/template-blank-template.ejs":47}],64:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-pooldetails.js:3
+ */
 
-        var ViewAdminDesignNewEddi = Mn.PolymerView.extend({
-            template: require('../templates/template-blank-template.ejs'),
-            tagName: "oe-admin-design-new-eddi",
-            _publishedKeys: ['oe', 'poollogic', 'controlmodules'],
-            initialize: function (opts) {
-                this.prepControlModules();
-            },
-            prepControlModules: function () {
-                var controlmodules = [];
-                _.forIn(app.OEModules, function (value, oeModule) {
-                    if (value.views && value.views.eddicontrol) {
-                        controlmodules.push({modulename: oeModule});
-            }
-        });
-                this.model.set('controlmodules', controlmodules);
-            }
-        });
-        module.exports = ViewAdminDesignNewEddi;
-    }, {"../templates/template-blank-template.ejs": 47}],
-    63: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/ViewAdminDesignNewSheet.js:3
-         */
+var template = require('../templates/template-blank-template.ejs');
 
-        var ViewAdminDesignNewSheet = Mn.PolymerView.extend({
-            template: require('../templates/template-blank-template.ejs'),
-            tagName: "oe-admin-design-new-sheet",
-            _publishedKeys: ['oe', 'poollogic']
-        });
-        module.exports = ViewAdminDesignNewSheet;
-    }, {"../templates/template-blank-template.ejs": 47}],
-    64: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-pooldetails.js:3
-         */
+var ViewAdminDesignPooldetails = Mn.PolymerView.extend({
+    template: template,
+    tagName: 'oe-admin-design-pooldetails',
+    _publishedKeys: ['oe', 'poollogic']
+});
+module.exports = ViewAdminDesignPooldetails;
+},{"../templates/template-blank-template.ejs":47}],65:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-sheet-list.js:3
+ */
 
-        var template = require('../templates/template-blank-template.ejs');
-
-        var ViewAdminDesignPooldetails = Mn.PolymerView.extend({
-            template: template,
-            tagName: 'oe-admin-design-pooldetails',
-            _publishedKeys: ['oe', 'poollogic']
-        });
-        module.exports = ViewAdminDesignPooldetails;
-    }, {"../templates/template-blank-template.ejs": 47}],
-    65: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-sheet-list.js:3
-         */
-
-        var ViewAdminDesignSingleSheet = require('./view-admin-design-single-sheet');
-        var ViewAdminDesignSheetList = Mn.CollectionView.extend({
-            attributes: {
-                "layout": "",
-                "vertical": "",
-                "flex": ""
-            },
-            childView: ViewAdminDesignSingleSheet
-        });
-        module.exports = ViewAdminDesignSheetList;
-    }, {"./view-admin-design-single-sheet": 69}],
-    66: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-sheets-layout.js:3
-         */
+var ViewAdminDesignSingleSheet = require('./view-admin-design-single-sheet');
+var ViewAdminDesignSheetList = Mn.CollectionView.extend({
+    attributes: {
+        "layout": "",
+        "vertical": "",
+        "flex": ""
+    },
+    childView: ViewAdminDesignSingleSheet
+});
+module.exports = ViewAdminDesignSheetList;
+},{"./view-admin-design-single-sheet":69}],66:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-sheets-layout.js:3
+ */
 
 
-        var template = require('../templates/template-admin-design-sheets-layout.ejs');
-        var ViewNewSheet = require('./view-admin-design-new-sheet');
-        var ViewSheetList = require('./view-admin-design-sheet-list');
-        var CollectionSheetDesign = require('../collections/collection-admin-design-sheet-list');
+var template = require('../templates/template-admin-design-sheets-layout.ejs');
+var ViewNewSheet = require('./view-admin-design-new-sheet');
+var ViewSheetList = require('./view-admin-design-sheet-list');
+var CollectionSheetDesign = require('../collections/collection-admin-design-sheet-list');
 
-        var ViewAdminDesignSheetsLayout = Mn.LayoutView.extend({
-            template: template,
-            regions: {
-                "newsheet": "#oe-admin-design-sheets-new-sheet",
-                "sheetlist": "#oe-admin-design-sheets-list"
-            },
-            initialize: function (opts) {
-                this.opts = opts || {};
-                this.model = app.channels.pool.request('get-pool-design-model');
-                this.model.on('change', this.showList, this);
+var ViewAdminDesignSheetsLayout = Mn.LayoutView.extend({
+    template: template,
+    regions: {
+        "newsheet": "#oe-admin-design-sheets-new-sheet",
+        "sheetlist": "#oe-admin-design-sheets-list"
+    },
+    initialize: function (opts) {
+        this.opts = opts || {};
+        this.model = app.channels.pool.request('get-pool-design-model');
+        this.model.on('change', this.showList, this);
 
-                app.channels.pool.comply('update-sheet', this.updateSheet, this);
-            },
-            onShow: function () {
-                var viewNewSheet = new ViewNewSheet({model: this.model});
-                this.newsheet.show(viewNewSheet);
-                this.showList();
-            },
-            showList: function () {
-                var sheets = this.model.get('poollogic').sheetlogic;
-                var sheetList = new CollectionSheetDesign(sheets);
-                var viewSheetList = new ViewSheetList({collection: sheetList});
-                this.sheetlist.show(viewSheetList);
-            },
+        app.channels.pool.comply('update-sheet', this.updateSheet, this);
+    },
+    onShow: function () {
+        var viewNewSheet = new ViewNewSheet({model: this.model});
+        this.newsheet.show(viewNewSheet);
+        this.showList();
+    },
+    showList: function () {
+        var sheets = this.model.get('poollogic').sheetlogic;
+        var sheetList = new CollectionSheetDesign(sheets);
+        var viewSheetList = new ViewSheetList({collection: sheetList});
+        this.sheetlist.show(viewSheetList);
+    },
 
-            updateSheet: function (sheet) {
-                // clone the poollogic object
-                var poollogic = _.clone(this.model.get('poollogic'));
+    updateSheet: function (sheet) {
+        // clone the poollogic object
+        var poollogic = _.clone(this.model.get('poollogic'));
 
-                // only keep the sheets that don't equal this sheet
-                var sheets = _.filter(poollogic.sheetlogic, function (x) {
-                    return (x.sheetid !== sheet.sheetid);
+        // only keep the sheets that don't equal this sheet
+        var sheets = _.filter(poollogic.sheetlogic, function (x) {
+            return (x.sheetid !== sheet.sheetid);
         });
 
-                // add the updated sheet
-                sheets.push(sheet);
-                poollogic.sheetlogic = sheets;
-                this.model.set('poollogic', poollogic);
-                this.model.save();
-            }
-        });
-        module.exports = ViewAdminDesignSheetsLayout;
-    }, {
-        "../collections/collection-admin-design-sheet-list": 16,
-        "../templates/template-admin-design-sheets-layout.ejs": 41,
-        "./view-admin-design-new-sheet": 63,
-        "./view-admin-design-sheet-list": 65
-    }],
-    67: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/24/15.
-         * oe/oe_client/views/view-admin-design-single-eddi-common.js:3
-         */
+        // add the updated sheet
+        sheets.push(sheet);
+        poollogic.sheetlogic = sheets;
+        this.model.set('poollogic', poollogic);
+        this.model.save();
+    }
+});
+module.exports = ViewAdminDesignSheetsLayout;
+},{"../collections/collection-admin-design-sheet-list":16,"../templates/template-admin-design-sheets-layout.ejs":41,"./view-admin-design-new-sheet":63,"./view-admin-design-sheet-list":65}],67:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/24/15.
+ * oe/oe_client/views/view-admin-design-single-eddi-common.js:3
+ */
 
 
-        var ViewAdminDesignSingleEddiCommon = Mn.PolymerView.extend({
-            template: require('../templates/template-blank-template.ejs'),
-            tagName: 'oe-admin-design-single-eddi-common',
-            _publishedKeys: ['oe', 'poollogic'],
-            initialize: function () {
-                var oe = _.clone(this.model.attributes);
-                this.model.set('oe', _.omit(oe, 'oe'));
-            }
-        });
-        module.exports = ViewAdminDesignSingleEddiCommon;
-    }, {"../templates/template-blank-template.ejs": 47}],
-    68: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-single-eddi.js:3
-         */
+var ViewAdminDesignSingleEddiCommon = Mn.PolymerView.extend({
+    template: require('../templates/template-blank-template.ejs'),
+    tagName: 'oe-admin-design-single-eddi-common',
+    _publishedKeys: ['oe', 'poollogic'],
+    initialize: function () {
+        var oe = _.clone(this.model.attributes);
+        this.model.set('oe', _.omit(oe, 'oe'));
+    }
+});
+module.exports = ViewAdminDesignSingleEddiCommon;
+},{"../templates/template-blank-template.ejs":47}],68:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-single-eddi.js:3
+ */
 
-        var ViewCommonEddi = require('./view-admin-design-single-eddi-common');
-        var ViewAdminDesignSingleEddi = Mn.LayoutView.extend({
-            template: require('../templates/template-admin-design-single-eddi.ejs'),
-            regions: {
-                "common": "#oe-admin-design-single-eddi-common",
-                "specific": "#oe-admin-design-single-eddi-specific"
-            },
-            initialize: function (opts) {
-                this.opts = opts || {};
-                this.pooldesign = app.channels.pool.request('get-pool-design-model');
+var ViewCommonEddi = require('./view-admin-design-single-eddi-common');
+var ViewAdminDesignSingleEddi = Mn.LayoutView.extend({
+    template: require('../templates/template-admin-design-single-eddi.ejs'),
+    regions: {
+        "common": "#oe-admin-design-single-eddi-common",
+        "specific": "#oe-admin-design-single-eddi-specific"
+    },
+    initialize: function (opts) {
+        this.opts = opts || {};
+        this.pooldesign = app.channels.pool.request('get-pool-design-model');
 
-                // every controlmodule needs a setup form, right?
-                var controlmodule = this.model.get('controlmodule');
-                this.specificView = app.OEModules[controlmodule].design.eddicontrol;
+        // every controlmodule needs a setup form, right?
+        var controlmodule = this.model.get('controlmodule');
+        this.specificView = app.OEModules[controlmodule].design.eddicontrol;
 
-                app.channels.pool.comply('update-eddi-model', this.updateEddi, this);
-            },
-            onShow: function () {
-                this.showCommon();
-                this.showSpecific();
-            },
-            showCommon: function () {
-                var v = new ViewCommonEddi({model: this.model});
-                this.common.show(v);
-            },
-            showSpecific: function () {
-                var v = new this.specificView({model: this.model});
-                this.specific.show(v);
-            },
-            updateEddi: function (eddi) {
-                var pooldesign = app.channels.pool.request('get-pool-design-model');
-                var poollogic = _.clone(pooldesign.get('poollogic'));
+        app.channels.pool.comply('update-eddi-model', this.updateEddi, this);
+    },
+    onShow: function () {
+        this.showCommon();
+        this.showSpecific();
+    },
+    showCommon: function () {
+        var v = new ViewCommonEddi({model: this.model});
+        this.common.show(v);
+    },
+    showSpecific: function () {
+        var v = new this.specificView({model: this.model});
+        this.specific.show(v);
+    },
+    updateEddi: function (eddi) {
+        var pooldesign = app.channels.pool.request('get-pool-design-model');
+        var poollogic = _.clone(pooldesign.get('poollogic'));
 
-                // get the existing eddi model
-                var existingEddi = _.find(poollogic.eddilogic, {eid: eddi.eid});
+        // get the existing eddi model
+        var existingEddi = _.find(poollogic.eddilogic, {eid: eddi.eid});
 
-                // remove that eddi
-                var eddis = _.filter(poollogic.eddilogic, function (x) {
-                    return (x.eid !== existingEddi.eid);
+        // remove that eddi
+        var eddis = _.filter(poollogic.eddilogic, function (x) {
+            return (x.eid !== existingEddi.eid);
         });
 
-                // merge the new info into the existing info
-                var newEddi = _.merge(existingEddi, eddi);
-                eddis.push(newEddi);
+        // merge the new info into the existing info
+        var newEddi = _.merge(existingEddi, eddi);
+        eddis.push(newEddi);
 
-                // replace the eddi logic
-                poollogic.eddilogic = eddis;
+        // replace the eddi logic
+        poollogic.eddilogic = eddis;
 
-                // update the model and save
-                pooldesign.set('poollogic', poollogic);
-                pooldesign.save();
-            }
-        });
-        module.exports = ViewAdminDesignSingleEddi;
-    }, {"../templates/template-admin-design-single-eddi.ejs": 42, "./view-admin-design-single-eddi-common": 67}],
-    69: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/23/15.
-         * oe/oe_client/views/view-admin-design-single-sheet.js:3
-         */
+        // update the model and save
+        pooldesign.set('poollogic', poollogic);
+        pooldesign.save();
+    }
+});
+module.exports = ViewAdminDesignSingleEddi;
+},{"../templates/template-admin-design-single-eddi.ejs":42,"./view-admin-design-single-eddi-common":67}],69:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/23/15.
+ * oe/oe_client/views/view-admin-design-single-sheet.js:3
+ */
 
-        var ViewAdminDesignSingleSheet = Mn.PolymerView.extend({
-            template: require('../templates/template-blank-template.ejs'),
-            tagName: 'oe-admin-design-single-sheet',
-            _publishedKeys: ['oe', 'poollogic']
-        });
-        module.exports = ViewAdminDesignSingleSheet;
-    }, {"../templates/template-blank-template.ejs": 47}],
-    70: [function (require, module, exports) {
-        /**
+var ViewAdminDesignSingleSheet = Mn.PolymerView.extend({
+    template: require('../templates/template-blank-template.ejs'),
+    tagName: 'oe-admin-design-single-sheet',
+    _publishedKeys: ['oe', 'poollogic']
+});
+module.exports = ViewAdminDesignSingleSheet;
+},{"../templates/template-blank-template.ejs":47}],70:[function(require,module,exports){
+/**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/views/view-admin-header.js:3
  */
@@ -54880,8 +56035,7 @@ module.exports = Mn.PolymerView.extend({
     template: template
 });
 
-    }, {"../templates/template-admin-header.ejs": 43}],
-    71: [function (require, module, exports) {
+},{"../templates/template-admin-header.ejs":43}],71:[function(require,module,exports){
 /**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/views/view-admin-list-pools.js:3
@@ -54891,66 +56045,52 @@ module.exports = Mn.PolymerView.extend({
 var AdminPoolListing = require('./view-admin-pool-listing');
 
 module.exports = Mn.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: AdminPoolListing
 });
 
-    }, {"./view-admin-pool-listing": 73}],
-    72: [function (require, module, exports) {
+},{"./view-admin-pool-listing":73}],72:[function(require,module,exports){
 /**
  * Created by jfagan on 6/22/15.
  * oe/oe_client/views/view-admin-pool-listing-layout.js
  */
 
 var template = require('../templates/template-admin-pool-listing-layout.ejs');
-        var PoolListingCollection = require('../collections/collection-admin-pool-listings');
-        var PoolListingView = require('../views/view-admin-list-pools');
-        var NewPoolView = require('../views/view-admin-create-new-pool');
-        var ModelPoolDesign = require('../models/model-admin-pooldesign');
+var PoolListingCollection = require('../collections/collection-admin-pool-listings');
+var PoolListingView = require('../views/view-admin-list-pools');
+var NewPoolView = require('../views/view-admin-create-new-pool');
+var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
-        var LayoutAdminPoolListings = Mn.LayoutView.extend({
-            template: template,
-            regions: {
-                "newpool": "#adminPoolListing-newPool",
-                "poollistings": "#adminPoolListing-poolListings"
-            },
-            onShow: function () {
-                var self = this;
-                this.poolListingCollection = new PoolListingCollection();
-                this.poolListingCollection.fetch({
-                    success: function () {
-                        self.showPoolListings();
+var LayoutAdminPoolListings = Mn.LayoutView.extend({
+    template: template,
+    regions: {
+        "newpool": "#adminPoolListing-newPool",
+        "poollistings": "#adminPoolListing-poolListings"
+    },
+    onShow: function () {
+        var self = this;
+        this.poolListingCollection = new PoolListingCollection();
+        this.poolListingCollection.fetch({
+            success: function () {
+                self.showPoolListings();
             }
         });
-            },
-            showPoolListings: function () {
+    },
+    showPoolListings: function () {
 
-                // list the current pools
-                var poolListingView = new PoolListingView({collection: this.poolListingCollection});
-                this.poollistings.show(poolListingView);
+        // list the current pools
+        var poolListingView = new PoolListingView({collection: this.poolListingCollection});
+        this.poollistings.show(poolListingView);
 
-                // polymer view expects a model, there's probably a better way around this
-                // but I'm just going to create a blank useless model
-                var newPoolView = new NewPoolView();
-                this.newpool.show(newPoolView);
-            }
-        });
-        module.exports = LayoutAdminPoolListings;
-    }, {
-        "../collections/collection-admin-pool-listings": 17,
-        "../models/model-admin-pooldesign": 30,
-        "../templates/template-admin-pool-listing-layout.ejs": 45,
-        "../views/view-admin-create-new-pool": 59,
-        "../views/view-admin-list-pools": 71
-    }],
-    73: [function (require, module, exports) {
-        /**
+        // polymer view expects a model, there's probably a better way around this
+        // but I'm just going to create a blank useless model
+        var newPoolView = new NewPoolView();
+        this.newpool.show(newPoolView);
+    }
+});
+module.exports = LayoutAdminPoolListings;
+},{"../collections/collection-admin-pool-listings":17,"../models/model-admin-pooldesign":30,"../templates/template-admin-pool-listing-layout.ejs":45,"../views/view-admin-create-new-pool":59,"../views/view-admin-list-pools":71}],73:[function(require,module,exports){
+/**
  * Created by jfagan on 6/4/15.
  * oe/oe_client/views/view-admin-pool-listing.js:3
  */
@@ -54967,8 +56107,7 @@ module.exports = Mn.PolymerView.extend({
 
 });
 
-    }, {"../templates/template-blank-template.ejs": 47}],
-    74: [function (require, module, exports) {
+},{"../templates/template-blank-template.ejs":47}],74:[function(require,module,exports){
 /**
  * Created by jfagan on 6/15/15.
  * /home/jfagan/Dropbox/projects/openeddi/openeddi3/oe/oe_client/views/view-admin-response-table-summaries.js
@@ -54977,20 +56116,13 @@ module.exports = Mn.PolymerView.extend({
 var ViewAdminResponseTableSummary = require('./view-admin-response-table-summary');
 
 module.exports = Mn.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: ViewAdminResponseTableSummary,
     onShow: function() {
         console.log('[ViewResponseTableSummaries] Showing...');
     }
 });
-    }, {"./view-admin-response-table-summary": 75}],
-    75: [function (require, module, exports) {
+},{"./view-admin-response-table-summary":75}],75:[function(require,module,exports){
 /**
  * Created by jfagan on 6/15/15.
  * /home/jfagan/Dropbox/projects/openeddi/openeddi3/oe/oe_client/views/view-admin-response-table-summary.js
@@ -55006,8 +56138,7 @@ module.exports = Mn.PolymerView.extend({
         this.model.set('oe', _.clone(this.model.attributes));
     }
 });
-    }, {"../templates/template-blank-template.ejs": 47}],
-    76: [function (require, module, exports) {
+},{"../templates/template-blank-template.ejs":47}],76:[function(require,module,exports){
 /**
  * Created by jfagan on 6/12/15.
  * oe/oe_client/views/view-admin-responses.js
@@ -55017,8 +56148,8 @@ var template = require('../templates/template-admin-responses.ejs');
 var ResponseTablesCollection = require('../collections/collection-admin-response-table-summary');
 var ViewResponseTableSummaries = require('../views/view-admin-response-table-summaries');
 
-        var ResponseTableModel = require('../models/model-admin-responsetable');
-        var ViewResponseTable = require('../views/view-admin-responsetable');
+var ResponseTableModel = require('../models/model-admin-responsetable');
+var ViewResponseTable = require('../views/view-admin-responsetable');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
@@ -55064,34 +56195,26 @@ module.exports = Mn.LayoutView.extend({
     }
 });
 
-    }, {
-        "../collections/collection-admin-response-table-summary": 18,
-        "../models/model-admin-responsetable": 31,
-        "../templates/template-admin-responses.ejs": 46,
-        "../views/view-admin-response-table-summaries": 74,
-        "../views/view-admin-responsetable": 77
-    }],
-    77: [function (require, module, exports) {
-        /**
-         * Created by jfagan on 6/18/15.
-         * oe/oe_client/views/view-admin-responsetable.js
-         */
+},{"../collections/collection-admin-response-table-summary":18,"../models/model-admin-responsetable":31,"../templates/template-admin-responses.ejs":46,"../views/view-admin-response-table-summaries":74,"../views/view-admin-responsetable":77}],77:[function(require,module,exports){
+/**
+ * Created by jfagan on 6/18/15.
+ * oe/oe_client/views/view-admin-responsetable.js
+ */
 
-        var template = require('../templates/template-blank-template.ejs');
+var template = require('../templates/template-blank-template.ejs');
 
-        var ViewResponseTable = Mn.PolymerView.extend({
-            tagName: 'oe-admin-responsetable',
-            template: template,
-            _publishedKeys: ['oe'],
-            initialize: function () {
-                this.model.set('oe', _.clone(this.model.attributes));
+var ViewResponseTable = Mn.PolymerView.extend({
+    tagName: 'oe-admin-responsetable',
+    template: template,
+    _publishedKeys: ['oe'],
+    initialize: function () {
+        this.model.set('oe', _.clone(this.model.attributes));
     }
 });
-        module.exports = ViewResponseTable;
+module.exports = ViewResponseTable;
 
 
-    }, {"../templates/template-blank-template.ejs": 47}],
-    78: [function (require, module, exports) {
+},{"../templates/template-blank-template.ejs":47}],78:[function(require,module,exports){
 /**
  * Created by jfagan on 4/2/15.
  * oe/oe_client/views/view-eddi-promptbar.js
@@ -55107,8 +56230,7 @@ module.exports = Mn.ItemView.extend({
     initialize: function() {
     }
 });
-    }, {"../models/model-eddi-promptbar": 33, "../templates/template-eddi-promptbar.ejs": 48}],
-    79: [function (require, module, exports) {
+},{"../models/model-eddi-promptbar":33,"../templates/template-eddi-promptbar.ejs":48}],79:[function(require,module,exports){
 /**
  * Created by jfagan on 3/24/15.
  * view-eddis.js
@@ -55123,10 +56245,14 @@ module.exports = Marionette.CollectionView.extend({
             this.sheetid = app.appState.get('sheetid');
         }
         return child.get('sheetid') == this.sheetid;
+    },
+    onRender: function () {
+        // Scroll to the top
+        poolLayout = document.getElementById('poolLayout');
+        poolLayout.scroller.scrollTop = 0;
     }
 });
-    }, {"../layouts/layout-eddi": 25}],
-    80: [function (require, module, exports) {
+},{"../layouts/layout-eddi":25}],80:[function(require,module,exports){
 /**
  * Created by jfagan on 5/30/15.
  * oe/oe_client/views/view-landing-login.js:3
@@ -55140,10 +56266,10 @@ module.exports = Mn.PolymerView.extend({
     _publishedKeys: []
 });
 
-    }, {"../templates/template-landing-login.ejs": 49}],
-    81: [function (require, module, exports) {
+},{"../templates/template-landing-login.ejs":49}],81:[function(require,module,exports){
 /**
  * Created by jfagan on 3/9/15.
+ * oe/oe_client/views/view-landing-pool-listing.js:3
  */
 "use strict";
 
@@ -55164,8 +56290,7 @@ module.exports = Mn.PolymerView.extend({
     }
 
 });
-    }, {"../models/model-pool-listing": 35, "../templates/template-landing-pool-listing.ejs": 50}],
-    82: [function (require, module, exports) {
+},{"../models/model-pool-listing":35,"../templates/template-landing-pool-listing.ejs":50}],82:[function(require,module,exports){
 /**
  * Created by jfagan on 3/9/15.
  */
@@ -55174,17 +56299,10 @@ module.exports = Mn.PolymerView.extend({
 var PoolListingView = require('./view-landing-pool-listing');
 
 module.exports = Marionette.CollectionView.extend({
-    attributes: function () {
-        return ( {
-            'flex': '',
-            'layout': '',
-            'vertical': ''
-        });
-    },
+    className: 'flex layout vertical',
     childView: PoolListingView
 });
-    }, {"./view-landing-pool-listing": 81}],
-    83: [function (require, module, exports) {
+},{"./view-landing-pool-listing":81}],83:[function(require,module,exports){
 /**
  * Created by jfagan on 5/26/15.
  * oe/oe_client/views/view-pool-footer.js:3
@@ -55194,10 +56312,7 @@ var template = require('../templates/template-layout-pool-footer.ejs');
 
 module.exports = Mn.ItemView.extend({
     template: template,
-    attributes: {
-        "layout": "",
-        "horizontal": ""
-    },
+    className: "layout horizontal",
     ui: {
         'nextButton': '#oe-footer-next-space > paper-button',
         'prevButton': '#oe-footer-prev-space > paper-button',
@@ -55220,10 +56335,6 @@ module.exports = Mn.ItemView.extend({
         app.appState.updateSheetIndex();
     },
 
-    onBeforeDestroy: function () {
-        console.log('[view-pool-footer] About to be destroyed');
-    },
-
     nextSheet: function () {
         app.channels.navigation.command('pool-next-sheet');
     },
@@ -55241,8 +56352,7 @@ module.exports = Mn.ItemView.extend({
     }
 });
 
-    }, {"../templates/template-layout-pool-footer.ejs": 54}],
-    84: [function (require, module, exports) {
+},{"../templates/template-layout-pool-footer.ejs":54}],84:[function(require,module,exports){
 /**
  * Created by jfagan on 4/9/15.
  * oe/oe_client/views/view-pool-header.js
@@ -55253,13 +56363,30 @@ var template = require('../templates/template-pool-header.ejs');
 
 module.exports = PolymerView.extend({
     tagName: 'oe-pool-header',
+    _publishedKeys: ['sheetid'],
     template: template
 });
 
-    }, {"../templates/template-pool-header.ejs": 57, "./marionette.polymerview": 58}],
-    85: [function (require, module, exports) {
+},{"../templates/template-pool-header.ejs":57,"./marionette.polymerview":58}],85:[function(require,module,exports){
 /**
  * Created by jfagan on 5/17/15.
+ * oe/oe_modules/control-alter-ties/AlterTies.js
+ */
+'use strict';
+
+        var template = require('./templateAlterTiesLayout.ejs');
+
+        module.exports = Mn.PolymerView.extend({
+            template: template,
+            tagName: 'oe-alter-ties',
+            _publishedKeys: ['oe', 'response']
+
+        });
+
+    }, {"./templateAlterTiesLayout.ejs": 87}],
+    86: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-alter-ties/client-index.js:3
  */
 'use strict';
@@ -55267,11 +56394,16 @@ module.exports = PolymerView.extend({
 var views = {};
 var templates = {};
 
+        views.eddicontrol = require('./AlterTies');
+        templates.eddicontrol = require('./templateAlterTiesLayout.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {}],
-    86: [function (require, module, exports) {
+    }, {"./AlterTies": 85, "./templateAlterTiesLayout.ejs": 87}],
+    87: [function (require, module, exports) {
+        arguments[4][43][0].apply(exports, arguments)
+    }, {"dup": 43, "lodash": 10}],
+    88: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/12/15.
  * oe/oe_modules/control-basic-nameinterpret/NICollectionView.js:3
@@ -55288,8 +56420,8 @@ module.exports = Mn.CollectionView.extend({
         };
     }
 });
-    }, {"./NINameLayoutView": 87}],
-    87: [function (require, module, exports) {
+    }, {"./NINameLayoutView": 89}],
+    89: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/12/15.
  * oe/oe_modules/control-basic-nameinterpret/NINameLayoutView.js
@@ -55351,11 +56483,11 @@ module.exports = Mn.LayoutView.extend({
 });
     }, {
         "../../oe_client/models/model-eddi": 34,
-        "../model-namelist/NameModel": 128,
-        "./NINameTag": 88,
-        "./templateNINameLayout.ejs": 91
+        "../model-namelist/NameModel": 142,
+        "./NINameTag": 90,
+        "./templateNINameLayout.ejs": 93
     }],
-    88: [function (require, module, exports) {
+    90: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/12/15.
  * oe/oe_modules/control-basic-nameinterpret/NINameTag.js:3
@@ -55369,8 +56501,8 @@ module.exports = Mn.ItemView.extend({
     template: template
 });
 
-    }, {"../model-namelist/NameModel": 128, "./templateNINameTag.ejs": 92}],
-    89: [function (require, module, exports) {
+    }, {"../model-namelist/NameModel": 142, "./templateNINameTag.ejs": 94}],
+    91: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/10/15.
  * oe/oe_modules/control-basic-nameinterpret/ViewBasicNameInterpret.js:3
@@ -55407,8 +56539,8 @@ var NILayoutView = Mn.LayoutView.extend({
 module.exports = NILayoutView;
 
 
-    }, {"../../oe_client/models/model-eddi": 34, "./NICollectionView": 86, "./templateNameInterpret.ejs": 93}],
-    90: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 34, "./NICollectionView": 88, "./templateNameInterpret.ejs": 95}],
+    92: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/10/15.
  *
@@ -55423,8 +56555,8 @@ templates.nameinterpret = require('./templateOEBasicNameInterpreter.ejs');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./ViewBasicNameInterpret": 89, "./templateNameInterpret.ejs": 93, "./templateOEBasicNameInterpreter.ejs": 94}],
-    91: [function (require, module, exports) {
+    }, {"./ViewBasicNameInterpret": 91, "./templateNameInterpret.ejs": 95, "./templateOEBasicNameInterpreter.ejs": 96}],
+    93: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -55432,8 +56564,8 @@ __p+='<paper-shadow class="NameInterpreterBox"><div id="niNameLayoutName"></div>
 return __p;
 };
 
-    }, {"lodash": 9}],
-    92: [function (require, module, exports) {
+    }, {"lodash": 10}],
+    94: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -55443,21 +56575,68 @@ __p+='<div class="niNameTag"><h3>'+
 return __p;
 };
 
-    }, {"lodash": 9}],
-    93: [function (require, module, exports) {
+    }, {"lodash": 10}],
+    95: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-__p+='<div id="oe-basic-nameinterpreters">Name Layout!</div>';
+    __p += '<div id="oe-basic-nameinterpreters">Name Layout!</div><style>#name-interpret-controls {\n        width: 75%;\n        margin: 1em auto;\n    }</style>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    94: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    95: [function (require, module, exports) {
+    }, {"lodash": 10}],
+    96: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    97: [function (require, module, exports) {
 /**
+ * Created by jfagan on 10/28/15.
+ * oe/oe_modules/control-boilerplate/client-index.js:3
+ */
+
+var views = {};
+        var templates = {};
+        var design = {};
+
+// The eddi control view
+// view shorttext
+        views.eddicontrol = require('./viewBoilerplate');
+
+// The view template
+        templates.eddicontrol = require('./templateBoilerplate.ejs');
+
+// The design view
+//design.eddicontrol = require('./DesignView');
+
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+        module.exports.design = design;
+
+    }, {"./templateBoilerplate.ejs": 98, "./viewBoilerplate": 99}],
+    98: [function (require, module, exports) {
+        arguments[4][43][0].apply(exports, arguments)
+    }, {"dup": 43, "lodash": 10}],
+    99: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 10/28/15.
+         * oe/oe_modules/control-boilerplate/viewBoilerplate.js:3
+         */
+
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('../../oe_client/templates/template-blank-template.ejs');
+
+        module.exports = Mn.PolymerView.extend({
+            tagName: 'oe-boilerplate',
+            model: EddiModel,
+            template: template,
+            _publishedKeys: ['oe']
+        });
+
+
+    }, {"../../oe_client/models/model-eddi": 34, "../../oe_client/templates/template-blank-template.ejs": 47}],
+    100: [function (require, module, exports) {
+        /**
  * Created by jfagan on 4/7/15.
  * The index file for the checklist module
  * oe/oe_modules/control-checklist/client-index.js:4
@@ -55478,11 +56657,11 @@ templates.eddicontrol = require('./templateChecklist.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateChecklist.ejs": 96, "./viewChecklist": 97}],
-    96: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    97: [function (require, module, exports) {
+    }, {"./templateChecklist.ejs": 101, "./viewChecklist": 102}],
+    101: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    102: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-checklist/viewChecklist.js
@@ -55516,10 +56695,55 @@ module.exports = PolymerView.extend({
     }, {
         "../../oe_client/models/model-eddi": 34,
         "../../oe_client/views/marionette.polymerview": 58,
-        "./templateChecklist.ejs": 96
+        "./templateChecklist.ejs": 101
     }],
-    98: [function (require, module, exports) {
+    103: [function (require, module, exports) {
 /**
+ * Created by jfagan on 4/15/15.
+ * oe/oe_modules/control-radiolist/client-index.js
+ */
+
+var views = {};
+        var templates = {};
+
+        views.eddicontrol = require('./viewConsent');
+
+        templates.eddicontrol = require('./templateConsent.ejs');
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+
+    }, {"./templateConsent.ejs": 104, "./viewConsent": 105}],
+    104: [function (require, module, exports) {
+        arguments[4][43][0].apply(exports, arguments)
+    }, {"dup": 43, "lodash": 10}],
+    105: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 4/15/15.
+         * oe/oe_modules/control-radiolist/viewRadiolist.js
+         */
+
+        var PolymerView = require('../../oe_client/views/marionette.polymerview');
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('./templateConsent.ejs');
+
+        module.exports = PolymerView.extend({
+            tagName: 'oe-consent',
+            model: EddiModel,
+            template: template,
+            _publishedKeys: ['oe', 'response'],
+            initialize: function () {
+            }
+        });
+
+
+    }, {
+        "../../oe_client/models/model-eddi": 34,
+        "../../oe_client/views/marionette.polymerview": 58,
+        "./templateConsent.ejs": 104
+    }],
+    106: [function (require, module, exports) {
+        /**
  * Created by jfagan on 5/5/15.
  * oe/oe_modules/control-namegen/BasicNameCard.js
  */
@@ -55545,8 +56769,8 @@ module.exports = PolymerView.extend({
 });
 
 
-    }, {"../../oe_client/views/marionette.polymerview": 58, "./templateBasicNameCard.ejs": 104}],
-    99: [function (require, module, exports) {
+    }, {"../../oe_client/views/marionette.polymerview": 58, "./templateBasicNameCard.ejs": 112}],
+    107: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/29/15.
  * oe/oe_modules/control-namegen/BasicNameGen-NameInput.js
@@ -55560,15 +56784,16 @@ var template = require('./templateBasicNameGen-NameInput.ejs');
 module.exports = PolymerView.extend({
     tagName: "oe-basicnamegen-nameinput",
     model: EddiModel,
+    _publishedKeys: ['oe', 'name'],
     template: template
 });
 
     }, {
         "../../oe_client/models/model-eddi": 34,
         "../../oe_client/views/marionette.polymerview": 58,
-        "./templateBasicNameGen-NameInput.ejs": 105
+        "./templateBasicNameGen-NameInput.ejs": 113
     }],
-    100: [function (require, module, exports) {
+    108: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/5/15.
  * oe/oe_modules/control-namegen/BasicNameGen-Names.js
@@ -55595,8 +56820,8 @@ module.exports = Mn.CollectionView.extend({
     }
 });
 
-    }, {"./BasicNameCard": 98}],
-    101: [function (require, module, exports) {
+    }, {"./BasicNameCard": 106}],
+    109: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/27/15.
  * oe/oe_modules/control-namegen/BasicNameGenerator.js
@@ -55636,11 +56861,11 @@ module.exports = Mn.LayoutView.extend({
 });
     }, {
         "../../oe_client/models/model-eddi": 34,
-        "./BasicNameGen-NameInput": 99,
-        "./BasicNameGen-Names": 100,
-        "./templateBasicNamegen.ejs": 106
+        "./BasicNameGen-NameInput": 107,
+        "./BasicNameGen-Names": 108,
+        "./templateBasicNamegen.ejs": 114
     }],
-    102: [function (require, module, exports) {
+    110: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-namegen/DesignView.js:3
@@ -55655,10 +56880,10 @@ var NamegenDesignView = Mn.PolymerView.extend({
         this.model.set('oe', _.omit(oe, 'oe'));
     }
 });
-        module.exports = NamegenDesignView;
+module.exports = NamegenDesignView;
     }, {"../../oe_client/templates/template-blank-template.ejs": 47}],
-    103: [function (require, module, exports) {
-        /**
+    111: [function (require, module, exports) {
+/**
  *
  * oe/oe_modules/control-namegen/client-index.js
  */
@@ -55666,23 +56891,23 @@ var NamegenDesignView = Mn.PolymerView.extend({
 
 var views = {};
 var templates = {};
-        var design = {};
+var design = {};
 
 views.eddicontrol = require('./BasicNameGenerator');
 templates.eddicontrol = require('./templateBasicNamegen.ejs');
-        design.eddicontrol = require('./DesignView');
+design.eddicontrol = require('./DesignView');
 
 module.exports.views = views;
 module.exports.templates = templates;
-        module.exports.design = design;
-    }, {"./BasicNameGenerator": 101, "./DesignView": 102, "./templateBasicNamegen.ejs": 106}],
-    104: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    105: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    106: [function (require, module, exports) {
+module.exports.design = design;
+    }, {"./BasicNameGenerator": 109, "./DesignView": 110, "./templateBasicNamegen.ejs": 114}],
+    112: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    113: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    114: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -55690,8 +56915,8 @@ __p+='<div id="oe-basicnamegen-nameinput"></div><div id="oe-basicnamegen-names">
 return __p;
 };
 
-    }, {"lodash": 9}],
-    107: [function (require, module, exports) {
+    }, {"lodash": 10}],
+    115: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/NamePick-Name.js:3
@@ -55702,6 +56927,7 @@ var template = require('./templateNamePickName.ejs');
 module.exports = Mn.PolymerView.extend({
     template: template,
     tagName: 'oe-name-pick',
+    _publishedKeys: ['oe', 'name', 'namelist', 'lists'],
     initialize: function (options) {
         // Make the namelist convient to access
         this.namelist = options.namelist;
@@ -55727,8 +56953,8 @@ module.exports = Mn.PolymerView.extend({
     }
 });
 
-    }, {"./templateNamePickName.ejs": 111}],
-    108: [function (require, module, exports) {
+    }, {"./templateNamePickName.ejs": 119}],
+    116: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/NamePick.js:3
@@ -55774,8 +57000,8 @@ module.exports = Mn.LayoutView.extend({
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 34, "./NamePick-Name": 107, "./templateNamePick.ejs": 110}],
-    109: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 34, "./NamePick-Name": 115, "./templateNamePick.ejs": 118}],
+    117: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/8/15.
  * oe/oe_modules/control-namepick/client-index.js:3
@@ -55789,8 +57015,8 @@ templates.eddicontrol = require('./templateNamePick.ejs');
 
 module.exports.views = views;
 module.exports.templates = templates;
-    }, {"./NamePick": 108, "./templateNamePick.ejs": 110}],
-    110: [function (require, module, exports) {
+    }, {"./NamePick": 116, "./templateNamePick.ejs": 118}],
+    118: [function (require, module, exports) {
 var _ = require('lodash');
 module.exports = function(rc){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -55798,12 +57024,65 @@ __p+='<div id="oe-namepick-names"></div>';
 return __p;
 };
 
-    }, {"lodash": 9}],
-    111: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    112: [function (require, module, exports) {
+    }, {"lodash": 10}],
+    119: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    120: [function (require, module, exports) {
 /**
+ * Created by jfagan on 10/28/15.
+ * oe/oe_modules/control-ni-boxpop/client-index.js:3
+ */
+
+var views = {};
+        var templates = {};
+        var design = {};
+
+// The eddi control view
+// view shorttext
+        views.eddicontrol = require('./viewNIBoxpop');
+
+// The view template
+        templates.eddicontrol = require('./templateNIBoxpop.ejs');
+
+// The design view
+//design.eddicontrol = require('./DesignView');
+
+
+        module.exports.views = views;
+        module.exports.templates = templates;
+        module.exports.design = design;
+
+    }, {"./templateNIBoxpop.ejs": 121, "./viewNIBoxpop": 122}],
+    121: [function (require, module, exports) {
+        arguments[4][43][0].apply(exports, arguments)
+    }, {"dup": 43, "lodash": 10}],
+    122: [function (require, module, exports) {
+        /**
+         * Created by jfagan on 10/28/15.
+         * oe/oe_modules/control-boilerplate/viewBoilerplate.js:3
+         */
+
+        var EddiModel = require('../../oe_client/models/model-eddi');
+        var template = require('../../oe_client/templates/template-blank-template.ejs');
+
+        module.exports = Mn.PolymerView.extend({
+            tagName: 'oe-ni-boxpop',
+            model: EddiModel,
+            template: template,
+            _publishedKeys: ['oe', 'namelist', 'response'],
+            initialize: function (options) {
+                this.options = options || {};
+                var oe = this.model.get('oe');
+                oe.names = app.currentPool.namelist.toJSON();
+                this.model.set('oe', oe);
+            }
+        });
+
+
+    }, {"../../oe_client/models/model-eddi": 34, "../../oe_client/templates/template-blank-template.ejs": 47}],
+    123: [function (require, module, exports) {
+        /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-nodelink/DesignView.js:3
  */
@@ -55817,11 +57096,11 @@ var NodelinkDesignView = Mn.PolymerView.extend({
         this.model.set('oe', _.omit(oe, 'oe'));
     }
 });
-        module.exports = NodelinkDesignView;
+module.exports = NodelinkDesignView;
 
     }, {"../../oe_client/templates/template-blank-template.ejs": 47}],
-    113: [function (require, module, exports) {
-        /**
+    124: [function (require, module, exports) {
+/**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/control-nodelink/NodeLink.js:3
  */
@@ -55874,8 +57153,8 @@ module.exports = Mn.PolymerView.extend({
     }
 });
 
-    }, {"../model-namelist/GraphModel": 126, "./templateNodeLink.ejs": 115}],
-    114: [function (require, module, exports) {
+    }, {"../model-namelist/GraphModel": 140, "./templateNodeLink.ejs": 126}],
+    125: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/control-nodelink/client-index.js:3
@@ -55884,19 +57163,19 @@ module.exports = Mn.PolymerView.extend({
 
 var views = {};
 var templates = {};
-        var design = {};
+var design = {};
 
 views.eddicontrol = require('./NodeLink');
-        design.eddicontrol = require('./DesignView');
+design.eddicontrol = require('./DesignView');
 
 module.exports.views = views;
 module.exports.templates = templates;
-        module.exports.design = design;
-    }, {"./DesignView": 112, "./NodeLink": 113}],
-    115: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    116: [function (require, module, exports) {
+module.exports.design = design;
+    }, {"./DesignView": 123, "./NodeLink": 124}],
+    126: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    127: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/client-index.js
@@ -55912,11 +57191,11 @@ templates.eddicontrol = require('./templateRadiolist.ejs');
 module.exports.views = views;
 module.exports.templates = templates;
 
-    }, {"./templateRadiolist.ejs": 117, "./viewRadiolist": 118}],
-    117: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    118: [function (require, module, exports) {
+    }, {"./templateRadiolist.ejs": 128, "./viewRadiolist": 129}],
+    128: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    129: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/15/15.
  * oe/oe_modules/control-radiolist/viewRadiolist.js
@@ -55954,9 +57233,58 @@ module.exports = PolymerView.extend({
     }, {
         "../../oe_client/models/model-eddi": 34,
         "../../oe_client/views/marionette.polymerview": 58,
-        "./templateRadiolist.ejs": 117
+        "./templateRadiolist.ejs": 128
     }],
-    119: [function (require, module, exports) {
+    130: [function (require, module, exports) {
+/**
+ * Created by jfagan on 4/15/15.
+ * oe/oe_modules/control-radiolist/client-index.js
+ */
+
+var views = {};
+var templates = {};
+
+views.eddicontrol = require('./viewSelect');
+
+templates.eddicontrol = require('./templateSelect.ejs');
+
+module.exports.views = views;
+module.exports.templates = templates;
+
+    }, {"./templateSelect.ejs": 131, "./viewSelect": 132}],
+    131: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    132: [function (require, module, exports) {
+/**
+ * Created by jfagan on 4/15/15.
+ * oe/oe_modules/control-radiolist/viewRadiolist.js
+ */
+
+var EddiModel = require('../../oe_client/models/model-eddi');
+var template = require('./templateSelect.ejs');
+
+        module.exports = Mn.PolymerView.extend({
+            tagName: 'oe-select',
+    model: EddiModel,
+    template: template,
+    _publishedKeys: ['oe', 'response'],
+    initialize: function () {
+        this._initializeSelected();
+    },
+    _initializeSelected: function () {
+        var respVal = this.model.attributes.response.value;
+        if (this.model.attributes.response.value === null) {
+            this.model.attributes.oe.selection = '';
+        } else {
+            this.model.attributes.oe.selection = '2';
+        }
+    }
+});
+
+
+    }, {"../../oe_client/models/model-eddi": 34, "./templateSelect.ejs": 131}],
+    133: [function (require, module, exports) {
 /**
  * Created by jfagan on 6/24/15.
  * oe/oe_modules/control-shorttext/DesignView.js:3
@@ -55971,11 +57299,11 @@ var ShorttextDesignView = Mn.PolymerView.extend({
         this.model.set('oe', _.omit(oe, 'oe'));
     }
 });
-        module.exports = ShorttextDesignView;
+module.exports = ShorttextDesignView;
 
     }, {"../../oe_client/templates/template-blank-template.ejs": 47}],
-    120: [function (require, module, exports) {
-        /**
+    134: [function (require, module, exports) {
+/**
  * Created by jfagan on 4/7/15.
  * The index file for the shorttext file
  * oe/oe_modules/control-shorttext/index.js
@@ -55984,7 +57312,7 @@ var ShorttextDesignView = Mn.PolymerView.extend({
 
 var views = {};
 var templates = {};
-        var design = {};
+var design = {};
 
 // The eddi control view
 // view shorttext
@@ -55994,18 +57322,18 @@ views.eddicontrol = require('./viewShorttext');
 templates.eddicontrol = require('./templateShorttext.ejs');
 
 // The design view
-        design.eddicontrol = require('./DesignView');
+design.eddicontrol = require('./DesignView');
 
 
 module.exports.views = views;
 module.exports.templates = templates;
-        module.exports.design = design;
+module.exports.design = design;
 
-    }, {"./DesignView": 119, "./templateShorttext.ejs": 121, "./viewShorttext": 122}],
-    121: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    122: [function (require, module, exports) {
+    }, {"./DesignView": 133, "./templateShorttext.ejs": 135, "./viewShorttext": 136}],
+    135: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    136: [function (require, module, exports) {
 /**
  * Created by jfagan on 3/24/15.
  * oe/oe_modules/control-shorttext/view-shorttext.js
@@ -56022,8 +57350,8 @@ module.exports = Mn.PolymerView.extend({
 });
 
 
-    }, {"../../oe_client/models/model-eddi": 34, "./templateShorttext.ejs": 121}],
-    123: [function (require, module, exports) {
+    }, {"../../oe_client/models/model-eddi": 34, "./templateShorttext.ejs": 135}],
+    137: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-slider/SliderControl.js:3
@@ -56062,8 +57390,8 @@ module.exports = Mn.PolymerView.extend({
 });
 
 
-    }, {"./templateSlider.ejs": 125}],
-    124: [function (require, module, exports) {
+    }, {"./templateSlider.ejs": 139}],
+    138: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/17/15.
  * oe/oe_modules/control-slider/client-index.js
@@ -56079,11 +57407,11 @@ module.exports.views = views;
 module.exports.templates = templates;
 
 
-    }, {"./SliderControl": 123, "./templateSlider.ejs": 125}],
-    125: [function (require, module, exports) {
-        arguments[4][43][0].apply(exports, arguments)
-    }, {"dup": 43, "lodash": 9}],
-    126: [function (require, module, exports) {
+    }, {"./SliderControl": 137, "./templateSlider.ejs": 139}],
+    139: [function (require, module, exports) {
+arguments[4][43][0].apply(exports,arguments)
+    }, {"dup": 43, "lodash": 10}],
+    140: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/18/15.
  * oe/oe_modules/model-namelist/GraphModel.js:3
@@ -56099,7 +57427,7 @@ module.exports = Backbone.Model.extend({
     }
 });
     }, {}],
-    127: [function (require, module, exports) {
+    141: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/27/15.
  * oe/oe_modules/control-shorttext/NameCollection.js
@@ -56147,8 +57475,8 @@ module.exports = Backbone.Collection.extend({
     }
 
 });
-    }, {"./NameModel": 128}],
-    128: [function (require, module, exports) {
+    }, {"./NameModel": 142}],
+    142: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/23/15.
  * oe/oe_modules/model-namelist/NameModel.js
@@ -56237,27 +57565,31 @@ module.exports = Backbone.Model.extend({
         this.destroy();
     },
 
+    /**
+     * Adds a tie to the name's nodelist.
+     *
+     * Ties are stored as a node-list. Each name should have a list of
+     * names it is connected to. Each entry in the list contains the details
+     * of each type of relationship.
+     *
+     * The ties object has objects in it like this:
+     *  ties =
+     *    {"a": [
+     *		{relation: "communicate", type: "undirected", weight: 3},
+     *		{relation: "giveadvice", type: "directed", weight: 1}],
+     *	"b": [
+     *		{relation: "communicate", type: "undirected", weight: 3}]
+     *	}
+     * @param nameid The id in the namelist of another name to attach
+     * @param tiedetails {object} The tie details object
+     * @param savethis {boolean} Defaults to true,
+     */
     addTie: function (nameid, tiedetails, savethis) {
         if (typeof this.attributes.details.ties === 'undefined') {
             this.attributes.details.ties = {};
         }
 
         savethis = typeof savethis === 'undefined' ? true : savethis;
-
-        /***********************************
-         * Ties are stored as a node-list. Each name should have a list of
-         * names it is connected to. Each entry in the list contains the details
-         * of each type of relationship.
-         *
-         * The ties object has objects in it like this:
-         *  ties =
-         *    {"a": [
-			*		{relation: "communicate", type: "undirected", weight: 3},
-			*		{relation: "giveadvice", type: "directed", weight: 1}],
-			*	"b": [
-			*		{relation: "communicate", type: "undirected", weight: 3}]
-			*	}
-         */
 
         var ties = this.attributes.details.ties;
 
@@ -56409,7 +57741,7 @@ module.exports = Backbone.Model.extend({
 
 });
     }, {"../../oe_client/helpers/guid": 22}],
-    129: [function (require, module, exports) {
+    143: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/4/15.
  * oe/oe_modules/model-namelist/NamelistPrep.js:3
@@ -56446,8 +57778,8 @@ App.prototype.initialize = function () {
     this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
 };
 
-    }, {"../../oe_client/application": 12, "./NameCollection": 127}],
-    130: [function (require, module, exports) {
+    }, {"../../oe_client/application": 12, "./NameCollection": 141}],
+    144: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/1/15.
  * oe/oe_modules/model-namelist/NamelistRadio.js
@@ -56466,13 +57798,11 @@ App.prototype.registerRadioChannels = function () {
 var oldListenRadioChannels = App.prototype.listenRadioChannels;
 App.prototype.listenRadioChannels = function () {
     this.channels.namelist.comply('add-new-name', this.namelistAddNewName, this);
+    this.channels.namelist.comply('save-name-detail', this.namelistSaveNameDetail, this);
     oldListenRadioChannels.apply(this, arguments);
 };
 
 App.prototype.namelistAddNewName = function (e) {
-    console.log('--- App: add new name.');
-    console.log(e);
-
     var newname = this.currentPool.namelist.create({
         name: e.name,
         namelist: e.namelist,
@@ -56489,9 +57819,15 @@ App.prototype.namelistAddNewName = function (e) {
     }
 };
 
+        App.prototype.namelistSaveNameDetail = function (e) {
+            var m = app.currentPool.namelist.find({id: e.id});
+            m.addToDetails(e.eid, e.value);
+            m.save();
+        };
+
 
     }, {"../../oe_client/application": 12}],
-    131: [function (require, module, exports) {
+    145: [function (require, module, exports) {
 /**
  * Created by jfagan on 4/22/15.
  *
@@ -56514,5 +57850,5 @@ require('./NamelistPrep');
 
 module.exports.models = models;
 module.exports.views = views;
-    }, {"./NameCollection": 127, "./NameModel": 128, "./NamelistPrep": 129, "./NamelistRadio": 130}]
+    }, {"./NameCollection": 141, "./NameModel": 142, "./NamelistPrep": 143, "./NamelistRadio": 144}]
 }, {}, [1]);

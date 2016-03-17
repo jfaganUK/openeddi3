@@ -1,54 +1,87 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
-<link rel="import" href="/bower_components/core-label/core-label.html"/>
-<link rel="import" href="/bower_components/paper-checkbox/paper-checkbox.html"/>
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="/bower_components/iron-label/iron-label.html">
+<link rel="import" href="/bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
-<polymer-element name="oe-checklist" attributes="oe response">
-    <template>
-        <!--<paper-input class="oe-checklist-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>-->
-        <div class="oe-checklist-container">
-            <template repeat="{{ arrayPrompt in oe.arrayPrompts }}">
-                <core-label horizontal layout id="{{oe.eid + '-' + arrayPrompt.arrayid}}">
-                    <paper-checkbox for role="checkbox"
-                                    class="oe-checklist-checkbox"
-                                    aria-labelledby="{{oe.eid + '-' + arrayPrompt.arrayid}}"
-                                    on-change="{{oeCheckboxChanged}}"
-                                    aria-checked="{{response.value[arrayPrompt.arrayid] ? true : false }}"
-                                    data-arrayid="{{arrayPrompt.arrayid}}"
-                                    checked?="{{response.value[arrayPrompt.arrayid]}}"
-                            ></paper-checkbox>
-                    <div vertical layout>
-                        {{ arrayPrompt.prompt }}
-                    </div>
-                </core-label>
-                <br>
-            </template>
-        </div>
-        <style>
+<dom-module id="oe-checklist">
+    <style>
             .oe-checklist-container {
                 margin-top: 10px;
             }
+
+            .oe-checklist-container > iron-label {
+                cursor: pointer;
+            }
+
             .oe-checklist-checkbox {
                 padding-right: 20px;
-                margin-left: 20px;
+                margin-left: 1em;
             }
 
             :host {
                 margin-top: 10px;
             }
+
+            #other {
+                margin: 1em 1em;
+            }
         </style>
+    <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
+        <div class="oe-checklist-container">
+            <template is="dom-repeat" items="{{oe.arrayPrompts}}" as="arrayPrompt">
+                <iron-label class="horizontal layout" id="{{_computeAria_labelledby(arrayPrompt, oe)}}">
+                    <paper-checkbox for="" role="checkbox" class="oe-checklist-checkbox" on-change="oeCheckboxChanged"
+                                    data-arrayid$="{{arrayPrompt.arrayid}}"
+                                    checked$="{{_computeChecked(arrayPrompt, response)}}"></paper-checkbox>
+                    <div class = "vertical layout">
+                        <span>{{ arrayPrompt.prompt }}</span>
+                    </div>
+                </iron-label>
+                <br>
+            </template>
+            <template is="dom-if" if="{{oe.other}}">
+                <div id="other" class="layout horizontal">
+                    <paper-input class="flex" label="Other" on-change="saveOther"
+                                 value="{{oe.response.other.value}}"></paper-input>
+                </div>
+            </template>
+        </div>
     </template>
     <script>
-        Polymer('oe-checklist', {
+        Polymer({
+            is: 'oe-checklist',
+            properties: {
+                oe: {notify: true},
+                oeCheckbox: {observer: 'oeCheckboxChanged'},
+                response: {notify: true}
+            },
             ready: function () {
             },
-
-            oeCheckboxChanged: function (event, detail, sender) {
-                var arrayid = sender.attributes['data-arrayid'].value;
-                this.response.value[arrayid] = sender.checked;
+            oeCheckboxChanged: function (detail, event, sender) {
+                var cb = detail.currentTarget;
+                var arrayid = cb.attributes['data-arrayid'].value;
+                this.set('response.value' + ('.' + arrayid), cb.checked);
                 this.fire('change:response');
+            },
+            saveOther: function (e) {
+                this.set('response.other.text', e.target.value);
+                this.fire('change:response');
+            },
+            _computeAria_labelledby: function (arrayPrompt, oe) {
+                return oe.eid + '-' + arrayPrompt.arrayid;
+            },
+            _computeAria_checked: function (arrayPrompt, response) {
+                return response.value[arrayPrompt.arrayid] ? true : false;
+            },
+            _computeChecked: function (arrayPrompt, response) {
+                return response.value[arrayPrompt.arrayid];
             }
-
         });
     </script>
-</polymer-element>
+</dom-module>

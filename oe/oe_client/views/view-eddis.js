@@ -12,5 +12,10 @@ module.exports = Marionette.CollectionView.extend({
             this.sheetid = app.appState.get('sheetid');
         }
         return child.get('sheetid') == this.sheetid;
+    },
+    onRender: function () {
+        // Scroll to the top
+        poolLayout = document.getElementById('poolLayout');
+        poolLayout.scroller.scrollTop = 0;
     }
 });

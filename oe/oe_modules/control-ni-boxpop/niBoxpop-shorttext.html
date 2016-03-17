@@ -1,0 +1,78 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html"/>
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
+
+
+<dom-module id="oe-boxpop-shorttext">
+    <style>
+        #shorttextContainer {
+            background: rgba(255, 255, 255, 0.4);
+            margin: 1em 2em;
+            padding: 0.5em 0.5em;
+        }
+    </style>
+    <template>
+        <div class="layout vertical" id="shorttextContainer" on-tap="focusInput">
+            <h3>{{name.name}}</h3>
+            <paper-input id="shorttextInput" value="{{nameResponse.value}}" label="{{prompt}}" on-change="saveResponse">
+                <paper-icon-button suffix icon="check" on-tap="saveResponse"></paper-icon-button>
+            </paper-input>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-boxpop-shorttext',
+            behaviors: [Polymer.NeonAnimatableBehavior],
+            properties: {
+                nameResponse: {type: Object, value: {value: ''}, notify: true},
+                name: {type: Object, notify: true},
+                prompt: {type: String, value: 'Type response - press Enter or click check for next name.'},
+                answered: {type: Boolean, value: false},
+                animationConfig: {
+                    value: function () {
+                        return {
+                            'exit': {
+                                name: 'slide-right-animation',
+                                timing: {duration: 200},
+                                node: this
+                            },
+                            'entry': {
+                                name: 'slide-from-left-animation',
+                                timing: {delay: 250},
+                                node: this
+                            }
+                        }
+                    }
+                }
+            },
+            saveResponse: function () {
+                if (!this.answered) {
+                    this.answered = true;
+                    this.fire('boxpop');
+                }
+            },
+            focusInput: function () {
+                this.$.shorttextInput.$.input.focus();
+            },
+            _getNameResponse: function () {
+                var details = this.name.details[this.oe.eid];
+//                console.log('Name: ' + this.name.name);
+//                console.table(this.name.details);
+                if (details) {
+                    this.set('nameResponse.value', details.value);
+                } else {
+                    this.set('nameResponse.value', '');
+                }
+            },
+            attached: function () {
+                this._getNameResponse();
+            },
+            ready: function () {
+            }
+        });
+    </script>
+</dom-module>

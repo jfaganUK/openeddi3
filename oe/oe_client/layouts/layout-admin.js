@@ -13,12 +13,8 @@ var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
 module.exports = Mn.LayoutView.extend({
     template: template,
-    tagName: 'core-drawer-panel',
-    attributes: {
-        'flex': '',
-        'layout': '',
-        'vertical': ''
-    },
+    tagName: 'paper-drawer-panel',
+    className: ['flex', 'layout', 'vertical'],
     regions: {
         header: "#oe-admin-header",
         main: "#oe-admin-main",

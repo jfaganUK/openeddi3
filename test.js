@@ -95,39 +95,73 @@ async.series(startServerQueue, function (err, results) {
 /**********************************************************************/
 
 function testing() {
-    var f = require('./oe/oe_modules/control-checklist/ResponseTable.js');
+    var f1 = require('./oe/oe_modules/model-namelist/responsesNameDetails');
+    var f2 = require('./oe/oe_modules/control-ni-boxpop/NameDetailResponseTable');
 
-    f('examplepool', {
-        "eid": "102",
-        "sheetid": "1",
-        "poolid": "test1",
-        "sortIndex": 1,
-        "title": "someGoodFoods",
-        "controlmodule": "checklist",
-        "prompt": "Which foods have you eaten in the last month?",
-        "arrayPrompts": [
-            {
-                "arrayid": 0,
-                "prompt": "apple",
-                "value": "apple"
-            },
-            {
-                "arrayid": 1,
-                "prompt": "orange",
-                "value": "orange"
-            },
-            {
-                "arrayid": 2,
-                "prompt": "ice",
-                "value": "ice"
-            },
-            {
-                "arrayid": 3,
-                "prompt": "delicious air",
-                "value": "air"
-            }
-        ]
-    }, function (x) {
+    f1('elph', function (x) {
         console.log(JSON.stringify(x, null, 2));
     });
+
+    //f1('elph', {
+    //    "eid": "605",
+    //    "sheetid": "6",
+    //    "poolid": "elph",
+    //    "sortIndex": 5,
+    //    "title": "alterFunding",
+    //    "controlmodule": "niBoxpop",
+    //    "prompt": "Is there any dedicated funding or support for the work you do together with each contact (check all that apply)?",
+    //    "helpText": "In-kind support is non-monetary resources an organization might provide. This might include: staff time, facility space, supplies (office supplies, photocopying).",
+    //    "controltype": "checklist",
+    //    "filter": {
+    //        "details": {
+    //            "key": "405",
+    //            "value": "Yes"
+    //        }
+    //    },
+    //    "other": true,
+    //    "arrayPrompts": [
+    //        {
+    //            "arrayid": 0,
+    //            "prompt": "No-kind",
+    //            "value": "No-kind"
+    //        },
+    //        {
+    //            "arrayid": 1,
+    //            "prompt": "Money from my organization",
+    //            "value": "Money from my organization"
+    //        },
+    //        {
+    //            "arrayid": 2,
+    //            "prompt": "Money from contact’s organization",
+    //            "value": "Money from contact’s organization"
+    //        },
+    //        {
+    //            "arrayid": 3,
+    //            "prompt": "Money from another source",
+    //            "value": "Money from another source"
+    //        },
+    //        {
+    //            "arrayid": 4,
+    //            "prompt": "In-kind support from my organization",
+    //            "value": "In-kind support from my organization"
+    //        },
+    //        {
+    //            "arrayid": 5,
+    //            "prompt": "In-kind support from contact’s organization",
+    //            "value": "In-kind support from contact’s organization"
+    //        },
+    //        {
+    //            "arrayid": 6,
+    //            "prompt": "In-kind support from another source",
+    //            "value": "In-kind support from another source"
+    //        },
+    //        {
+    //            "arrayid": 7,
+    //            "prompt": "Other type of support",
+    //            "value": "Other type of support"
+    //        }
+    //    ]
+    //}, function (x) {
+    //    console.log(JSON.stringify(x, null, 2));
+    //});
 }

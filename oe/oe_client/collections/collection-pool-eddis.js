@@ -18,6 +18,10 @@ module.exports = Backbone.Collection.extend({
         this.puid = currentPool.get('puid');
         this.poolid = currentPool.get('poolid');
         this.createStore();
+    },
+
+    comparator: function (e) {
+        return e.get('sortIndex');
     }
 
 });

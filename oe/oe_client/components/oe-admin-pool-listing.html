@@ -1,98 +1,110 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 
-<polymer-element name="oe-admin-pool-listing"
-                 attributes="poolTitle dateCreated numResponses description oe attrUpdate poolid">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="oe-admin-pool-listing">
+    <style>
+        :host {
+            margin: 0.5em auto;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            padding: 0.5em 1em 1em;
+            position: relative;
+            width: 80%;
+            max-width: 560px;
+            min-width: 256px;
+        }
+
+        #poolListingStatsTable {
+            width: 90%;
+        }
+
+        .poolButton {
+            margin-top: 15px;
+        }
+
+        .poolListingStatsRow {
+            margin-top: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .poolListingStatsRow > div:nth-child(1) {
+            width: 30%;
+            max-width: 240px;
+            min-width: 120px;
+            word-wrap: normal;
+        }
+
+        .poolListingStatsRow > div:nth-child(2) {
+            text-align: left;
+        }
+
+    </style>
     <template>
-        <div class="pool-listing" layout vertical>
+        <div class="pool-listing layout vertical">
             <h2>{{poolTitle}}</h2>
 
-            <div id="poolListingStatsTable" layout vertical>
-                <div class="poolListingStatsRow" layout horizontal>
+            <div id="poolListingStatsTable" class="layout vertical">
+                <div class="poolListingStatsRow layout horizontal">
                     <div>ID:</div>
-                    <div flex>{{poolid}}</div>
+                    <div class="flex">{{poolid}}</div>
                 </div>
-                <div class="poolListingStatsRow" layout horizontal>
+                <div class="poolListingStatsRow layout horizontal">
                     <div>Description:</div>
-                    <div flex>{{description}}</div>
+                    <div class="flex">{{description}}</div>
                 </div>
-                <div class="poolListingStatsRow" layout horizontal>
+                <div class="poolListingStatsRow layout horizontal">
                     <div>Date created:</div>
-                    <div flex>{{dateShown}}</div>
+                    <div class="flex">{{dateShown}}</div>
                 </div>
-                <div class="poolListingStatsRow" layout horizontal="">
+                <div class="poolListingStatsRow layout horizontal">
                     <div>Number of responses:</div>
-                    <div flex>{{numResponses}}</div>
+                    <div class="flex">{{numResponses}}</div>
                 </div>
             </div>
-            <paper-button class="poolButton" raised on-tap="{{viewResponses}}">
+            <paper-button class="poolButton" on-tap="viewResponses" raised>
                 View Responses
             </paper-button>
-            <paper-button class="poolButton" raised on-tap="{{viewDesign}}">
+            <paper-button class="poolButton" on-tap="viewDesign" raised>
                 Edit Pool
             </paper-button>
         </div>
-        <style>
-            :host {
-                margin: 0.5em auto;
-                background: white;
-                border: 1px solid rgba(0, 0, 0, 0.15);
-                padding: 0.5em 1em 1em;
-                position: relative;
-                width: 80%;
-                max-width: 560px;
-                min-width: 256px;
-            }
-
-            #poolListingStatsTable {
-                width: 90%;
-            }
-
-            .poolButton {
-                margin-top: 15px;
-            }
-
-            .poolListingStatsRow {
-                margin-top: 12px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-            }
-
-            .poolListingStatsRow > div:nth-child(1) {
-                width: 30%;
-                max-width: 240px;
-                min-width: 120px;
-                word-wrap: normal;
-            }
-
-            .poolListingStatsRow > div:nth-child(2) {
-                text-align: left;
-            }
-
-        </style>
     </template>
     <script>
         //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-admin-pool-listing', {
-            dateShown: 'October 10th, 1982',
-
+        Polymer({
+            is: 'oe-admin-pool-listing',
+            properties: {
+                attrUpdate: {
+                    notify: true,
+                    observer: 'attrUpdateChanged'
+                },
+                dateCreated: {notify: true},
+                dateShown: {
+                    type: String,
+                    value: 'October 10th, 1982'
+                },
+                description: {notify: true},
+                numResponses: {notify: true},
+                oe: {notify: true},
+                poolTitle: {notify: true},
+                poolid: {notify: true}
+            },
             attrUpdateChanged: function () {
                 this.prepAttributes();
             },
-
             prepAttributes: function () {
                 var d = new Date(this.dateCreated);
                 this.dateShown = d.toDateString();
             },
-
             viewResponses: function () {
                 app.channels.navigation.command('load-admin-responses', this.poolid);
             },
-
             viewDesign: function () {
                 app.channels.navigation.command('load-admin-design', this.poolid);
             }
         });
     </script>
-</polymer-element>
+</dom-module>

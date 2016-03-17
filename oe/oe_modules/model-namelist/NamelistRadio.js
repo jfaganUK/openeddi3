@@ -16,13 +16,11 @@ App.prototype.registerRadioChannels = function () {
 var oldListenRadioChannels = App.prototype.listenRadioChannels;
 App.prototype.listenRadioChannels = function () {
     this.channels.namelist.comply('add-new-name', this.namelistAddNewName, this);
+    this.channels.namelist.comply('save-name-detail', this.namelistSaveNameDetail, this);
     oldListenRadioChannels.apply(this, arguments);
 };
 
 App.prototype.namelistAddNewName = function (e) {
-    console.log('--- App: add new name.');
-    console.log(e);
-
     var newname = this.currentPool.namelist.create({
         name: e.name,
         namelist: e.namelist,
@@ -37,6 +35,12 @@ App.prototype.namelistAddNewName = function (e) {
     } else {
         newname.appendToList(e.namelist);
     }
+};
+
+App.prototype.namelistSaveNameDetail = function (e) {
+    var m = app.currentPool.namelist.find({id: e.id});
+    m.addToDetails(e.eid, e.value);
+    m.save();
 };
 
 

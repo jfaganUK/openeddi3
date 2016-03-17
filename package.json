@@ -13,7 +13,7 @@
     "backbone.babysitter": "./oe/bower_components/backbone.babysitter/lib/backbone.babysitter.js",
     "backbone.radio": "./oe/bower_components/backbone.radio/build/backbone.radio.js",
     "backbone.dualstorage": "./oe/bower_components/backbone.dualstorage/backbone.dualstorage.js",
-    "marionette": "./oe/bower_components/marionette/lib/backbone.marionette.js",
+    "backbone.marionette": "./oe/bower_components/backbone.marionette/lib/backbone.marionette.js",
     "webcomponents": "./oe/bower_components/webcomponentsjs/webcomponents.js",
     "polymer": "./oe/bower_components/polymer/polymer.js",
     "d3": "./oe/bower_components/d3/d3.min.js"
@@ -31,7 +31,7 @@
         "backbone:Backbone"
       ]
     },
-    "marionette": "Marionette",
+    "backbone.marionette": "Marionette",
     "webcomponents": "Webcomponents",
     "polymer": "Polymer",
     "d3": "d3"

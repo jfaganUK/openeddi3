@@ -10,20 +10,23 @@
 
     <link rel="stylesheet" href="oe.css">
 
+    <script>
+        // This is necessary with Polymer and Marionette. It needs to 'teach' the app about the shadow-dom.
+        window.Polymer = window.Polymer || {dom: 'shadow'};
+    </script>
     <script src="/bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
     <link rel="import" href="/bower_components/polymer/polymer.html">
 
     <!------- POLYMER WEB-COMPONENTS ------->
     <!-- I'm expecting I will Vulcanize these for the production oe_server -->
-    <link rel="import" href="/bower_components/core-header-panel/core-header-panel.html">
-    <link rel="import" href="/bower_components/core-drawer-panel/core-drawer-panel.html"/>
-    <link rel="import" href="/bower_components/core-menu/core-menu.html"/>
-    <link rel="import" href="/bower_components/core-item/core-item.html"/>
-    <link rel="import" href="/bower_components/font-roboto/roboto.html">
-    <link rel="import" href="/bower_components/core-header-panel/core-header-panel.html">
-    <link rel="import" href="/bower_components/core-icon-button/core-icon-button.html"/>
-    <link rel="import" href="/bower_components/core-scroll-header-panel/core-scroll-header-panel.html"/>
+    <link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">
+    <link rel="import" href="/bower_components/paper-drawer-panel/paper-drawer-panel.html"/>
+    <link rel="import" href="/bower_components/paper-menu/paper-menu.html"/>
+    <link rel="import" href="/bower_components/paper-item/paper-item.html"/>
+    <link rel="import" href="/bower_components/font-roboto-local/roboto.html">
+    <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+    <link rel="import" href="/bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html"/>
 
 
     <!------- OE COMPONENTS ---------------->
@@ -45,6 +48,8 @@
     <link rel="import" href="/oe_client/components/oe-admin-design-new-eddi.html"/>
     <link rel="import" href="/oe_client/components/oe-admin-design-single-eddi-common.html"/>
 
+    <link rel="import" href="/oe_client/components/oe-test-component.html"/>
+
     <!------- OE MODULE COMPONENTS ------------->
 
     <% inspect(oeModules) %>
@@ -61,8 +66,8 @@
     %>
 
 </head>
-<body unresolved fullbleed vertical layout>
-<div id="app-space" flex vertical layout>OpenEddi</div>
+<body unresolved class="fullbleed vertical layout">
+<div id="app-space" class="flex vertical layout">OpenEddi</div>
 </body>
 <script src="/built.js"></script>
 </html>

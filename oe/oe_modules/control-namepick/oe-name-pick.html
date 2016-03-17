@@ -1,21 +1,31 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-shadow/paper-shadow.html">
-<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
-<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html"/>
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html">
 
-<polymer-element name="oe-name-pick" attributes="oe name namelist lists">
-    <template>
-        <paper-shadow id="nameCard" class="{{ {nameInListCard: oe.inlist, nameNotInListCard: !oe.inlist} | tokenList}}">
-            <section id="namePickCard">
-                <div horizontal layout>
-                    <paper-icon-button icon="done" id="pickName" on-tap="{{pickName}}"
-                                       class="{{ {nameInList: oe.inlist} | tokenList }}"></paper-icon-button>
-                    <span id="nameCardName" on-tap="{{pickName}}" flex>{{name}}</span>
-                    <paper-ripple fit on-tap="{{pickName}}"></paper-ripple>
-                </div>
-            </section>
-        </paper-shadow>
-        <style>
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="oe-name-pick">
+    <style>
+        /* TODO(polyup): For speed, consider reworking these styles with .classes
+                         and #ids rather than [attributes].
+        */
+        [layout] {
+        @apply(- -layout);
+        }
+
+        [layout][horizontal] {
+        @apply(- -layout-horizontal);
+        }
+
+        [fit] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    </style>
+    <style>
             #nameCard {
                 margin-left: 10px;
                 margin-right: 10px;
@@ -45,17 +55,52 @@
             }
 
             #pickName {
-                height: 24px;
+                /*height: 24px;*/
                 padding-top: 12px;
             }
         </style>
+    <template>
+        <paper-material id="nameCard" class$="{{_computeClass(oe)}}">
+            <section id="namePickCard">
+                <div class="layout horizontal">
+                    <paper-icon-button icon="done" id="pickName" on-tap="pickName"
+                                       class$="{{_computeClass2(oe)}}"></paper-icon-button>
+                    <span id="nameCardName" on-tap="pickName" class="flex">{{name}}</span>
+                    <paper-ripple class="fit" on-tap="pickName"></paper-ripple>
+                </div>
+            </section>
+        </paper-material>
     </template>
     <script>
-        Polymer('oe-name-pick', {
+        Polymer({
+            is: 'oe-name-pick',
+            properties: {
+                lists: {type: 'Object', notify: true},
+                name: {type: 'String', notify: true},
+                namelist: {type: 'Object', notify: true},
+                oe: {type: 'Object', notify: true}
+            },
             pickName: function () {
                 this.fire('toggle-name');
+            },
+            _computeClass: function (oe) {
+                return this.tokenList({
+                    nameInListCard: oe.inlist,
+                    nameNotInListCard: !oe.inlist
+                });
+            },
+            _computeClass2: function (oe) {
+                return this.tokenList({nameInList: oe.inlist});
+            },
+            tokenList: function (obj) {
+                var pieces = [];
+                for (var key in obj) {
+                    if (obj[key]) {
+                        pieces.push(key);
+                    }
+                }
+                return pieces.join(' ');
             }
-        })
+        });
     </script>
-
-</polymer-element>
+</dom-module>

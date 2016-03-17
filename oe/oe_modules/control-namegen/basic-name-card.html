@@ -1,31 +1,11 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-shadow/paper-shadow.html">
-<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
-<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
 
-<polymer-element name="oe-basic-name-card" attributes="oe name">
-    <template>
-        <paper-shadow id="nameCard">
-            <section id="nameCardShow">
-                <div horizontal layout>
-                    <paper-icon-button icon="create" id="editName" on-tap="{{editNameTapped}}"></paper-icon-button>
-                    <span id="nameCardName" on-tap="{{editNameTapped}}" flex>{{name}}</span>
-                    <paper-icon-button icon="clear" id="removeName" on-tap="{{removeNameTapped}}"></paper-icon-button>
-                </div>
-            </section>
-            <section id="nameCardEdit">
-                <div horizontal layout>
-                    <span class="nameCardNameEdit" flex>
-                        <paper-input value={{name}} on-blur="{{editDoneTapped}}">
-                            <core-a11y-keys keys="enter" on-keys-pressed="{{editDoneTapped}}"></core-a11y-keys>
-                            <core-a11y-keys keys="esc" on-keys-pressed="{{cancelEdit}}"></core-a11y-keys>
-                        </paper-input>
-                    </span>
-                    <paper-icon-button icon="done" id="editDone" on-tap="{{editDoneTapped}}"></paper-icon-button>
-                </div>
-            </section>
-        </paper-shadow>
-        <style>
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="oe-basic-name-card">
+    <style>
             #nameCard {
                 margin-left: 10px;
                 margin-right: 10px;
@@ -48,9 +28,38 @@
                 display: none;
             }
         </style>
+    <template>
+        <paper-material id="nameCard">
+            <section id="nameCardShow">
+                <div class="layout horizontal">
+                    <paper-icon-button icon="create" id="editName" on-tap="editNameTapped"></paper-icon-button>
+                    <span id="nameCardName" on-tap="editNameTapped" class="flex">{{name}}</span>
+                    <paper-icon-button icon="clear" id="removeName" on-tap="removeNameTapped"></paper-icon-button>
+                </div>
+            </section>
+            <section id="nameCardEdit">
+                <div class="layout horizontal">
+                    <span class="nameCardNameEdit flex">
+                        <paper-input value="{{name}}" on-blur="editDoneTapped">
+                            <iron-a11y-keys keys="enter" on-keys-pressed="editDoneTapped"></iron-a11y-keys>
+                            <iron-a11y-keys keys="esc" on-keys-pressed="cancelEdit"></iron-a11y-keys>
+                        </paper-input>
+                    </span>
+                    <paper-icon-button icon="done" id="editDone" on-tap="editDoneTapped"></paper-icon-button>
+                </div>
+            </section>
+        </paper-material>
     </template>
     <script>
-        Polymer('oe-basic-name-card', {
+        Polymer({
+            is: 'oe-basic-name-card',
+            properties: {
+                name: {
+                    notify: true,
+                    observer: 'nameChanged'
+                },
+                oe: {notify: true}
+            },
             ready: function () {
                 this.previousName = this.name;
             },
@@ -60,7 +69,6 @@
                 editBox.show();
                 editBox.find('paper-input').focus();
                 editBox.find('paper-input').select();
-
                 $(this.$.nameCardShow).hide();
             },
             removeNameTapped: function () {
@@ -80,4 +88,4 @@
             }
         });
     </script>
-</polymer-element>
+</dom-module>

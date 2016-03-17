@@ -1,0 +1,97 @@
+<link rel="import" href="/bower_components/polymer/polymer.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animatable-behavior.html">
+<link rel="import" href="/bower_components/neon-animation/animations/fade-out-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/fade-in-animation.html"/>
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+
+<dom-module id="oe-alter-ties-dyad">
+    <style>
+        :host {
+            display: block;
+        }
+
+        #nameAnswerBox {
+            margin: 0.5em 1em;
+            padding: 0.5em;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+
+        .verb {
+            vertical-align: middle;
+            line-height: 4em;
+        }
+
+        .leftName {
+            text-align: right;
+            padding-right: 2em;
+        }
+
+        .rightName {
+            text-align: left;
+            padding-left: 2em;
+        }
+    </style>
+    <template>
+        <div id="nameAnswerBox" class="layout vertical">
+            <div class="layout horizontal">
+                <div class="flex namebox leftName"><h3>{{getName(dyad.name1)}}</h3></div>
+                <div class="verb"><span>and</span></div>
+                <div class="flex namebox rightName"><h3>{{getName(dyad.name2)}}</h3></div>
+            </div>
+            <div class="layout horizontal" id="connectButtons">
+                <paper-button on-tap="connected" raised class="flex">
+                    <iron-icon icon="check"></iron-icon>
+                    <span>{{connectOptions.connected}}</span>
+                </paper-button>
+                <paper-button on-tap="notConnected" raised class="flex">
+                    <iron-icon icon="clear"></iron-icon>
+                    <span>{{connectOptions.notconnected}}</span>
+                </paper-button>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: "oe-alter-ties-dyad",
+            behaviors: [Polymer.NeonAnimatableBehavior],
+            properties: {
+                dyad: {type: Object, notify: true},
+                comparator: {type: String},
+                connectOptions: {type: Object},
+                verb: {type: String},
+                animationConfig: {
+                    value: function () {
+                        return {
+                            'exit': {
+                                name: 'fade-out-animation',
+                                node: this
+                            },
+                            'entry': {
+                                name: 'fade-in-animation',
+                                node: this
+                            }
+                        }
+                    }
+                }
+            },
+            connected: function () {
+                this.dyad.tie = 'connected';
+                this.nextDyad();
+            },
+            getName: function (id) {
+                var m = app.currentPool.namelist.find({id: id});
+                return (m.get('name'));
+            },
+            notConnected: function () {
+                this.dyad.tie = 'not connected';
+                this.nextDyad();
+            },
+            nextDyad: function () {
+                this.fire('next-dyad');
+            }
+        });
+    </script>
+
+</dom-module>

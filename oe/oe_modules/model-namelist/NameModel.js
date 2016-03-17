@@ -86,27 +86,31 @@ module.exports = Backbone.Model.extend({
         this.destroy();
     },
 
+    /**
+     * Adds a tie to the name's nodelist.
+     *
+     * Ties are stored as a node-list. Each name should have a list of
+     * names it is connected to. Each entry in the list contains the details
+     * of each type of relationship.
+     *
+     * The ties object has objects in it like this:
+     *  ties =
+     *    {"a": [
+     *		{relation: "communicate", type: "undirected", weight: 3},
+     *		{relation: "giveadvice", type: "directed", weight: 1}],
+     *	"b": [
+     *		{relation: "communicate", type: "undirected", weight: 3}]
+     *	}
+     * @param nameid The id in the namelist of another name to attach
+     * @param tiedetails {object} The tie details object
+     * @param savethis {boolean} Defaults to true,
+     */
     addTie: function (nameid, tiedetails, savethis) {
         if (typeof this.attributes.details.ties === 'undefined') {
             this.attributes.details.ties = {};
         }
 
         savethis = typeof savethis === 'undefined' ? true : savethis;
-
-        /***********************************
-         * Ties are stored as a node-list. Each name should have a list of
-         * names it is connected to. Each entry in the list contains the details
-         * of each type of relationship.
-         *
-         * The ties object has objects in it like this:
-         *  ties =
-         *    {"a": [
-			*		{relation: "communicate", type: "undirected", weight: 3},
-			*		{relation: "giveadvice", type: "directed", weight: 1}],
-			*	"b": [
-			*		{relation: "communicate", type: "undirected", weight: 3}]
-			*	}
-         */
 
         var ties = this.attributes.details.ties;
 

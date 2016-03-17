@@ -1,29 +1,30 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
-<link rel="import" href="/bower_components/core-icon-button/core-icon-button.html">
+    <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
-<polymer-element name="oe-admin-design-single-sheet" attributes="oe poollogic attrUpdate">
-    <template>
-        <div vertical layout flex id="wrapper">
-            <div id="container">
-                <div id="newSheetEntry">
-                    <h3>{{sheetTitle}}</h3>
-                    <p class="secondary-text-color">{{sheetid}}</p>
-                    <paper-input-decorator label="Sheet Title" floatingLabel>
-                        <input is="core-input" on-blur="{{updateAttr}}" value="{{sheetTitle}}">
-                    </paper-input-decorator>
-                    <p>Describe the sheet.</p>
-                    <paper-input-decorator label="Sheet Description" on-blur="{{updateAttr}}" floatingLabel>
-                        <input is="core-input" on-blur="{{updateAttr}}" value="{{sheetDescription}}">
-                    </paper-input-decorator>
-                    <paper-button on-tap="{{editEddis}}">Edit Eddis</paper-button>
-                </div>
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-admin-design-single-sheet">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
 
-            </div>
-        </div>
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
+
+            [layout][flex] {
+            @apply(- -layout-flex);
+            }
+        </style>
         <style>
             #container {
                 margin: 0.5em auto;
@@ -41,36 +42,59 @@
             }
 
         </style>
-    </template>
-    <script>
-        //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-admin-design-single-sheet', {
-            ready: function () {
-            },
+        <template>
+            <div vertical="" layout="" flex="" id="wrapper">
+                <div id="container">
+                    <div id="newSheetEntry">
+                        <h3>{{sheetTitle}}</h3>
 
-            attrUpdateChanged: function () {
-                this.setupVars();
-            },
+                        <p class="secondary-text-color">{{sheetid}}</p>
+                        <paper-input-decorator label="Sheet Title" floatinglabel="">
+                            <input is="core-input" on-blur="updateAttr" value="{{sheetTitle::input}}">
+                        </paper-input-decorator>
+                        <p>Describe the sheet.</p>
+                        <paper-input-decorator label="Sheet Description" on-blur="updateAttr" floatinglabel="">
+                            <input is="core-input" on-blur="updateAttr" value="{{sheetDescription::input}}">
+                        </paper-input-decorator>
+                        <paper-button on-tap="editEddis">Edit Eddis</paper-button>
+                    </div>
 
-            updateAttr: function () {
-                var sheet = {
-                    title: this.sheetTitle,
-                    sheetid: this.sheetid,
-                    description: this.sheetDescription
-                };
-                app.channels.pool.command('update-sheet', sheet);
-            },
-
-            setupVars: function () {
-                this.sheetid = this.oe.sheetid;
-                this.sheetTitle = this.oe.title;
-                this.sheetDescription = this.oe.description;
-            },
-
-            editEddis: function () {
-                app.channels.pool.command('set-eddi-sheetid', this.sheetid);
-            }
-
-        });
-    </script>
-</polymer-element>
+                </div>
+            </div>
+        </template>
+        <script>
+            //noinspection JSUnusedGlobalSymbols
+            Polymer({
+                is: 'oe-admin-design-single-sheet',
+                properties: {
+                    attrUpdate: {
+                        notify: true,
+                        observer: 'attrUpdateChanged'
+                    },
+                    oe: {notify: true},
+                    poollogic: {notify: true}
+                },
+                ready: function () {
+                },
+                attrUpdateChanged: function () {
+                    this.setupVars();
+                },
+                updateAttr: function () {
+                    var sheet = {
+                        title: this.sheetTitle,
+                        sheetid: this.sheetid,
+                        description: this.sheetDescription
+                    };
+                    app.channels.pool.command('update-sheet', sheet);
+                },
+                setupVars: function () {
+                    this.sheetid = this.oe.sheetid;
+                    this.sheetTitle = this.oe.title;
+                    this.sheetDescription = this.oe.description;
+                },
+                editEddis: function () {
+                    app.channels.pool.command('set-eddi-sheetid', this.sheetid);
+                }
+            });
+        </script>
+    </dom-module>

@@ -1,50 +1,35 @@
 <!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/paper-input/paper-input.html">
-<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
-<link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<html>
+<head>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
+    <link rel="import" href="/bower_components/paper-button/paper-button.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-button/paper-button.html">
+    <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 
-<polymer-element name="oe-admin-design-pooldetails" attributes="poollogic attrUpdate">
-    <template>
-        <div layout vertical flex id="wrapper">
-            <div id="container">
-                <h2>{{poollogic.poollogic.title}}</h2>
+    <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+    <dom-module id="oe-admin-design-pooldetails">
+        <style>
+            /* TODO(polyup): For speed, consider reworking these styles with .classes
+                             and #ids rather than [attributes].
+            */
+            [layout] {
+            @apply(- -layout);
+            }
 
-                <div id="poolListingStatsTable" layout vertical>
-                    <div class="poolListingStatsRow" layout horizontal>
-                        <div>Title:</div>
-                        <div flex>
-                            <paper-input value="{{poollogic.poollogic.title}}" on-blur="{{savePool}}"></paper-input>
-                        </div>
-                    </div>
-                    <div class="poolListingStatsRow" layout horizontal>
-                        <div>Description:</div>
-                        <div flex>
-                            <paper-input value="{{poollogic.poollogic.description}}"
-                                         on-blur="{{savePool}}"></paper-input>
-                        </div>
-                    </div>
-                    <div class="poolListingStatsRow" layout horizontal>
-                        <div>Introduction:</div>
-                        <div flex>
-                            <paper-input value="{{poollogic.poollogic.introduction}}"
-                                         on-blur="{{savePool}}"></paper-input>
-                        </div>
-                    </div>
-                    <div class="poolListingStatsRow" layout horizontal>
-                        <div>Afterword:</div>
-                        <div flex>
-                            <paper-input value="{{poollogic.poollogic.afterward}}" on-blur="{{savePool}}"></paper-input>
-                        </div>
-                    </div>
-                    <div class="poolListingStatsRow" layout horizontal>
-                        <paper-button raised flex on-tap="{{pushPool}}">Push Pool</paper-button>
-                    </div>
-                </div>
-            </div>
-        </div>
+            [layout][vertical] {
+            @apply(- -layout-vertical);
+            }
+
+            [layout][flex] {
+            @apply(- -layout-flex);
+            }
+
+            [layout][horizontal] {
+            @apply(- -layout-horizontal);
+            }
+        </style>
         <style>
             #container {
                 margin: 0.5em auto;
@@ -78,22 +63,65 @@
             }
 
         </style>
-    </template>
-    <script>
-        //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-admin-design-pooldetails', {
-            attrUpdateChanged: function () {
-//                console.log(this.poollogic);
-            },
+        <template>
+            <div class="layout vertical flex" id="wrapper">
+                <div id="container">
+                    <h2>{{poollogic.poollogic.title}}</h2>
 
-            savePool: function () {
-                app.channels.pool.command('save-pool-design', this.poollogic);
-            },
-
-            pushPool: function () {
-                app.channels.pool.command('push-pool', this.poollogic);
-            }
-
-        });
-    </script>
-</polymer-element>
+                    <div id="poolListingStatsTable" class="layout vertical">
+                        <div class="poolListingStatsRow layout horizontal">
+                            <div>Title:</div>
+                            <div flex="">
+                                <paper-input value="{{poollogic.poollogic.title}}" on-blur="savePool"></paper-input>
+                            </div>
+                        </div>
+                        <div class="poolListingStatsRow layout horizontal">
+                            <div>Description:</div>
+                            <div flex="">
+                                <paper-input value="{{poollogic.poollogic.description}}"
+                                             on-blur="savePool"></paper-input>
+                            </div>
+                        </div>
+                        <div class="poolListingStatsRow layout horizontal">
+                            <div>Introduction:</div>
+                            <div flex="">
+                                <paper-input value="{{poollogic.poollogic.introduction}}"
+                                             on-blur="savePool"></paper-input>
+                            </div>
+                        </div>
+                        <div class="poolListingStatsRow layout horizontal">
+                            <div>Afterword:</div>
+                            <div flex="">
+                                <paper-input value="{{poollogic.poollogic.afterward}}" on-blur="savePool"></paper-input>
+                            </div>
+                        </div>
+                        <div class="poolListingStatsRow layout horizontal">
+                            <paper-button raised="" flex="" on-tap="pushPool">Push Pool</paper-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <script>
+            //noinspection JSUnusedGlobalSymbols
+            Polymer({
+                is: 'oe-admin-design-pooldetails',
+                properties: {
+                    attrUpdate: {
+                        notify: true,
+                        observer: 'attrUpdateChanged'
+                    },
+                    poollogic: {notify: true}
+                },
+                attrUpdateChanged: function () {
+                },
+                //                console.log(this.poollogic);
+                savePool: function () {
+                    app.channels.pool.command('save-pool-design', this.poollogic);
+                },
+                pushPool: function () {
+                    app.channels.pool.command('push-pool', this.poollogic);
+                }
+            });
+        </script>
+    </dom-module>

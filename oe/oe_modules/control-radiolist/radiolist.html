@@ -1,30 +1,52 @@
 <!-- oe/oe_modules/control-radiolist/radiolist.html -->
-<link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-radio-group/paper-radio-group.html"/>
+<link rel="import" href="/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
-<polymer-element name="oe-radiolist" attributes="oe response">
+<dom-module id="oe-radiolist">
+    <style>
+        #other {
+            margin: 1em 1em;
+        }
+    </style>
     <template>
-        <paper-radio-group selected="{{response.value}}" flex vertical layout on-tap="{{saveResponse}}">
-            <template repeat="{{ arrayPrompt in oe.arrayPrompts }}">
-                <paper-radio-button data-arrayid="{{arrayPrompt.arrayid}}"
-                                    class="oe-radio-button"
-                                    label="{{arrayPrompt.prompt}}">
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
+        <paper-radio-group selected="{{response.value}}" class="flex vertical layout" id="oe-radiogroup">
+            <template is="dom-repeat" items="{{oe.arrayPrompts}}">
+                <paper-radio-button name="{{item.value}}" data-arrayid$="{{item.arrayid}}">
+                    <span>[[item.prompt]]</span>
                 </paper-radio-button>
             </template>
         </paper-radio-group>
-        <style>
-        </style>
+        <template is="dom-if" if="{{oe.other}}">
+            <div id="other" class="layout horizontal">
+                <paper-input class="flex" label="Other" on-change="saveOther"
+                             value="{{oe.response.other.value}}"></paper-input>
+            </div>
+        </template>
     </template>
     <script>
         //noinspection JSUnusedGlobalSymbols
-        Polymer('oe-radiolist', {
+        Polymer({
+            is: 'oe-radiolist',
+            properties: {
+                oe: {type: 'Object', notify: true},
+                response: {type: 'Object', notify: true}
+            },
+            listeners: {
+                'oe-radiogroup.paper-radio-group-changed': 'saveResponse'
+            },
             ready: function () {
             },
-
-            saveResponse: function () {
+            saveOther: function (e) {
+                this.set('response.other.text', e.target.value);
+                this.fire('change:response');
+            },
+            saveResponse: function (e) {
                 this.fire('change:response');
             }
-
         });
     </script>
-</polymer-element>
+</dom-module>

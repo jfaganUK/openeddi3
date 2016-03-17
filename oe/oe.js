@@ -16,7 +16,7 @@ Backbone.$ = $;
 Backbone.Radio = require('backbone.radio');
 require('./oe_client/backbone.dualstorage.browserify');
 require('./oe_client/backbone.dualstorage.oe.helpers');
-var Marionette = require('marionette');
+var Marionette = require('backbone.marionette');
 var PolymerView = require('./oe_client/views/marionette.polymerview');
 Mn.PolymerView = Marionette.PolymerView = PolymerView;
 
@@ -28,10 +28,11 @@ _.templateSettings.variable = 'rc';
 
 // Determine local storage is active or not
 // This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
-Backbone.Collection.prototype.local = true;
-Backbone.Collection.prototype.remote = true;
-Backbone.Model.prototype.local = true;
-Backbone.Model.prototype.remote = true;
+// Both - meaning we do nothing to the defaults, apparently
+//Backbone.Collection.prototype.local = true;
+//Backbone.Collection.prototype.remote = false;
+//Backbone.Model.prototype.local = true;
+//Backbone.Model.prototype.remote = false;
 
 window.RESIZE_WIDTH = 600;
 
@@ -60,19 +61,39 @@ app.on('start', function() {
     // Create the router
     var Router = require('./oe_client/routers/oe-router');
     app.router = new Router();
-
-    // We want to retrieve the appstate from localstorage, if it exists there.
-    // That way, on a refresh, the previous state can be restored
-    AppState = require('./oe_client/models/model-appstate');
-    app.appState = new AppState();
-    app.appState.fetch();
+    Backbone.history.start({pushState: false});
 
     console.log('--- OpenEddi Application Started --');
 
 });
 
-$(document).ready(function () {
-    app.start();
+/*
+ Order of events here.
+ Wait for webcomponents to be ready, otherwise we can't render anything
+ Sync the appstate and either get the existing last saved appstate, or get a new appstate
+ Then start the application
+ */
 
-    Backbone.history.start({pushState: false});
+// Need to wait until webcomponents are ready before launching the application
+window.addEventListener('WebComponentsReady', function () {
+
+    // We want to retrieve the appstate from localstorage, if it exists there.
+    // That way, on a refresh, the previous state can be restored
+    AppState = require('./oe_client/models/model-appstate');
+    app.appState = new AppState();
+    app.appState.fetch({
+        success: function (model, response, options) {
+            console.log('[appState] Fetch success.');
+            //app.appState.trigger('initialFetchSuccess');
+            app.start();
+        },
+        error: function (model, response, options) {
+            console.error('[appState] ERROR failure to fetch appstate');
+            app.appState.trigger('initialFetchError');
+        }
+    });
+
+    // Wait for the appstate to sync, then start the application
+    //app.listenTo(app.appState, 'initialFetchSuccess', app.start());
+    //app.start();
 });

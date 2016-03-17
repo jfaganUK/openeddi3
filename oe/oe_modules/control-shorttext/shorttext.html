@@ -1,28 +1,37 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
-<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
 
-<polymer-element name="oe-shorttext" attributes="oe response">
-    <template>
-        <paper-input class="oe-shorttext-input" label="{{oe.prompt}}" value="{{response.value}}" on-blur="{{updateResponse}}"></paper-input>
-        <style>
+<dom-module id="oe-shorttext">
+    <style>
             .oe-shorttext-input {
                 margin-left: 10px;
                 margin-right: 5px;
                 width: 90%;
             }
         </style>
+    <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
+        <paper-input class="oe-shorttext-input" label="{{oe.prompt}}" value="{{response.value}}"
+                     on-blur="updateResponse"></paper-input>
     </template>
     <script>
-        Polymer('oe-shorttext', {
-            ready: function() {
+        Polymer({
+            is: 'oe-shorttext',
+            properties: {
+                oe: {notify: true},
+                response: {notify: true}
             },
-
-            updateResponse: function(event, detail, sender) {
+            ready: function () {
+            },
+            updateResponse: function (event, detail, sender) {
                 this.fire('change:response');
             }
         });
     </script>
-</polymer-element>
+</dom-module>

@@ -1,0 +1,115 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/neon-animation/neon-animated-pages.html"/>
+<link rel="import" href="../../oe_client/components/oe-helptext.html"/>
+<link rel="import" href="./niBoxpop-radio.html">
+<link rel="import" href="./niBoxPop-endoflist.html">
+<link rel="import" href="./niBoxpop-shorttext.html"/>
+<link rel="import" href="./niBoxpop-checklist.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html"/>
+
+<dom-module id="oe-ni-boxpop">
+    <style>
+        #name-pager {
+            height: 23em;
+            overflow-y: scroll;
+        }
+    </style>
+    <template>
+        <template is="dom-if" if="{{oe.helpText}}">
+            <oe-helptext id="helpText" help-text="{{oe.helpText}}"></oe-helptext>
+        </template>
+
+        <oe-ni-boxpop-undo last-save="{{lastSave}}" array-prompts="{{oe.arrayPrompts}}"></oe-ni-boxpop-undo>
+        <neon-animated-pages id="name-pager" class="flex" selected="[[nameIndex]]">
+            <template is="dom-repeat" items="{{oe.names}}" filter="nameFilter">
+
+                <!-- NI Radio Type-->
+                <template is="dom-if" if="{{_isRadio()}}">
+                    <oe-ni-boxpop-radio name="{{item}}" array-prompts="{{oe.arrayPrompts}}" on-boxpop="saveResponse"
+                                        show-other="{{oe.other}}"></oe-ni-boxpop-radio>
+                </template>
+
+                <!-- NI Shorttext type -->
+                <template is="dom-if" if="{{_isShorttext()}}">
+                    <oe-boxpop-shorttext name="{{item}}" oe="[[oe]]" on-boxpop="saveResponse"></oe-boxpop-shorttext>
+                </template>
+
+                <!-- NI checklist type -->
+                <template is="dom-if" if="{{_isChecklist()}}">
+                    <oe-boxpop-checklist name="{{item}}" on-boxpop="saveResponse" array-prompts="{{oe.arrayPrompts}}"
+                                         show-other="{{oe.other}}"></oe-boxpop-checklist>
+                </template>
+
+
+            </template>
+            <oe-ni-boxpop-endoflist on-startover="reset" on-nexteddi="nexteddi"></oe-ni-boxpop-endoflist>
+        </neon-animated-pages>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-ni-boxpop',
+            behaviors: [Polymer.NeonAnimationRunnerBehavior],
+            properties: {
+                oe: {type: Object, notify: true},
+                namelist: {type: String, notify: true},
+                response: {type: Object, notify: true},
+                lastSave: {type: Object, notify: true},
+                nameIndex: {type: Number, value: 0}
+            },
+            listeners: {
+                'undo': 'undoLast',
+                'neon-animation-finish': '_onNeonAnimationFinish'
+            },
+            _isRadio: function () {
+                return this.oe.controltype == 'radio';
+            },
+            _isShorttext: function () {
+                return this.oe.controltype == 'shorttext';
+            },
+            _isChecklist: function () {
+                return this.oe.controltype == 'checklist';
+            },
+            _onNeonAnimationFinish: function (e, anim) {
+                console.log('[oe-ni-boxpop] Neon Animation Finish');
+                if (this._isShorttext()) {
+                    anim.toPage.focusInput();
+                    anim.toPage.answered = false;
+                }
+            },
+            ready: function () {
+                this.reset();
+            },
+            reset: function () {
+                this.$['name-pager'].selected = 0;
+            },
+            nameFilter: function (e) {
+                if (this.oe.filter) {
+                    if (this.oe.filter.details) {
+                        var fil = this.oe.filter.details;
+                        return e.details[fil.key].value == fil.value;
+                    }
+                }
+                return true;
+            },
+            saveResponse: function (e) {
+                console.log('[oe-ni-boxpop] Save response.');
+                e.stopPropagation();
+                var o = {
+                    id: e.model.get('item.id'),
+                    name: e.model.get('item.name'),
+                    value: e.target.nameResponse,
+                    eid: this.oe.eid
+                };
+                this.set('lastSave', o);
+                app.channels.namelist.command('save-name-detail', o);
+                this.$['name-pager'].selectNext();
+            },
+            undoLast: function () {
+                this.$['name-pager'].selectPrevious();
+            },
+            nexteddi: function () {
+            }
+
+        });
+    </script>
+</dom-module>

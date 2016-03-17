@@ -17,12 +17,8 @@
 var template = require('../templates/template-layout-pool.ejs')();
 
 module.exports = Marionette.LayoutView.extend({
-    tagName: 'core-header-panel',
-    attributes: function () {
-        return ( {
-            'flex': ''
-        });
-    },
+    tagName: 'paper-header-panel',
+    className: 'flex',
     id: 'poolLayout',
     template: _.template(template),
     regions: {

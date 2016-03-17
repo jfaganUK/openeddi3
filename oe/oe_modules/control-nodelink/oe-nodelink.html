@@ -1,77 +1,82 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/core-a11y-keys/core-a11y-keys.html">
-<link rel="import" href="/bower_components/paper-button/paper-button.html"/>
-<link rel="import" href="/bower_components/paper-toast/paper-toast.html"/>
-<link rel="import" href="/bower_components/paper-dialog/paper-dialog.html"/>
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/paper-dialog/paper-dialog.html">
 <script src="../../bower_components/d3/d3.min.js"></script>
 
 // TODO have this response to the tablet turning
+<dom-module id="oe-nodelink">
+    <style>
+        paper-toast {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+        }
 
-<polymer-element name="oe-nodelink" attributes="oe response graph">
+        paper-toast .undo {
+            color: #eeff41;
+        }
+
+        #svgSpace {
+            background-color: white;
+            position: relative;
+            left: 0;
+        }
+
+        /*noinspection ALL*/
+        path.link {
+            fill: none;
+            stroke: #000;
+            stroke-width: 4px;
+            cursor: default;
+        }
+
+        /*noinspection ALL*/
+        path.link.dragline {
+            pointer-events: none;
+        }
+
+        /*noinspection ALL*/
+        path.link.hidden {
+            stroke-width: 0;
+        }
+
+        /*noinspection ALL*/
+        .link {
+            stroke: black;
+            stroke-width: 2px;
+        }
+
+        .ndnm {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+    </style>
     <template if="{{graph !== undefined}}">
         <svg id="svgSpace">
         </svg>
-        <paper-toast text="Tie was ADDED between {{name1}} and {{name2}}." id="toastTieAdded" class="">
-            <div class="undo" on-tap="{{undoLastOperation}}" autoCloseDisabled=true duration=10000>Undo</div>
+        <paper-toast text="{{_computeText(name1, name2)}}" id="toastTieAdded" class="">
+            <div class="undo" on-tap="undoLastOperation" autoclosedisabled="true" duration="10000">Undo</div>
         </paper-toast>
-        <paper-toast text="Tie was REMOVED between {{name1}} and {{name2}}." id="toastTieRemoved" class="">
-            <div class="undo" on-tap="{{undoLastOperation}}" autoCloseDisabled=true duration=10000>Undo</div>
+        <paper-toast text="{{_computeText(name1, name2)}}" id="toastTieRemoved" class="{{_computeText2(name1, name2)}}">
+            <div class="undo" on-tap="undoLastOperation" autoclosedisabled="true" duration="10000">Undo</div>
         </paper-toast>
-        <style>
-            paper-toast {
-                bottom: 0;
-                left: 0;
-                width: 100%;
-            }
-
-            paper-toast .undo {
-                color: #eeff41;
-            }
-
-            #svgSpace {
-                background-color: white;
-                position: relative;
-                left: 0;
-            }
-
-            /*noinspection ALL*/
-            path.link {
-                fill: none;
-                stroke: #000;
-                stroke-width: 4px;
-                cursor: default;
-            }
-
-            /*noinspection ALL*/
-            path.link.dragline {
-                pointer-events: none;
-            }
-
-            /*noinspection ALL*/
-            path.link.hidden {
-                stroke-width: 0;
-            }
-
-            /*noinspection ALL*/
-            .link {
-                stroke: black;
-                stroke-width: 2px;
-            }
-
-            .ndnm {
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-
-        </style>
     </template>
     <script>
         //noinspection JSUnusedLocalSymbols,JSUnusedGlobalSymbols
-        Polymer('oe-nodelink', {
+        Polymer({
+            is: 'oe-nodelink',
+            properties: {
+                graph: {notify: true},
+                oe: {notify: true},
+                response: {notify: true}
+            },
             ready: function () {
                 // I used to to just have this listener, but with the polyfill, I can't fire events
                 // external to the element.
@@ -86,26 +91,20 @@
                             this.setupNodeLink();
                         }
                     }
-
                     app.channels.pool.on('attributes-updated', _.bind(isThisEddi, this));
                 }
             },
-
             updateResponse: function (event, detail, sender) {
                 this.fire('change:response');
             },
-
             setupNodeLink: function () {
-
                 // With backbone we just say 'once', but in this case
                 // I just want to remove the listener without using backbone to do it
-//                this.removeEventListener('attributes-updated', this.setupNodeLink, false);
+                //                this.removeEventListener('attributes-updated', this.setupNodeLink, false);
                 app.channels.pool.off('attributes-updated');
-
                 // This sucks. I want to blow this eddi up bigger.
                 this.touchHeight = $(window).height() * 0.9;
                 this.touchWidth = $('#oe-layout-eddi-controlspace').width();
-
                 // Force details
                 this.cRadius = 20;
                 this.fcharge = -600;
@@ -113,81 +112,67 @@
                 this.ffriction = 0.9;
                 //this.collAlpha = 0.59;
                 this.linkdistance = 100;
-
                 // colors
                 this.cols = d3.scale.category10();
                 this.animSpeed = 100;
-
                 this.operations = [];
-
                 // Turn on collision detection?
                 this.collisionDetect = false;
                 //this.collPadding = 5;
-
-                this.force = d3.layout.force()
-                        .charge(this.fcharge)
-                        .friction(this.ffriction)
-                        .gravity(this.fgravity)
-                        .linkDistance(this.linkdistance)
-                        .size([this.touchWidth, this.touchHeight]);
-
+                this.force = d3.layout.force().charge(this.fcharge).friction(this.ffriction).gravity(this.fgravity).linkDistance(this.linkdistance).size([
+                    this.touchWidth,
+                    this.touchHeight
+                ]);
                 // Load the nodes and links
                 this.loadNodeLinkNodes();
                 this.loadNodeLinkLinks();
                 this.loadOperations();
                 this.renderNodeLink();
             },
-
             /***************************************************
              *
              *    Dragging
              *
              ***************************************************/
-
             pointerDragStart: function (d) {
                 // Make sure the toast is gone
-                this.$.toastTieAdded.dismiss();
-                this.$.toastTieRemoved.dismiss();
-
+                this.$['toastTieAdded'].hide();
+                this.$['toastTieRemoved'].hide();
                 // Initialize the position of the pointer
-                this.pointer.locations = {
+                this.set('pointer.locations', {
                     startx: d.x,
                     starty: d.y,
                     tox: d.x,
                     toy: d.y
-                };
-
-                this.pointer.classed('hidden', false)
-                        .attr('d', _.bind(this.pointer.drawline, this.pointer));
+                });
+                this.pointer.classed('hidden', false).attr('d', _.bind(this.pointer.drawline, this.pointer));
             },
-
             pointerDragging: function (d) {
                 // if we are actually dragging the pointer
                 // then  update the location
                 if (this.pointer && this.pointer.dragging) {
                     if (d3.event.type == 'touchmove') {
-                        var touches = d3.touches(this.$.svgSpace)[0];
-                        this.pointer.locations = {
+                        var touches = d3.touches(this.$['svgSpace'])[0];
+                        this.set('pointer.locations', {
                             tox: touches[0],
                             toy: touches[1],
                             startx: this.pointer.node.x,
                             starty: this.pointer.node.y
-                        };
-                        this.pointer.hovernode = this.getNodeAtPoint(touches[0], touches[1]);
+                        });
+                        this.set('pointer.hovernode', this.getNodeAtPoint(touches[0], touches[1]));
                     } else if (d3.event.type == 'mousemove') {
-                        var mouse = d3.mouse(this.$.svgSpace);
-                        this.pointer.locations = {
+                        var mouse = d3.mouse(this.$['svgSpace']);
+                        this.set('pointer.locations', {
                             tox: mouse[0],
                             toy: mouse[1],
                             startx: this.pointer.node.x,
                             starty: this.pointer.node.y
-                        };
-                        this.pointer.hovernode = this.getNodeAtPoint(mouse[0], mouse[1]);
+                        });
+                        this.set('pointer.hovernode', this.getNodeAtPoint(mouse[0], mouse[1]));
                     }
                     this.pointer.attr('d', _.bind(this.pointer.drawline, this.pointer));
                 }
             },
-
             getNodeAtPoint: function (x, y) {
                 // This works by creating a 0-width rectangle
                 // then it uses the getIntersectionList to see what items are intersected.
@@ -197,7 +182,6 @@
                 var rect = svg.createSVGRect();
                 rect.x = x;
                 rect.y = y;
-
                 // Now to go through each element
                 //noinspection JSUnresolvedFunction
                 var ilist = svg.getIntersectionList(rect, svg);
@@ -209,18 +193,14 @@
                         break;
                     }
                 }
-
                 //noinspection JSUnusedGlobalSymbols
                 this.touchHover = i === null ? '' : i.__data__.name;
-
                 return i;
             },
-
             getNodeNameFromID: function (id) {
                 var nm = app.currentPool.namelist.get(id);
                 return nm.get('name');
             },
-
             pointerDragEnd: function (d) {
                 var res;
                 this.pointer.classed('hidden', true);
@@ -231,89 +211,66 @@
                         res = this.nlAddTie(id1, id2);
                         if (res) {
                             // Added the tie
-                            this.$.toastTieAdded.show();
+                            this.$['toastTieAdded'].show();
                         } else {
                             // Tie exists, remove the tie
                             this.nlRemoveTie(id1, id2);
-                            this.$.toastTieRemoved.show();
+                            this.$['toastTieRemoved'].show();
                         }
                     }
                 }
-                this.pointer.hovernode = null;
-                this.pointer.node = null;
+                this.set('pointer.hovernode', null);
+                this.set('pointer.node', null);
                 this.updateNodeLink();
             },
-
             /***************************************************
              *
              *    Network Editing
              *
              ***************************************************/
-
-
             /***** catches link adding and removing behavior *****/
-
             nlResetColor: function (nd) {
                 var qview = this;
-                d3.select(nd).select('.circ').transition().duration(this.animSpeed)
-                        .style('fill', function (d) {
-                            return qview.cols(+d.details.relatetype);
-                        });
-                d3.select(nd).select('.circ').transition().duration(this.animSpeed).ease('linear')
-                        .attr('r', this.cRadius);
+                d3.select(nd).select('.circ').transition().duration(this.animSpeed).style('fill', function (d) {
+                    return qview.cols(+d.details.relatetype);
+                });
+                d3.select(nd).select('.circ').transition().duration(this.animSpeed).ease('linear').attr('r', this.cRadius);
             },
-
             nlSelectColor: function (nd) {
                 var qview = this;
-                d3.select(nd).select('.circ').transition().duration(this.animSpeed)
-                        .style('fill', function (d) {
-                            return d3.rgb(qview.cols(+d.details.relatetype)).brighter(2);
-                        });
-                d3.select(nd).select('.circ').transition().duration(this.animSpeed).ease('linear')
-                        .attr('r', function () {
-                            return qview.cRadius * 1.3;
-                        });
+                d3.select(nd).select('.circ').transition().duration(this.animSpeed).style('fill', function (d) {
+                    return d3.rgb(qview.cols(+d.details.relatetype)).brighter(2);
+                });
+                d3.select(nd).select('.circ').transition().duration(this.animSpeed).ease('linear').attr('r', function () {
+                    return qview.cRadius * 1.3;
+                });
             },
-
             nlGetD3NodeById: function (id) {
                 for (var i = 0; i < this.ns[0].length; i++) {
                     if (this.ns[0][i].__data__.id === id) {
-                        return (this.ns[0][i]);
+                        return this.ns[0][i];
                     }
                 }
             },
-
             /*** Basic Rendering tasks for the question ***/
             renderNodeLink: function () {
                 var hh = this.touchHeight;
                 var ww = this.touchWidth;
                 var self = this;
-
                 // the drawing space
-                this.svg = d3.select(this.$.svgSpace)
-                        .attr('height', hh)
-                        .attr('width', ww)
-                        .attr('class', 'nodelinkSVG')
-                        .on('mousemove', function (d) {
-                            self.pointerDragging.call(self, d);
-                        })
-                        .on('touchmove', function (d) {
-                            self.pointerDragging.call(self, d);
-                        });
-
+                this.svg = d3.select(this.$['svgSpace']).attr('height', hh).attr('width', ww).attr('class', 'nodelinkSVG').on('mousemove', function (d) {
+                    self.pointerDragging.call(self, d);
+                }).on('touchmove', function (d) {
+                    self.pointerDragging.call(self, d);
+                });
                 // The pointer line
-                this.pointer = this.svg.append('svg:path')
-                        .attr('class', 'link hidden')
-                        .attr('d', 'M0,0L0,0');
+                this.pointer = this.svg.append('svg:path').attr('class', 'link hidden').attr('d', 'M0,0L0,0');
                 // This will create the path instructions
-                this.pointer.drawline = function () {
+                this.set('pointer.drawline', function () {
                     return 'M' + this.locations.startx + ',' + this.locations.starty + ' L' + this.locations.tox + ',' + this.locations.toy;
-                };
-
-
+                });
                 this.updateNodeLink();
             },
-
             /*** Add a tie to the network.
              *   Will return false if a tie already exists (remove the tie?)
              *   or true if successful.
@@ -324,39 +281,40 @@
                 var ties = _.clone(this.graph.get('ties'));
                 // default to adding an operation
                 var addOperation = addop === undefined ? true : addop;
-
                 if (this.nlTieIndex(id1, id2) !== -1) {
                     return false;
                 }
-
-                ties.push({source: nm1.attributes, target: nm2.attributes});
+                ties.push({
+                    source: nm1.attributes,
+                    target: nm2.attributes
+                });
                 this.graph.set('ties', ties);
-
-                this.links.push({source: nm1.attributes, target: nm2.attributes});
-
+                this.links.push({
+                    source: nm1.attributes,
+                    target: nm2.attributes
+                });
                 // We need the option of not adding an operation and just adding the tie
                 // in the case of undo
                 if (addOperation) {
                     this.nlAddOperation('add', id1, id2);
                 }
-
                 var td = this.graph.get('tieDetails');
                 nm1.addTie(nm2.id, td);
                 nm2.addTie(nm1.id, td);
                 return true;
             },
-
             nlRemoveTie: function (id1, id2, addop) {
                 var nm1 = app.currentPool.namelist.get(id1);
                 var nm2 = app.currentPool.namelist.get(id2);
                 var addOperation = addop === undefined ? true : addop;
-
                 var ix = this.nlTieIndex(id1, id2);
                 if (ix === -1) {
                     return;
                 }
-
-                var ids = ['', ''];
+                var ids = [
+                    '',
+                    ''
+                ];
                 for (var i = 0; i < this.links.length; i++) {
                     ids[0] = this.links[i].source.id;
                     ids[1] = this.links[i].target.id;
@@ -365,25 +323,22 @@
                         break;
                     }
                 }
-
                 this.links.splice(ix, 1);
-
                 var td = this.graph.get('tieDetails');
                 nm1.removeTie(nm2.id, td);
                 nm2.removeTie(nm1.id, td);
-
                 if (addOperation) {
                     this.nlAddOperation('remove', id1, id2);
                 }
-
                 // there may be a duplicate tie, run it again
                 // If the tie doesn't exist it will exit.
                 this.nlRemoveTie(id1, id2, addop);
-
             },
-
             nlTieIndex: function (id1, id2) {
-                var ids = ['', ''];
+                var ids = [
+                    '',
+                    ''
+                ];
                 for (var i = 0; i < this.links.length; i++) {
                     ids[0] = this.links[i].source.id;
                     ids[1] = this.links[i].target.id;
@@ -393,7 +348,6 @@
                 }
                 return -1;
             },
-
             /*****************************************************
              * Operations
              *
@@ -413,31 +367,33 @@
              * good way to do this. I'm thinking of creating a 'graph' object that is tracked for each namelist. Maybe?
              *
              * **/
-
             nlAddOperation: function (op, id1, id2) {
-                var operation = {op: op, id1: id1, id2: id2};
-                this.operations.push({op: op, id1: id1, id2: id2});
-                this.response.operations = this.operations;
+                var operation = {
+                    op: op,
+                    id1: id1,
+                    id2: id2
+                };
+                this.operations.push({
+                    op: op,
+                    id1: id1,
+                    id2: id2
+                });
+                this.set('response.operations', this.operations);
                 this.fire('change:response');
                 return operation;
             },
-
-
             // In case they did the last thing in error.
             undoLastOperation: function () {
                 var lastop = this.operations.pop();
-                this.response.operations = this.operations;
+                this.set('response.operations', this.operations);
                 this.fire('change:response');
-
                 if (lastop.op === 'add') {
                     this.nlRemoveTie(lastop.id1, lastop.id2, false);
                 } else if (lastop.op === 'remove') {
                     this.nlAddTie(lastop.id1, lastop.id2, false);
                 }
-
                 this.updateNodeLink();
             },
-
             nlApplyOperations: function () {
                 var id1, id2, nm1, nm2;
                 this.cleanOperations();
@@ -446,77 +402,54 @@
                     id2 = this.operations[i].id2;
                     nm1 = app.currentPool.namelist.get(id1);
                     nm2 = app.currentPool.namelist.get(id2);
-
                     if (this.operations[i].op === 'add') {
                         this.nlAddTie(id1, id2, false);
                     } else if (this.operations[i].op === 'remove') {
                         this.nlRemoveTie(id1, id2, false);
                     }
-
                 }
             },
-
             // If any nodes have been removed this will remove the operations
             cleanOperations: function () {
-
                 function bothNamesExist(x) {
                     var nm1 = app.currentPool.namelist.get(x.id1);
                     var nm2 = app.currentPool.namelist.get(x.id2);
                     return nm1 && nm2;
                 }
-
                 this.operations = _.remove(this.operations, bothNamesExist);
-
-                this.response.operations = this.operations;
+                this.set('response.operations', this.operations);
                 this.fire('change:response');
             },
-
             /***************************************************
              *
              *    Rendering
              *
              ***************************************************/
-
             /**** Draw or update the nodes and links ****/
-
             updateNodeLink: function () {
                 var hh = this.touchHeight;
                 var ww = this.touchWidth;
                 var qview = this;
                 var cr = this.cRadius;
-
                 /*	Nodes */
-                this.ns = this.svg.selectAll('g.ns')
-                        .data(this.nd, function (d) {
-                            return d.id;
-                        });
-                this.nsEnter = this.ns.enter().insert('g')
-                        .attr('class', 'ns')
-                        .attr('transform', function () {
-                            return ('translate(' + Math.random() * ww + ',' + Math.random() * hh + ')');
-                        });
-
-                this.nsEnter.append('circle')
-                        .attr('class', 'circ')
-                        .attr('r', cr)
-                        .style('stroke', function (d) {
-                            return d3.rgb(qview.cols(+d.details.relatetype)).darker(2);
-                        })
-                        .style('fill', function (d) {
-                            return qview.cols(+d.details.relatetype);
-                        });
-
-                this.nsEnter.append('text')
-                        .attr('class', 'ndnm')
-                        .attr('text-anchor', 'middle')
-                        .text(function (d) {
-                            return (d.name);
-                        });
-
-
+                this.ns = this.svg.selectAll('g.ns').data(this.nd, function (d) {
+                    return d.id;
+                });
+                this.nsEnter = this.ns.enter().insert('g').attr('class', 'ns').attr('transform', function () {
+                    return 'translate(' + Math.random() * ww + ',' + Math.random() * hh + ')';
+                });
+                this.nsEnter.append('circle').attr('class', 'circ').attr('r', cr).style('stroke', function (d) {
+                    return d3.rgb(qview.cols(+d.details.relatetype)).darker(2);
+                }).style('fill', function (d) {
+                    return qview.cols(+d.details.relatetype);
+                });
+                this.nsEnter.append('text').attr('class', 'ndnm').attr('text-anchor', 'middle').text(function (d) {
+                    return d.name;
+                });
                 // Start moving the edge pointer around
                 this.ns.on('touchstart', function (d) {
-                    d3.event.preventDefault(); // so that we don't drag the screen around
+                    d3.event.preventDefault();
+                    // so that we don't drag the screen around
                     qview.pointer.dragging = true;
                     qview.pointer.hovernode = null;
                     qview.pointer.node = d;
@@ -528,7 +461,6 @@
                     qview.pointer.node = d;
                     qview.pointerDragStart.call(qview, d);
                 });
-
                 // User stops touching, or dragging
                 this.ns.on('touchend', function (d) {
                     qview.pointer.dragging = false;
@@ -538,65 +470,37 @@
                     qview.pointer.dragging = false;
                     qview.pointerDragEnd.call(qview, d);
                 });
-
                 this.ns.exit().remove();
-
                 /*	Edges */
-                this.lks = this.svg.selectAll('line.link')
-                        .data(this.links, function (d) {
-                            return d.source.id + "-" + d.target.id;
-                        });
-
+                this.lks = this.svg.selectAll('line.link').data(this.links, function (d) {
+                    return d.source.id + '-' + d.target.id;
+                });
                 //noinspection JSUnusedGlobalSymbols
-                this.lkEnter = this.lks.enter().insert('line', 'g.ns')
-                        .attr('class', 'link')
-                        .attr('x1', function (d) {
-                            return d.source.x;
-                        })
-                        .attr('x2', function (d) {
-                            return d.target.x;
-                        })
-                        .attr('y1', function (d) {
-                            return d.source.y;
-                        })
-                        .attr('y2', function (d) {
-                            return d.target.y;
-                        });
-
-                this.lks.exit().transition().duration(this.animSpeed)
-                        .attr('stroke-width', 0)
-                        .remove();
-
+                this.lkEnter = this.lks.enter().insert('line', 'g.ns').attr('class', 'link').attr('x1', function (d) {
+                    return d.source.x;
+                }).attr('x2', function (d) {
+                    return d.target.x;
+                }).attr('y1', function (d) {
+                    return d.source.y;
+                }).attr('y2', function (d) {
+                    return d.target.y;
+                });
+                this.lks.exit().transition().duration(this.animSpeed).attr('stroke-width', 0).remove();
                 this.tickNodeLink();
-
             },
-
             /**** Tick / move the nodes and draw the force behavior ****/
-
             tickNodeLink: function () {
-                var ns = this.ns,
-                        nd = this.nd,
-                        lks = this.lks,
-                        cr = this.cRadius;
-                var hh = this.touchHeight,
-                        ww = this.touchWidth;
-
-                this.force.on("tick", function () {
-
+                var ns = this.ns, nd = this.nd, lks = this.lks, cr = this.cRadius;
+                var hh = this.touchHeight, ww = this.touchWidth;
+                this.force.on('tick', function () {
                     // Collision detection - move the nodes around each other
                     if (this.collisionDetect) {
                         ns.each(function (d) {
                             var quadtree = d3.geom.quadtree(nd);
-                            var nx1 = d.x - cr,
-                                    nx2 = d.x + cr,
-                                    ny1 = d.y - cr,
-                                    ny2 = d.y + cr;
+                            var nx1 = d.x - cr, nx2 = d.x + cr, ny1 = d.y - cr, ny2 = d.y + cr;
                             quadtree.visit(function (quad, x1, y1, x2, y2) {
-                                if (quad.point && (quad.point !== d)) {
-                                    var x = d.x - quad.point.x,
-                                            y = d.y - quad.point.y,
-                                            l = Math.sqrt(x * x + y * y),
-                                            r = cr * 2 + padding;
+                                if (quad.point && quad.point !== d) {
+                                    var x = d.x - quad.point.x, y = d.y - quad.point.y, l = Math.sqrt(x * x + y * y), r = cr * 2 + padding;
                                     if (l < r) {
                                         l = (l - r) / l * 0.05;
                                         d.x -= x *= l;
@@ -605,79 +509,61 @@
                                         quad.point.y += y;
                                     }
                                 }
-                                return x1 > nx2
-                                        || x2 < nx1
-                                        || y1 > ny1
-                                        || y2 < ny2;
+                                return x1 > nx2 || x2 < nx1 || y1 > ny1 || y2 < ny2;
                             });
                         });
                     }
-
                     // Turning off gravity, so we need a boundary
                     var padding = 50;
                     ns.each(function (d) {
                         if (d.x < cr) {
                             d.x = cr;
                         }
-                        if (d.x > (ww - cr)) {
+                        if (d.x > ww - cr) {
                             d.x = ww - cr;
                         }
-                        if (d.y < (cr + padding)) {
+                        if (d.y < cr + padding) {
                             d.y = cr + padding;
                         }
-                        if (d.y > (hh - cr - padding)) {
+                        if (d.y > hh - cr - padding) {
                             d.y = hh - cr - padding;
                         }
                     });
-
-                    ns.attr("transform", function (d) {
+                    ns.attr('transform', function (d) {
                         if (isNaN(d.x) || isNaN(d.px)) {
                             debugger;
                         }
-                        return "translate(" + d.x + "," + d.y + ")";
+                        return 'translate(' + d.x + ',' + d.y + ')';
                     });
-
-                    lks.attr("x1", function (d) {
+                    lks.attr('x1', function (d) {
                         return d.source.x;
-                    })
-                            .attr("y1", function (d) {
-                                return d.source.y;
-                            })
-                            .attr("x2", function (d) {
-                                return d.target.x;
-                            })
-                            .attr("y2", function (d) {
-                                return d.target.y;
-                            });
+                    }).attr('y1', function (d) {
+                        return d.source.y;
+                    }).attr('x2', function (d) {
+                        return d.target.x;
+                    }).attr('y2', function (d) {
+                        return d.target.y;
+                    });
                 });
-
                 this.force.start();
-
             },
-
             /***************************************************
              *
              *    Load Data
              *
              ***************************************************/
-
             /**** Load the node / name data ****/
             loadNodeLinkNodes: function () {
                 var nameModels = this.graph.get('nodes');
-
                 var nameData = _.pluck(nameModels, 'attributes');
                 //var pf = _.pluck(_.pluck(nameData, 'details'), this.qn);
-
                 this.nd = this.force.nodes();
-
                 for (var i = 0; i < nameData.length; i++) {
                     var qq = nameData[i];
                     qq.iid = i;
                     this.nd.push(qq);
                 }
             },
-
-
             /**** Helper function ****/
             loadOperations: function () {
                 var ops = this.response.operations;
@@ -686,21 +572,14 @@
                 }
                 this.nlApplyOperations();
             },
-
             /**** Load the link data (stored in the name data) ****/
             loadNodeLinkLinks: function () {
                 var nameModels = this.graph.get('nodes');
-
                 // look at this silly line, hehe
                 var tieData = _.pluck(_.pluck(_.pluck(nameModels, 'attributes'), 'details'), 'ties');
                 var nmids = app.currentPool.namelist.pluck('id');
-                var targets = [],
-                        j = 0,
-                        src = '',
-                        nm1, nm2;
-
+                var targets = [], j = 0, src = '', nm1, nm2;
                 this.links = this.force.links();
-
                 for (var i = 0; i < nmids.length; i++) {
                     targets = _.keys(tieData[i]);
                     src = nmids[i];
@@ -709,17 +588,21 @@
                             nm1 = app.currentPool.namelist.get(src);
                             nm2 = app.currentPool.namelist.get(targets[j]);
                             if (nm1 && nm2) {
-                                this.links.push({source: nm1.attributes, target: nm2.attributes});
+                                this.links.push({
+                                    source: nm1.attributes,
+                                    target: nm2.attributes
+                                });
                             }
                         }
                     }
                 }
+            },
+            _computeText: function (name1, name2) {
+                return 'Tie was ADDED between ' + name1 + ' and ' + name2 + '.';
+            },
+            _computeText2: function (name1, name2) {
+                return 'Tie was REMOVED between ' + name1 + ' and ' + name2 + '.';
             }
-
         });
-
-
     </script>
-
-
-</polymer-element>
+</dom-module>

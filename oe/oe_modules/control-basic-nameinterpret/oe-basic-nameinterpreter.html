@@ -1,14 +1,10 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-shadow/paper-shadow.html">
-<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
-<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html"/>
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html">
 
-<polymer-element name="oe-basic-nameinterpreter" attributes="oe name">
-    <template>
-        <paper-shadow id="nameCard">
-            {{name}}
-        </paper-shadow>
-        <style>
+<dom-module id="oe-basic-nameinterpreter">
+    <style>
             #nameCard {
                 margin-left: 10px;
                 margin-right: 10px;
@@ -18,9 +14,18 @@
                 height: 100%;
             }
         </style>
+    <template>
+        <paper-material id="nameCard">
+            <span>{{name}}</span>
+        </paper-material>
     </template>
     <script>
-        Polymer('oe-basic-nameinterpreter', {})
+        Polymer({
+            is: 'oe-basic-nameinterpreter',
+            properties: {
+                name: {notify: true},
+                oe: {notify: true}
+            }
+        });
     </script>
-
-</polymer-element>
+</dom-module>

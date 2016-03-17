@@ -3,9 +3,18 @@
 @import url("css/admin.css");
 @import url("css/design.css");
 
+html {
+    height: 100%;
+}
+
 body {
-    font-family: 'RobotoDraft', sans serif;
+    font-family: 'Roboto', sans serif;
     background: url('/assets/squairy_light.png') repeat;
+    height: 100%;
+}
+
+#app-space {
+    height: 100%;
 }
 
 .hidden {

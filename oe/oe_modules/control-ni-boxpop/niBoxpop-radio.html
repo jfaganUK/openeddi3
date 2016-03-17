@@ -1,0 +1,98 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
+<link rel="import" href="/bower_components/neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="./niBoxpop-other.html"/>
+<link rel="import" href="./niBoxPop-undo.html"/>
+
+<dom-module id="oe-ni-boxpop-radio">
+    <style>
+        :host {
+            display: block;
+        }
+
+        #nameAnswerBox {
+            margin: 0.5em 1em;
+            padding: 0.5em;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+
+        .select-button {
+            display: block;
+            background: #e8e8e8;
+            width: 75%;
+            margin-top: 0.5em;
+            cursor: pointer;
+            padding: 0.5em;
+        }
+
+        .select-button.on {
+            background: #00BCD4;
+        }
+
+        .button-container {
+            max-height: 14em;
+            overflow-y: scroll;
+        }
+    </style>
+    <template>
+
+        <div id="nameAnswerBox" class="layout vertical">
+            <div class="layout horizontal"><h3>{{name.name}}</h3></div>
+            <div class="button-container">
+                <template is="dom-repeat" items="{{arrayPrompts}}">
+                    <paper-material class="select-button" on-tap="itemSelect">{{item.prompt}}</paper-material>
+                </template>
+            </div>
+            <template is="dom-if" if="{{showOther}}">
+                <oe-boxpop-other other-value="{{nameResponse.other}}" on-other-change="otherChange"></oe-boxpop-other>
+            </template>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-ni-boxpop-radio',
+            behaviors: [Polymer.NeonAnimationRunnerBehavior, Polymer.NeonAnimatableBehavior],
+            listeners: {
+                'neon-animation-finish': '_onNeonAnimationFinish'
+            },
+            properties: {
+                name: {type: 'Object', notify: true},
+                arrayPrompts: {type: 'Array', notify: true},
+                answered: {type: Boolean, value: false},
+                nameResponse: {type: Object, notify: true, value: {value: '', other: ''}},
+                showOther: {type: Boolean},
+                animationConfig: {
+                    value: function () {
+                        return {
+                            'exit': {
+                                name: 'slide-right-animation',
+                                timing: {duration: 200},
+                                node: this
+                            },
+                            'entry': {
+                                name: 'slide-from-left-animation',
+                                timing: {delay: 250},
+                                node: this
+                            }
+                        }
+                    }
+                }
+            },
+            itemSelect: function (e) {
+                var val = e.model.get('item.prompt');
+                this.set('nameResponse.value', val);
+                this.fire('boxpop');
+            },
+            otherChange: function (e) {
+                console.log('Other change');
+                e.stopPropagation();
+                this.set('nameResponse.value', '');
+                this.fire('boxpop');
+            }
+        });
+    </script>
+</dom-module>

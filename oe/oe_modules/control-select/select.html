@@ -1,0 +1,57 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="/oe_client/components/oe-helptext.html"/>
+
+<dom-module id="oe-select">
+    <style>
+        #oe-paper-menu {
+            margin-left: 2em;
+            width: 90%;
+        }
+
+        #other {
+            margin: 1em 1em;
+        }
+    </style>
+    <template>
+        <template is="dom-if" if="{{oe.helptext}}">
+            <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
+        </template>
+        <paper-dropdown-menu id="oe-paper-menu" label="{{oe.prompt}}">
+            <paper-menu selected="{{response.value}}" attr-for-selected="id" class="dropdown-content">
+                <template is="dom-repeat" items="{{oe.arrayPrompts}}">
+                    <paper-item id="{{item.id}}"><span>{{item.prompt}}</span></paper-item>
+                </template>
+            </paper-menu>
+        </paper-dropdown-menu>
+        <template is="dom-if" if="{{oe.other}}">
+            <div id="other" class="layout horizontal">
+                <paper-input class="flex" label="Other" on-change="saveOther"
+                             value="{{oe.response.other.value}}"></paper-input>
+            </div>
+        </template>
+    </template>
+    <script>
+        //noinspection JSUnusedGlobalSymbols
+        Polymer({
+            is: 'oe-select',
+            properties: {
+                oe: {notify: true},
+                response: {notify: true}
+            },
+            listeners: {
+                'oe-paper-menu.paper-dropdown-close': 'saveResponse'
+            },
+            ready: function () {
+            },
+            saveOther: function (e) {
+                this.set('response.other.text', e.target.value);
+                this.fire('change:response');
+            },
+            saveResponse: function () {
+                this.fire('change:response');
+            }
+        });
+    </script>
+</dom-module>

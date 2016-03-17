@@ -1,20 +1,9 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/core-icons/core-icons.html">
-
-<polymer-element name="pool-listing-landing" attributes="poolTitle dateCreated description oe">
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="pool-listing-landing">
     <template>
-        <div class="pool-listing" layout vertical>
-            <content select="h2"></content>
-            <h2>{{poolTitle}}</h2>
-
-            <div class="pool-desc">{{description}}</div>
-            <span class="date-created">{{dateCreated}}</span>
-            <paper-button raised on-tap="{{createNewPool}}" class="start-button">
-                <core-icon icon="create"></core-icon>
-                Start
-            </paper-button>
-        </div>
         <style>
             :host {
                 margin: 0.5em auto;
@@ -43,13 +32,29 @@
                 color: white;
             }
         </style>
+        <div class="pool-listing layout vertical">
+            <h2>{{poolTitle}}</h2>
+            <div class="pool-desc">{{description}}</div>
+            <span class="date-created">{{dateCreated}}</span>
+            <paper-button raised="" on-tap="createNewPool" class="start-button">
+                <iron-icon icon="create"></iron-icon>
+                Start
+            </paper-button>
+        </div>
     </template>
-    <script>
-        //noinspection JSUnusedGlobalSymbols
-        Polymer('pool-listing-landing', {
-            createNewPool: function () {
-                this.fire('start-new-pool');
-            }
-        });
-    </script>
-</polymer-element>
+</dom-module>
+<script>
+    //noinspection JSUnusedGlobalSymbols
+    Polymer({
+        is: 'pool-listing-landing',
+        properties: {
+            dateCreated: {notify: true},
+            description: {notify: true},
+            oe: {notify: true},
+            poolTitle: {type: 'String', notify: true}
+        },
+        createNewPool: function () {
+            this.fire('start-new-pool');
+        }
+    });
+</script>

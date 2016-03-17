@@ -1,0 +1,38 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html"/>
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html"/>
+
+<dom-module id="oe-boxpop-other">
+    <style>
+        #otherContainer {
+            padding-left: 2em;
+        }
+    </style>
+
+    <template>
+        <div class="layout horizontal" id="otherContainer">
+            <paper-input label="Other" class="flex" id="otherInput" on-change="saveOther" value="{{otherValue}}">
+                <paper-icon-button suffix icon="check" on-tap="saveOther"></paper-icon-button>
+                <iron-a11y-keys id="a11y" target="[[otherInput]]" keys="enter"
+                                on-keys-pressed="saveOther"></iron-a11y-keys>
+            </paper-input>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'oe-boxpop-other',
+            properties: {
+                otherValue: {type: String, notify: true},
+                saved: {type: Boolean, value: false}
+            },
+            saveOther: function () {
+                // prevents a double event, when the page switches it loses focus on the input and the on-change event fires
+                if (!this.saved) {
+                    this.saved = true;
+                    this.fire('other-change');
+                }
+            }
+        })
+    </script>
+</dom-module>
