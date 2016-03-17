@@ -30,10 +30,11 @@ _.templateSettings.variable = 'rc';
 
 // Determine local storage is active or not
 // This is for the dual-storage mechanism. Should the application store things locally, remotely, or both?
-Backbone.Collection.prototype.local = true;
-Backbone.Collection.prototype.remote = true;
-Backbone.Model.prototype.local = true;
-Backbone.Model.prototype.remote = true;
+// Both - meaning we do nothing to the defaults, apparently
+//Backbone.Collection.prototype.local = true;
+//Backbone.Collection.prototype.remote = false;
+//Backbone.Model.prototype.local = true;
+//Backbone.Model.prototype.remote = false;
 
 window.RESIZE_WIDTH = 600;
 
@@ -62,21 +63,41 @@ app.on('start', function() {
     // Create the router
     var Router = require('./oe_client/routers/oe-router');
     app.router = new Router();
-
-    // We want to retrieve the appstate from localstorage, if it exists there.
-    // That way, on a refresh, the previous state can be restored
-    AppState = require('./oe_client/models/model-appstate');
-    app.appState = new AppState();
-    app.appState.fetch();
+    Backbone.history.start({pushState: false});
 
     console.log('--- OpenEddi Application Started --');
 
 });
 
+    /*
+     Order of events here.
+     Wait for webcomponents to be ready, otherwise we can't render anything
+     Sync the appstate and either get the existing last saved appstate, or get a new appstate
+     Then start the application
+     */
+
 // Need to wait until webcomponents are ready before launching the application
     window.addEventListener('WebComponentsReady', function () {
-    app.start();
-    Backbone.history.start({pushState: false});
+
+    // We want to retrieve the appstate from localstorage, if it exists there.
+    // That way, on a refresh, the previous state can be restored
+    AppState = require('./oe_client/models/model-appstate');
+    app.appState = new AppState();
+        app.appState.fetch({
+            success: function (model, response, options) {
+                console.log('[appState] Fetch success.');
+                //app.appState.trigger('initialFetchSuccess');
+                app.start();
+            },
+            error: function (model, response, options) {
+                console.error('[appState] ERROR failure to fetch appstate');
+                app.appState.trigger('initialFetchError');
+            }
+        });
+
+        // Wait for the appstate to sync, then start the application
+        //app.listenTo(app.appState, 'initialFetchSuccess', app.start());
+        //app.start();
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -53573,6 +53594,7 @@ var App = Marionette.Application.extend({
     },
 
     loadPool: function (e) {
+
         if (e.poolid) {
             app.appState.set('poolid', e.poolid);
         }
@@ -53580,8 +53602,8 @@ var App = Marionette.Application.extend({
         // If the load-pool-sheet command was complied with, then there will be a sheetid property
         if(e.sheetid) {
             app.appState.set({sheetid: e.sheetid});
-            app.appState.save();
         }
+        app.appState.save();
 
         // Once the pool is ready, launch it
         app.channels.pool.once('load-pool-ready', _.bind(this.poolLaunch, this));
@@ -53679,6 +53701,7 @@ var App = Marionette.Application.extend({
             app.currentPool.set('poolstatus', poolstatus);
             app.currentPool.set('sheetindex', idx);
             app.currentPool.save();
+            app.appState.save();
         }
     },
 
@@ -54959,6 +54982,7 @@ module.exports = ResponseTable;
 /**
  * Created by jfagan on 3/12/15.
  * oe/oe_client/models/model-appstate.js:3
+ * Note, this should always be synced to local storage.
  */
 
 var guid = require('../helpers/guid');
@@ -54970,21 +54994,26 @@ module.exports = Backbone.Model.extend({
 
     defaults: function() {
         return {
-            user: 'new user',
             id: this.createID(),
-            page: 'landing',
-            sheetid: null,
-            poolid: null,
-            puid: null,
-            sheetindex: null
+            puid: this.defaultPUID(),
+            poolid: this.defaultPoolid(),
+            sheetid: this.defaultSheetid(),
+            sheetindex: null,
+            page: null,
+            user: null
         }
     },
 
     initialize: function() {
-        this.createID();
+        console.log('[appState] Initialize.');
+        var self = this;
         // Do this if we pulled an existing survey.
         this.on('change:sheetid', _.bind(this.updateSheetIndex, this));
         app.channels.pool.on('pool-synced', _.bind(this.setPoolLength, this));
+        this.on('change', function () {
+            // for debugging
+            console.log(self.toJSON());
+        });
     },
 
     setPoolLength: function () {
@@ -55000,23 +55029,48 @@ module.exports = Backbone.Model.extend({
             var ix = _.indexOf(sids, sid);
             // if we can't find the sheetid in the array, set it to the first page
             this.set('sheetindex', ix < 0 ? 0 : ix);
-
         }
+    },
+
+    getLocalAppstate: function () {
+        var appstate;
+        var id = this.getLocalID();
+        if (id) {
+            appstate = localStorage.getItem(this.urlRoot + id);
+            appstate = JSON.parse(appstate);
+        }
+        return appstate;
+    },
+
+    defaultSheetid: function () {
+        var appstate = this.getLocalAppstate();
+        return appstate ? appstate.sheetid : null;
+    },
+
+    defaultPUID: function () {
+        var appstate = this.getLocalAppstate();
+        return appstate ? appstate.puid : null;
+    },
+
+    defaultPoolid: function () {
+        var appstate = this.getLocalAppstate();
+        return appstate ? appstate.poolid : null;
+    },
+
+    getLocalID: function () {
+        var appstate = localStorage.getItem(this.urlRoot);
+        if (!_.isNull(appstate)) {
+            return (appstate.split(',')[0]);
+        }
+        return null;
     },
 
     // Check the localstorage to see if there is an appstate model to use
     // I want to restore the appstate if possible
     createID: function() {
-        var appstate = localStorage.getItem(this.urlRoot);
-        var _id;
-        if(appstate) {
-            var appStateID = appstate.split(',')[0];
-            var lsJSON = localStorage.getItem(this.urlRoot + appStateID);
-            _id = JSON.parse(lsJSON).id;
-        } else {
-            _id = guid();
-        }
-        return _id;
+        console.log('[appState] Create id');
+        var _id = this.getLocalID();
+        return this.getLocalID() ? _id : guid();
     }
 });
 
@@ -55237,6 +55291,12 @@ module.exports = Backbone.Model.extend({
             app.channels.pool.trigger('eddis-synced', self);
         } else {
             $.when(self.eddis.fetch()).done(function() {
+                // TODO: This needs to be more graceful, it's hacky right now
+                // I want some way to test if there's an existing pool with data before reaching this point
+                if (self.eddis.length === 0) {
+                    app.appState.set('newpool', true);
+                    self.buildPoolLogic();
+                }
                 self.eddis.each(function (e) {
                     e.restoreLogic();
                 });
@@ -55381,6 +55441,7 @@ module.exports = Backbone.Model.extend({
 
 },{}],39:[function(require,module,exports){
 /**
+ * oe/oe_client/routers/oe-router.js
  * Created by jfagan on 3/19/15.
  */
 

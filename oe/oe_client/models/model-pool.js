@@ -70,6 +70,12 @@ module.exports = Backbone.Model.extend({
             app.channels.pool.trigger('eddis-synced', self);
         } else {
             $.when(self.eddis.fetch()).done(function() {
+                // TODO: This needs to be more graceful, it's hacky right now
+                // I want some way to test if there's an existing pool with data before reaching this point
+                if (self.eddis.length === 0) {
+                    app.appState.set('newpool', true);
+                    self.buildPoolLogic();
+                }
                 self.eddis.each(function (e) {
                     e.restoreLogic();
                 });
