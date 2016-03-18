@@ -31,6 +31,6 @@
   "resolutions": {
     "webcomponentsjs": "0.7.15",
     "polymer": "^1.1.0",
-    "backbone": "~1.2.3"
+    "backbone": "^1.2.3"
   }
 }

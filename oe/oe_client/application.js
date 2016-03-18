@@ -133,8 +133,7 @@ var App = Marionette.Application.extend({
     },
 
     newPool: function(e) {
-        app.appState.set('newpool', true);
-        app.appState.set('poolid', e.poolid);
+        app.appState.newPool(e);
         this.loadPool(e);
     },
 

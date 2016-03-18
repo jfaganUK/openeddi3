@@ -84,6 +84,19 @@ module.exports = Backbone.Model.extend({
         return null;
     },
 
+    /***
+     * newPool
+     * Set the conditions for starting a new pool. Clear any existing id's
+     * @param e Object with a single property (e.poolid) which has the poolid to be launched
+     */
+    newPool: function (e) {
+        this.set('newpool', true);
+        this.set('poolid', e.poolid);
+        this.set('sheetid', null);
+        this.set('puid', null);
+        this.save();
+    },
+
     // Check the localstorage to see if there is an appstate model to use
     // I want to restore the appstate if possible
     createID: function() {
