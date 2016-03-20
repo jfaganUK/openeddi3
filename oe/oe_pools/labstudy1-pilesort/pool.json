@@ -1,0 +1,34 @@
+{
+  "poollogic": {
+    "poolid": "labstudy1-pilesort",
+    "title": "OpenEddi Example",
+    "description": "A new generation of flexible, interactive, and engaging data collection.",
+    "introduction": "Introduction goes here.",
+    "afterward": "The afterword (exit message) goes here.",
+    "sheetOrder": [
+      "1"
+    ],
+    "dateCreated": "2016-03-19 20:21:00-04:00"
+  },
+  "sheetlogic": [
+    {
+      "sheetid": "1",
+      "title": "Pile sort",
+      "description": "Pile Sort of Characters"
+    },
+  ],
+  "eddilogic": [
+    {
+      "eid": "ps1",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": 0,
+      "title": "pileSortTask",
+      "controlmodule": "alterpilesort",
+      "prompt": "Sort the cards into piles. Each pile should represent a group of people who all talked directly with each other. A card can be in multiple piles. Double-click to duplicate a card."
+    },
+  ]
+}
+
+
+

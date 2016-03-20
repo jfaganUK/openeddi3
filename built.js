@@ -25521,9 +25521,9 @@ return jQuery;
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 // MarionetteJS (Backbone.Marionette)
 // ----------------------------------
-// v2.4.3
+// v2.4.5
 //
-// Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
+// Copyright (c)2016 Derick Bailey, Muted Solutions, LLC.
 // Distributed under MIT license
 //
 // http://marionettejs.com
@@ -25559,9 +25559,9 @@ return jQuery;
   /* istanbul ignore next */
   // Backbone.BabySitter
   // -------------------
-  // v0.1.10
+    // v0.1.11
   //
-  // Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
+    // Copyright (c)2016 Derick Bailey, Muted Solutions, LLC.
   // Distributed under MIT license
   //
   // http://github.com/marionettejs/backbone.babysitter
@@ -25688,7 +25688,7 @@ return jQuery;
       // return the public API
       return Container;
     }(Backbone, _);
-    Backbone.ChildViewContainer.VERSION = "0.1.10";
+      Backbone.ChildViewContainer.VERSION = "0.1.11";
     Backbone.ChildViewContainer.noConflict = function() {
       Backbone.ChildViewContainer = previousChildViewContainer;
       return this;
@@ -25699,9 +25699,9 @@ return jQuery;
   /* istanbul ignore next */
   // Backbone.Wreqr (Backbone.Marionette)
   // ----------------------------------
-  // v1.3.5
+    // v1.3.6
   //
-  // Copyright (c)2015 Derick Bailey, Muted Solutions, LLC.
+    // Copyright (c)2016 Derick Bailey, Muted Solutions, LLC.
   // Distributed under MIT license
   //
   // http://github.com/marionettejs/backbone.wreqr
@@ -25709,7 +25709,7 @@ return jQuery;
     "use strict";
     var previousWreqr = Backbone.Wreqr;
     var Wreqr = Backbone.Wreqr = {};
-    Backbone.Wreqr.VERSION = "1.3.5";
+      Backbone.Wreqr.VERSION = "1.3.6";
     Backbone.Wreqr.noConflict = function() {
       Backbone.Wreqr = previousWreqr;
       return this;
@@ -26010,7 +26010,7 @@ return jQuery;
 
   var Marionette = Backbone.Marionette = {};
 
-  Marionette.VERSION = '2.4.3';
+    Marionette.VERSION = '2.4.5';
 
   Marionette.noConflict = function() {
     root.Marionette = previousMarionette;
@@ -26098,7 +26098,7 @@ return jQuery;
   // utility method for parsing @ui. syntax strings
   // into associated selector
   Marionette.normalizeUIString = function(uiString, ui) {
-    return uiString.replace(/@ui\.[a-zA-Z_$0-9]*/g, function(r) {
+      return uiString.replace(/@ui\.[a-zA-Z-_$0-9]*/g, function (r) {
       return ui[r.slice(4)];
     });
   };
@@ -26169,8 +26169,13 @@ return jQuery;
       deprecate._cache[message] = true;
     }
   };
-  
-  deprecate._warn = typeof console !== 'undefined' && (console.warn || console.log) || function() {};
+
+    deprecate._console = typeof console !== 'undefined' ? console : {};
+    deprecate._warn = function () {
+        var warn = deprecate._console.warn || deprecate._console.log || function () {
+            };
+        return warn.apply(deprecate._console, arguments);
+    };
   deprecate._cache = {};
   
   /* jshint maxstatements: 14, maxcomplexity: 7 */
@@ -26539,10 +26544,12 @@ return jQuery;
   
     //this is a noop method intended to be overridden by classes that extend from this base
     initialize: function() {},
-  
-    destroy: function() {
-      this.triggerMethod('before:destroy');
-      this.triggerMethod('destroy');
+
+      destroy: function (options) {
+          options = options || {};
+
+          this.triggerMethod('before:destroy', options);
+          this.triggerMethod('destroy', options);
       this.stopListening();
   
       return this;
@@ -26632,8 +26639,8 @@ return jQuery;
       if (isChangingView) {
         this.triggerMethod('before:swapOut', this.currentView, this, options);
       }
-  
-      if (this.currentView) {
+
+        if (this.currentView && isDifferentView) {
         delete this.currentView._parent;
       }
   
@@ -26655,10 +26662,13 @@ return jQuery;
         // to the currentView since once a view has been destroyed
         // we can not reuse it.
         view.once('destroy', this.empty, this);
-  
+
+          // make this region the view's parent,
+          // It's important that this parent binding happens before rendering
+          // so that any events the child may trigger during render can also be
+          // triggered on the child's ancestor views
+          view._parent = this;
         this._renderView(view);
-  
-        view._parent = this;
   
         if (isChangingView) {
           this.triggerMethod('before:swap', view, this, options);
@@ -26790,7 +26800,9 @@ return jQuery;
       var preventDestroy  = !!emptyOptions.preventDestroy;
       // If there is no view in the region
       // we should not remove anything
-      if (!view) { return; }
+        if (!view) {
+            return this;
+        }
   
       view.off('destroy', this.empty, this);
       this.triggerMethod('before:empty', view);
@@ -27484,6 +27496,10 @@ return jQuery;
   
       // call the parent view's childEvents handler
       var childEvents = Marionette.getOption(layoutView, 'childEvents');
+
+        // since childEvents can be an object or a function use Marionette._getValue
+        // to handle the abstaction for us.
+        childEvents = Marionette._getValue(childEvents, layoutView);
       var normalizedChildEvents = layoutView.normalizeMethods(childEvents);
   
       if (normalizedChildEvents && _.isFunction(normalizedChildEvents[eventName])) {
@@ -27508,27 +27524,18 @@ return jQuery;
         return memo.concat(view._getNestedViews());
       }, children);
     },
-  
-    // Internal utility for building an ancestor
-    // view tree list.
-    _getAncestors: function() {
-      var ancestors = [];
+
+      // Walk the _parent tree until we find a layout view (if one exists).
+      // Returns the parent layout view hierarchically closest to this view.
+      _parentLayoutView: function () {
       var parent  = this._parent;
   
       while (parent) {
-        ancestors.push(parent);
+          if (parent instanceof Marionette.LayoutView) {
+              return parent;
+          }
         parent = parent._parent;
       }
-  
-      return ancestors;
-    },
-  
-    // Returns the containing parent view.
-    _parentLayoutView: function() {
-      var ancestors = this._getAncestors();
-      return _.find(ancestors, function(parent) {
-        return parent instanceof Marionette.LayoutView;
-      });
     },
   
     // Imports the "normalizeMethods" to transform hashes of
@@ -27827,27 +27834,38 @@ return jQuery;
     reorder: function() {
       var children = this.children;
       var models = this._filteredSortedModels();
-      var modelsChanged = _.find(models, function(model) {
+        var anyModelsAdded = _.some(models, function (model) {
         return !children.findByModel(model);
       });
-  
-      // If the models we're displaying have changed due to filtering
-      // We need to add and/or remove child views
+
+        // If there are any new models added due to filtering
+        // We need to add child views
       // So render as normal
-      if (modelsChanged) {
+        if (anyModelsAdded) {
         this.render();
       } else {
         // get the DOM nodes in the same order as the models
-        var els = _.map(models, function(model, index) {
+            var elsToReorder = _.map(models, function (model, index) {
           var view = children.findByModel(model);
           view._index = index;
           return view.el;
         });
+
+            // find the views that were children before but arent in this new ordering
+            var filteredOutViews = children.filter(function (view) {
+                return !_.contains(elsToReorder, view.el);
+            });
+
+            this.triggerMethod('before:reorder');
   
         // since append moves elements that are already in the DOM,
         // appending the elements will effectively reorder them
-        this.triggerMethod('before:reorder');
-        this._appendReorderedChildren(els);
+            this._appendReorderedChildren(elsToReorder);
+
+            // remove any views that have been filtered out
+            _.each(filteredOutViews, this.removeChildView, this);
+            this.checkEmpty();
+  
         this.triggerMethod('reorder');
       }
     },
@@ -28613,9 +28631,10 @@ return jQuery;
       this.regionManager.destroy();
       return Marionette.ItemView.prototype.destroy.apply(this, arguments);
     },
-  
-    showChildView: function(regionName, view) {
-      return this.getRegion(regionName).show(view);
+
+      showChildView: function (regionName, view, options) {
+          var region = this.getRegion(regionName);
+          return region.show.apply(region, _.rest(arguments));
     },
   
     getChildView: function(regionName) {
@@ -28842,7 +28861,9 @@ return jQuery;
   
             var eventKey  = eventName + selector;
             var handler   = _.isFunction(behaviour) ? behaviour : b[behaviour];
-  
+              if (!handler) {
+                  return;
+              }
             _events[eventKey] = _.bind(handler, b);
           }, this);
   
@@ -55711,7 +55732,7 @@ module.exports = Backbone.Model.extend({
      * Set the conditions for starting a new pool. Clear any existing id's
      * @param e Object with a single property (e.poolid) which has the poolid to be launched
      */
-    newPool: function(e) {
+    newPool: function (e) {
         this.set('newpool', true);
         this.set('poolid', e.poolid);
         this.set('sheetid', null);

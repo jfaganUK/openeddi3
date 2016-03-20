@@ -3,39 +3,39 @@
 <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
-
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <dom-module id="oe-basicnamegen-nameinput">
-  <style>
-  </style>
-  <template>
-    <div class="layout horizontal">
-      <paper-input class="oe-nameinput flex" label="{{oe.prompt}}" value="{{newName}}">
-        <iron-a11y-keys keys="enter" on-keys-pressed="addNewName"></iron-a11y-keys>
-      </paper-input>
-      <paper-button on-tap="addNewName" raise="">Add Name</paper-button>
-    </div>
-  </template>
-  <script>
-    // TODO make the focus change to the input after each input
-    //noinspection JSUnusedGlobalSymbols
-    Polymer({
-      is: 'oe-basicnamegen-nameinput',
-      properties: {
-        oe: {type: 'Object', notify: true},
-        name: {type: 'String', notify: true}
-      },
-      ready: function () {
-      },
-      addNewName: function () {
-        //noinspection JSUnresolvedVariable
-        var o = {
-          namelist: this.oe.namelist,
-          name: this.newName
-        };
-        this.newName = '';
-        app.channels.namelist.command('add-new-name', o);
-      }
-    });
-  </script>
+    <style include="iron-flex iron-flex-alignment">
+    </style>
+    <template>
+        <div class="layout horizontal">
+            <paper-input class="oe-nameinput flex" label="{{oe.prompt}}" value="{{newName}}">
+                <iron-a11y-keys keys="enter" on-keys-pressed="addNewName"></iron-a11y-keys>
+            </paper-input>
+            <paper-button on-tap="addNewName" raise="">Add Name</paper-button>
+        </div>
+    </template>
+    <script>
+        // TODO make the focus change to the input after each input
+        //noinspection JSUnusedGlobalSymbols
+        Polymer({
+            is: 'oe-basicnamegen-nameinput',
+            properties: {
+                oe: {type: 'Object', notify: true},
+                name: {type: 'String', notify: true}
+            },
+            ready: function () {
+            },
+            addNewName: function () {
+                //noinspection JSUnresolvedVariable
+                var o = {
+                    namelist: this.oe.namelist,
+                    name: this.newName
+                };
+                this.newName = '';
+                app.channels.namelist.command('add-new-name', o);
+            }
+        });
+    </script>
 </dom-module>

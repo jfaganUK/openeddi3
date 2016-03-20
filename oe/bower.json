@@ -20,7 +20,7 @@
     "lodash": "^3.4.0",
     "datatables": "~1.10.7",
     "d3": "~3.5.5",
-    "polymer": "Polymer/polymer#^1.1.0",
+    "polymer": "1.4.0",
     "webcomponentsjs": "^0.7.15",
     "iron-elements": "PolymerElements/iron-elements#~1.0.4",
     "paper-elements": "PolymerElements/paper-elements#~1.0.5",
@@ -30,7 +30,7 @@
   },
   "resolutions": {
     "webcomponentsjs": "0.7.15",
-    "polymer": "^1.1.0",
+    "polymer": "1.4.0",
     "backbone": "^1.2.3"
   }
 }

@@ -1,0 +1,25 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
+<dom-module id="test-component">
+    <style include="iron-flex iron-flex-alignment">
+        .abox {
+            background-color: paleturquoise;
+            padding: 1em;
+            border: 3px solid cornflowerblue;
+        }
+    </style>
+    <template>
+        <div class="container layout horizontal">
+            <div id="redBox" class="abox">Red</div>
+            <div id="greenBox" class="abox flex">Green</div>
+            <div id="blueBox" class="abox">Blue</div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: "test-component"
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <script src="./bower_components/webcomponentsjs/webcomponents.min.js"></script>
+
+    <link rel="import" href="./bower_components/polymer/polymer.html">
+    <link rel="import" href="./bower_components/iron-flex-layout/iron-flex-layout.html"/>
+    <link rel="import" href="./bower_components/iron-flex-layout/iron-flex-layout-classes.html"/>
+    <link rel="import" href="./import_test_component.html"/>
+    <title></title>
+
+    <style is="custom-style" include="iron-flex iron-flex-alignment iron">
+        body {
+        @apply(- -layout-fullbleed)
+        }
+
+        .container {
+        @apply(- -layout-horizontal);
+        }
+
+        .flexchild {
+        @apply(- -layout-flex);
+        }
+
+    </style>
+
+</head>
+<body>
+<div class="container">
+    <div>One</div>
+    <div class="flexchild">Two</div>
+    <div>Three</div>
+</div>
+<test-component></test-component>
+</body>
+</html>
