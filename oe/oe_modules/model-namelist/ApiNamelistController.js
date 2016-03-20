@@ -57,6 +57,7 @@ function postNamelist(req, res, next) {
         details: req.body.details
     }).complete(function (err, namelist) {
         if (!!err) {
+            console.log(JSON.stringify(err, null, 4));
             log("Failed to save the namelist: ", err);
             res.status(400).send("Failed to save the namelist");
         } else {

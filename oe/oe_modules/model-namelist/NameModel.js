@@ -44,7 +44,8 @@ module.exports = Backbone.Model.extend({
         this.set('details', details);
     },
 
-    appendToList: function (x) {
+    appendToList: function (x, options) {
+        var options = options || {};
         // This is the best way to change nested attributes
         // so that they actually fire the change, and set the model.changed.
         var lists = _.clone(this.get('lists'));
@@ -54,7 +55,11 @@ module.exports = Backbone.Model.extend({
         }
 
         this.set('lists', lists);
-        this.save();
+        // default behavior is to save the model
+        if (!options.doNotSave) {
+            this.save();
+        }
+
     },
 
     removeFromList: function (x) {

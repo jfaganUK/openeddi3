@@ -1,21 +1,89 @@
 {
   "poollogic": {
     "poolid": "labstudy1-pilesort",
-    "title": "OpenEddi Example",
-    "description": "A new generation of flexible, interactive, and engaging data collection.",
+    "title": "LabStudy1 Pilesort Task",
+    "description": "Pilesort task.",
     "introduction": "Introduction goes here.",
     "afterward": "The afterword (exit message) goes here.",
     "sheetOrder": [
       "1"
     ],
-    "dateCreated": "2016-03-19 20:21:00-04:00"
+    "dateCreated": "2016-03-19 20:21:00-04:00",
+    "roster": [
+      {
+        "name": "Kevin",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Joey",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Winnie",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Wayne",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Karen",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Dad",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Mom",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Teacher",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Gym teacher",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Brian",
+        "lists": [
+          "wonderyears"
+        ]
+      },
+      {
+        "name": "Bully",
+        "lists": [
+          "wonderyears"
+        ]
+      }
+    ]
   },
   "sheetlogic": [
     {
       "sheetid": "1",
       "title": "Pile sort",
       "description": "Pile Sort of Characters"
-    },
+    }
   ],
   "eddilogic": [
     {
@@ -26,7 +94,7 @@
       "title": "pileSortTask",
       "controlmodule": "alterpilesort",
       "prompt": "Sort the cards into piles. Each pile should represent a group of people who all talked directly with each other. A card can be in multiple piles. Double-click to duplicate a card."
-    },
+    }
   ]
 }
 

@@ -55667,15 +55667,10 @@ module.exports = Backbone.Model.extend({
     },
 
     initialize: function() {
-        console.log('[appState] Initialize.');
         var self = this;
         // Do this if we pulled an existing survey.
         this.on('change:sheetid', _.bind(this.updateSheetIndex, this));
         app.channels.pool.on('pool-synced', _.bind(this.setPoolLength, this));
-        this.on('change', function () {
-            // for debugging
-            console.log(self.toJSON());
-        });
     },
 
     setPoolLength: function () {
@@ -55743,7 +55738,6 @@ module.exports = Backbone.Model.extend({
     // Check the localstorage to see if there is an appstate model to use
     // I want to restore the appstate if possible
     createID: function() {
-        console.log('[appState] Create id');
         var _id = this.getLocalID();
         return this.getLocalID() ? _id : guid();
     }
@@ -58061,6 +58055,65 @@ module.exports = Backbone.Collection.extend({
         return name.get('name');
     },
 
+    /***
+     * Does a name exist in the collection already.
+     * @param name String with a name
+     * @param namelist (optional)
+     * @return true if the name already exists in the collection
+     */
+    nameExists: function (name, namelist) {
+        var namelist = namelist || undefined;
+
+        var nms = this.filter({name: name});
+
+        if (nms.length === 0) {
+            return false;
+        } else {
+            if (namelist) {
+                return _.chain(nms)
+                    .map(function (nm) {
+                        return nm.toJSON().lists.indexOf(namelist) > -1;
+                    })
+                    .every().value();
+            } else {
+                return true;
+            }
+        }
+    },
+
+    /***
+     * Add a new name to the
+     * @param name a name object with
+     * @param options Options can be empty. doNotSave, if true then it will not persist. preventDuplicates will disallow a name to duplicate
+     */
+    addName: function (name, options) {
+        var options = options || {};
+        var nm = {
+            name: name.name,
+            lists: name.lists,
+            details: name.details,
+            puid: app.appState.get('puid'),
+            poolid: app.appState.get('poolid')
+        };
+
+        if (options.preventDuplicates) {
+            //TODO: add the namelist option here
+            if (!this.nameExists(name.name)) {
+                if (options.doNotSave) {
+                    this.add(nm);
+                } else {
+                    this.create(nm);
+                }
+            }
+        } else {
+            if (options.doNotSave) {
+                this.add(nm);
+            } else {
+                this.create(nm);
+            }
+        }
+    },
+
     //returns the number of names in a specified list
     countOfList: function (ll) {
         var ml = this.models;
@@ -58121,7 +58174,8 @@ module.exports = Backbone.Model.extend({
         this.set('details', details);
     },
 
-    appendToList: function (x) {
+    appendToList: function (x, options) {
+        var options = options || {};
         // This is the best way to change nested attributes
         // so that they actually fire the change, and set the model.changed.
         var lists = _.clone(this.get('lists'));
@@ -58131,7 +58185,11 @@ module.exports = Backbone.Model.extend({
         }
 
         this.set('lists', lists);
-        this.save();
+        // default behavior is to save the model
+        if (!options.doNotSave) {
+            this.save();
+        }
+
     },
 
     removeFromList: function (x) {
@@ -58350,9 +58408,19 @@ module.exports = Backbone.Model.extend({
 
 var App = require('../../oe_client/application');
 var NamelistCollection = require('./NameCollection');
+    var async = require('async');
+
+// Now add it to the loadPoolQueue
+    var oldApplicationInitialize = App.prototype.initialize;
+    App.prototype.initialize = function () {
+        oldApplicationInitialize.apply(this, arguments);
+        this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
+    };
+
 
 // Need to add the callback, since it is part of an async series queue
 App.prototype.prepNamelistForLaunch = function (callback) {
+    var self = this;
     this.currentPool.namelist = new NamelistCollection();
 
     // These next two steps seem redundant, but it's just in case
@@ -58361,21 +58429,52 @@ App.prototype.prepNamelistForLaunch = function (callback) {
         callback(null);
     });
 
-    this.currentPool.namelist.once('sync', function () {
-        app.channels.namelist.trigger('namelist-ready');
+
+    // Fetch any existing data for this namelist
+    var fetchNamelist = function (callback) {
+        self.currentPool.namelist.fetch({
+            success: function () {
+                callback();
+            }
+        });
+    };
+
+    // Then add the roster, if it exists
+    var addRoster = function (callback) {
+        self.addRosterToNamelist(function () {
+            callback();
+        });
+    };
+
+    // Then save stuff
+    var saveNameList = function (callback) {
+        self.currentPool.namelist.sync({
+            success: function () {
+                app.channels.namelist.trigger('namelist-ready');
+                callback();
+            }
+        });
+    };
+
+    //After all that, do the callback
+    async.series([fetchNamelist, addRoster], function () {
+        callback();
     });
-
-    this.currentPool.namelist.fetch();
 };
 
-// Now add it to the loadPoolQueue
-var oldApplicationInitialize = App.prototype.initialize;
-App.prototype.initialize = function () {
-    oldApplicationInitialize.apply(this, arguments);
-    this.loadPoolQueue.push(this.prepNamelistForLaunch.bind(this));
+    App.prototype.addRosterToNamelist = function (callback) {
+        var roster = app.currentPool.get('poollogic').roster;
+        var self = this;
+        if (roster) {
+            _.each(roster, function (nm) {
+                app.currentPool.namelist.addName(nm, {preventDuplicates: true, doNotSave: true});
+            });
+        }
+        callback();
 };
 
-},{"../../oe_client/application":12,"./NameCollection":141}],144:[function(require,module,exports){
+}, {"../../oe_client/application": 12, "./NameCollection": 141, "async": 2}],
+    144: [function (require, module, exports) {
 /**
  * Created by jfagan on 5/1/15.
  * oe/oe_modules/model-namelist/NamelistRadio.js

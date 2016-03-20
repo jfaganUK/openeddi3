@@ -32,6 +32,65 @@ module.exports = Backbone.Collection.extend({
         return name.get('name');
     },
 
+    /***
+     * Does a name exist in the collection already.
+     * @param name String with a name
+     * @param namelist (optional)
+     * @return true if the name already exists in the collection
+     */
+    nameExists: function (name, namelist) {
+        var namelist = namelist || undefined;
+
+        var nms = this.filter({name: name});
+
+        if (nms.length === 0) {
+            return false;
+        } else {
+            if (namelist) {
+                return _.chain(nms)
+                    .map(function (nm) {
+                        return nm.toJSON().lists.indexOf(namelist) > -1;
+                    })
+                    .every().value();
+            } else {
+                return true;
+            }
+        }
+    },
+
+    /***
+     * Add a new name to the
+     * @param name a name object with
+     * @param options Options can be empty. doNotSave, if true then it will not persist. preventDuplicates will disallow a name to duplicate
+     */
+    addName: function (name, options) {
+        var options = options || {};
+        var nm = {
+            name: name.name,
+            lists: name.lists,
+            details: name.details,
+            puid: app.appState.get('puid'),
+            poolid: app.appState.get('poolid')
+        };
+
+        if (options.preventDuplicates) {
+            //TODO: add the namelist option here
+            if (!this.nameExists(name.name)) {
+                if (options.doNotSave) {
+                    this.add(nm);
+                } else {
+                    this.create(nm);
+                }
+            }
+        } else {
+            if (options.doNotSave) {
+                this.add(nm);
+            } else {
+                this.create(nm);
+            }
+        }
+    },
+
     //returns the number of names in a specified list
     countOfList: function (ll) {
         var ml = this.models;

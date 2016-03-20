@@ -24,15 +24,10 @@ module.exports = Backbone.Model.extend({
     },
 
     initialize: function() {
-        console.log('[appState] Initialize.');
         var self = this;
         // Do this if we pulled an existing survey.
         this.on('change:sheetid', _.bind(this.updateSheetIndex, this));
         app.channels.pool.on('pool-synced', _.bind(this.setPoolLength, this));
-        this.on('change', function () {
-            // for debugging
-            console.log(self.toJSON());
-        });
     },
 
     setPoolLength: function () {
@@ -100,7 +95,6 @@ module.exports = Backbone.Model.extend({
     // Check the localstorage to see if there is an appstate model to use
     // I want to restore the appstate if possible
     createID: function() {
-        console.log('[appState] Create id');
         var _id = this.getLocalID();
         return this.getLocalID() ? _id : guid();
     }
