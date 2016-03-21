@@ -10,6 +10,7 @@ module.exports = Mn.PolymerView.extend({
     template: template,
     _publishedKeys: ['oe'],
     initialize: function() {
+        console.log('hello world');
         this.model.set('oe', _.clone(this.model.attributes));
     }
 });

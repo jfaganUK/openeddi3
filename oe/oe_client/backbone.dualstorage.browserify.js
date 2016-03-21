@@ -151,6 +151,9 @@ window.Store = (function() {
     };
 
     Store.prototype.update = function(model, options) {
+        if (!model.id) {
+            model.id = model.cid;
+        }
         localStorage.setItem(this.name + this.sep + model.id, JSON.stringify(model.toJSON ? model.toJSON(options) : model));
         if (!_.include(this.records, model.id.toString())) {
             this.records.push(model.id.toString());

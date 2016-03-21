@@ -1,0 +1,15 @@
+{
+  "name": "alterpilesort",
+  "type": "eddi",
+  "author": "Jesse Fagan (aftersox@gmail.com)",
+  "description": "Takes the names from the name list and creates cards for them. Ties are created by putting alters in piles.",
+  "components": {
+    "eddicontrol": "alter-pilesort.html"
+  },
+  "templates": {
+    "eddicontrol": "templateAlterPilesort"
+  },
+  "views": {
+    "eddicontrol": "ViewAlterPilesort"
+  }
+}

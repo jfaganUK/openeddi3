@@ -1,4 +1,5 @@
 var OEModules = {};
+OEModules.alterpilesort = require('./oe_modules/control-alter-pilesort/client-index');
 OEModules.alterties = require('./oe_modules/control-alter-ties/client-index');
 OEModules.basicnameinterpret = require('./oe_modules/control-basic-nameinterpret/client-index');
 OEModules.boilerplate = require('./oe_modules/control-boilerplate/client-index');

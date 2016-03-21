@@ -1,0 +1,640 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<script src="../../bower_components/d3/d3.min.js"></script>
+<script src="d3-grid.js"></script>
+
+// TODO have this respond to the tablet turning
+<dom-module id="oe-alter-pilesort">
+    <style include="iron-flex iron-flex-alignment">
+        .nameCard {
+            cursor: pointer;
+        }
+
+        .cardText {
+            fill: black;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+    <template>
+        <svg id="svgSpace">
+        </svg>
+    </template>
+    <script>
+        //noinspection JSUnusedLocalSymbols,JSUnusedGlobalSymbols
+        Polymer({
+            is: 'oe-alter-pilesort',
+            properties: {
+                graph: {notify: true},
+                oe: {notify: true},
+                response: {notify: true}
+            },
+
+            ready: function () {
+                this.createLayoutGrid();
+                var self = this;
+                this.initialSetup = true;
+                if (this.oe) {
+                    this.setupNamePileSort();
+                } else {
+                    console.log('[alter-pilesort] Pilesort is ready!');
+                    // For some reason the data is pulled slower than the comoponent is ready
+                    // So we need to listen for when the attributes are updated
+                    // then set everything up as soon as they're ready.
+                    // There has got to be a better way.
+                    function isThisEddi(ev) {
+                        var eid = ev.get('eid');
+                        if (self.oe && self.oe.eid && self.oe.eid === eid) {
+                            self.setupNamePileSort();
+                        }
+                    }
+
+                    app.channels.pool.on('attributes-updated', _.bind(isThisEddi, this));
+                }
+
+            },
+
+            // Set the initial variables
+            setupNamePileSort: function () {
+                console.log('---- setupNamePileSort');
+                app.channels.pool.off('attributes-updated'); // stop listening for attribute updated events.
+                this.touchHeight = $(window).height() * 0.9;
+                this.touchWidth = $('#oe-layout-eddi-controlspace').width();
+
+                this.cardHeight = 40;
+                this.cardWidth = 100;
+                this.cardStrokeWidth = 1;
+
+                this.cardFill = '#777';
+                this.cardFillHighlight = '#4d4da4';
+
+                // it's important that the cardCount (which creates the card id's)
+                // is an integer that strictly increases. This is an assumption of the
+                // pileCrawl algorithm.
+                this.cardCount = 0;
+
+                this.cards = [];
+                this.cardpiles = [];
+                this.piles = [];
+
+                /*** Startup procedure
+                 * 1) Render and set up the playing field
+                 * 2) Add the starting grid of cards
+                 * 3) Add any existing cards from the data
+                 * 4) Run the card update function
+                 * 5) Refresh and set the piles up
+                 ***/
+                this.renderNamePileSort();
+                this.addNamesToStartGrid();
+                this.loadCards();
+                this.updateCards();
+                //this.refreshPiles();
+                this.initialSetup = false;
+            },
+
+            // Render the pile sort, setup the playing field
+            renderNamePileSort: function () {
+                var self = this;
+
+                // the drawing space
+                this.svg = d3.select(this.$['svgSpace'])
+                        .attr('height', this.touchHeight)
+                        .attr('width', this.touchWidth)
+                        .attr('class', 'namepsSVG');
+
+                this.cardGrid = d3.layout.grid()
+                        .bands()
+                        .cols(5)
+                        .rows(5)
+                        .nodeSize([this.cardWidth, this.cardHeight])
+                        .padding([10, 10]);
+
+                this.carddrag = d3.behavior.drag()
+                        .on('drag', function (d, i) {
+                            self.moveCard(d, i, this, self);
+                        })
+                        .on('dragend', function (d, i) {
+                            self.psDragEnd(d, i, this, self);
+                        });
+            },
+
+            // Adds the cards to the starting grid.
+            addNamesToStartGrid: function () {
+                var self = this;
+                this.startCards = self.cardGrid(app.currentPool.namelist.toJSON());
+
+                // Build the starting card deck
+                _.each(this.startCards, function (c) {
+                    var addCard = {
+                        id: self.cardCount++,
+                        nmid: c.id,
+                        x: c.x,
+                        y: c.y,
+                        sx: c.x,
+                        sy: c.y,
+                        name: c.name,
+                        collisions: [],
+                        active: false
+                    };
+                    self.cards.push(addCard);
+                });
+
+                this.updateStartingGrid();
+            },
+
+            updateStartingGrid: function () {
+                console.log('[updateStartingGrid] ---------- ');
+                console.table(this.cards);
+                var self = this;
+                var startCards = _.filter(this.cards, function (c) {
+                    return !c.active;
+                });
+
+                var sc = this.svg.selectAll('g.startingCard')
+                        .data(startCards, function (d) {
+                            return d.nmid + '-' + d.id;
+                        });
+                var scGroup = sc.enter().insert('g')
+                        .attr('class', 'nameCard startingCard')
+                        .attr('transform', function (d) {
+                            return "translate(" + (d.x) + ", " + d.y + "), scale(0.0001)";
+                        })
+                        .on('mouseover', function (d) {
+                            self.highlightPiles(d.id);
+                        })
+                        .on('mouseout', function () {
+                            self.resetHighlight();
+                        })
+                        .call(this.carddrag);
+                scGroup.append('rect').attr('class', 'cardRect')
+                        .style('fill', this.cardFill)
+                        .style('opacity', 0.7)
+                        .attr('width', this.cardWidth)
+                        .attr('height', this.cardHeight);
+                scGroup.append('text').attr('class', 'cardText')
+                        .attr('x', this.cardWidth / 2).attr('y', (this.cardHeight / 2) + 5)
+                        .attr('text-anchor', 'middle')
+                        .text(function (d) {
+                            return d.name;
+                        });
+                scGroup.transition()
+                        .duration(500)
+                        .delay(function (d, i) {
+                            if (self.initialSetup) {
+                                return i * 100;
+                            } else {
+                                return 0;
+                            }
+                        })
+                        .attr('transform', function (d) {
+                            return "translate(" + (d.x) + ", " + d.y + "), scale(1)";
+                        });
+                sc.exit().remove();
+            },
+
+            // When a card is pulled away, we need to replace it
+            replaceCard: function (c) {
+                var addCard = {
+                    id: this.cardCount++,
+                    nmid: c.nmid,
+                    x: c.sx,
+                    y: c.sy,
+                    sx: c.sx,
+                    sy: c.sy,
+                    name: c.name,
+                    collisions: [],
+                    active: false
+                };
+                this.cards.push(addCard);
+                this.updateStartingGrid();
+            },
+
+            // Load any existing played cards from the data
+            loadCards: function () {
+                var self = this;
+                if (!this.response.cards) {
+                    return;
+                }
+
+                var loadedCards = _.filter(this.response.cards, function (x) {
+                    return x.active;
+                });
+
+                // Rebuild the deck
+                // Start the numbering over
+                _.each(loadedCards, function (c) {
+                    c.id = self.cardCount++;
+                    self.cards.push(c);
+                });
+            },
+
+            updateCards: function () {
+                var self = this;
+                var activeCards = _.filter(this.cards, function (c) {
+                    return c.active;
+                });
+
+                var sc = this.svg.selectAll('g.activeCard')
+                        .data(activeCards, function (d) {
+                            return d.nmid + '-' + d.id;
+                        });
+                var scGroup = sc.enter().insert('g')
+                        .attr('class', 'nameCard activeCard')
+                        .attr('transform', function (d) {
+                            return "translate(" + (d.x) + ", " + d.y + "), scale(0.0001)";
+                        })
+                        .on('mouseover', function (d) {
+                            self.highlightPiles(d.id);
+                        })
+                        .on('mouseout', function () {
+                            self.resetHighlight();
+                        })
+                        .call(this.carddrag);
+                scGroup.append('rect').attr('class', 'cardRect')
+                        .style('fill', this.cardFill)
+                        .style('opacity', 0.7)
+                        .attr('width', this.cardWidth)
+                        .attr('height', this.cardHeight);
+                scGroup.append('text').attr('class', 'cardText')
+                        .attr('x', this.cardWidth / 2).attr('y', (this.cardHeight / 2) + 5)
+                        .attr('text-anchor', 'middle')
+                        .text(function (d) {
+                            return d.name;
+                        });
+                scGroup.transition()
+                        .duration(500)
+                        .delay(function (d, i) {
+                            if (self.initialSetup) {
+                                return i * 100;
+                            } else {
+                                return 0;
+                            }
+                        })
+                        .attr('transform', function (d) {
+                            return "translate(" + (d.x) + ", " + d.y + "), scale(1)";
+                        });
+                sc.exit().remove();
+
+
+            },
+
+            highlightPiles: function (jid) {
+                var self = this;
+                var a = _.findWhere(this.cards, {id: jid});
+                if (a) {
+                    var pid = a.pid;
+                    var cardFill = this.cardFill;
+                    var cardFillHighlight = this.cardFillHighlight;
+
+                    this.svg.selectAll('.cardRect')
+                            .style('fill', function (d) {
+                                if (d.active) {
+                                    if (d.pid == pid) {
+                                        return cardFillHighlight;
+                                    }
+                                }
+                                return cardFill;
+                            });
+                }
+            },
+
+            resetHighlight: function () {
+                this.svg.selectAll('.cardRect')
+                        .style('fill', this.cardFill);
+            },
+
+            // The context of this function is the card, not the question
+            getCardCollisions: function (cardid) {
+                var a = _.findWhere(this.cards, {id: cardid});
+                var otherCards = _.filter(this.cards, function (x) {
+                    return x.id !== cardid;
+                });
+
+                var ch = this.cardHeight;
+                var cw = this.cardWidth;
+
+                var collisions = [];
+
+                // Boundaries of the subject card
+                // a-left-side, a-right-side, a-top-side, a-under-side (can't use abs!)
+                var als = a.x - (cw / 2),
+                        ars = a.x + (cw / 2),
+                        ats = a.y - (ch / 2),
+                        aus = a.y + (ch / 2);
+
+                // a is the subject, b is the other card
+                otherCards.forEach(function (b) {
+                    // The xpos and ypos indicate the center of the card
+                    // so the left edge is half the width from the xpos
+                    var bls = b.x - (cw / 2),
+                            brs = b.x + (cw / 2),
+                            bts = b.y - (ch / 2),
+                            bus = b.y + (ch / 2);
+
+                    if (!(bls > ars || brs < als || bts > aus || bus < ats) && b.active) {
+                        collisions.push(b.id);
+                    }
+
+                });
+
+                a.collisions = collisions;
+            },
+
+            getAllCollisions: function () {
+                var qview = this;
+                this.cards.forEach(function (a) {
+                    qview.getCardCollisions(a.id);
+                });
+            },
+
+            refreshPiles: function () {
+                this.getAllCollisions();
+                this.checkPiles();
+            },
+
+            savePiles: function () {
+
+                /**** save the tie data ****/
+                // The tie data is derived from the cards. Everyone in the pile has a tie
+                // to everyone else in the pile. It is saved in the details of the name
+                // data.
+
+                var td = this.oe.tieDetails,
+                        tiedata = {},
+                        nmids = [];
+
+                for (var i = 0; i < this.piles.length; i++) {
+                    nmids = this.cardidToNameid(i);
+                    nmids.forEach(function (nmid) {
+                        var nmmod = app.currentPool.namelist.get(nmid);
+
+                        for (var j = 0; j < nmids.length; j++) {
+                            if (nmids[j] !== nmid) {
+                                nmmod.addTie(nmids[j], td);
+                            }
+                        }
+                        nmmod.save();
+                    });
+                }
+
+                /**** save the card data ****/
+                    // This data is more specific to the actual pile-sort task. And it is somewhat
+                    // independent of the ties. For instance, it is only possible to ADD ties
+                    // with the pile sort.
+
+                this.response.cards = this.cards;
+                this.fire('change:response');
+            },
+
+            removeCard: function (id) {
+                var ids = _.pluck(this.cards, 'id');
+                var ix = _.indexOf(ids, id);
+                this.cards.splice(ix, 1);
+                this.refreshPiles();
+                this.updateCards();
+                this.savePiles();
+            },
+
+            // Supply the pile index, it will return an array of name ids
+            cardidToNameid: function (pix) {
+                var pile = this.piles[pix];
+                var nmids = [];
+
+                for (var i = 0; i < pile.length; i++) {
+                    nmids.push(_.findWhere(this.cards, {id: pile[i]}).nmid);
+                }
+
+                return nmids;
+            },
+
+
+            /**********************************************************************
+             *    These two functions check the piles using
+             *        Tarjan's Strongly Connected Component algorithm.
+             *    checkPiles and pileCrawl
+             **********************************************************************/
+            checkPiles: function () {
+                this.piles = [];
+                this.pileS = [];
+                this.pindex = {};
+                this.plowlink = {};
+                this.pindex1 = 0;
+                this.npid = 0;
+                var qview = this;
+
+                this.cards.forEach(function (a) {
+                    if (!a.active) {
+                        return;
+                    }
+                    var jid = a.id;
+                    if (qview.pindex[jid] === undefined) {
+                        qview.pileCrawl(jid);
+                    }
+                });
+            },
+
+            pileCrawl: function (jid) {
+                this.pindex[jid] = this.pindex1;
+                this.plowlink[jid] = this.pindex1;
+                this.pindex1++;
+                this.pileS.push(jid);
+                var tid = null;
+                var a = _.findWhere(this.cards, {id: jid});
+
+                var jids = a.collisions;
+
+                for (var i = 0; i < jids.length; i++) {
+                    if (jids[i] !== jid && this.pindex[jids[i]] === undefined) {
+                        this.pileCrawl(jids[i]);
+                        this.plowlink[jid] = Math.min(this.plowlink[jid], this.plowlink[jids[i]]);
+                    } else if ($.inArray(jids[i], this.pileS) !== -1) {
+                        this.plowlink[jid] = Math.min(this.plowlink[jid], this.pindex[jids[i]]);
+                    }
+                }
+
+                if (this.plowlink[jid] === this.pindex[jid]) {
+                    this.piles.push([]);
+                    do {
+                        tid = this.pileS.pop();
+                        _.findWhere(this.cards, {id: tid}).pid = this.npid;
+                        this.cardpiles[tid] = this.npid;
+                        this.piles[this.npid].push(tid);
+
+                    } while (tid !== jid);
+                    this.npid++;
+                }
+
+            },
+
+            psDragEnd: function (d, i, card, qview) {
+                qview.refreshPiles();
+                this.savePiles();
+
+                // Drag to the top to remove
+                if (d.y < this.cardHeight) {
+                    qview.removeCard(d.id);
+                }
+            },
+
+            moveCard: function (d, i, card, qview) {
+                d.x += d3.event.dx;
+                d.y += d3.event.dy;
+                var pcollisions = d.collisions;
+                d3.select(card).attr('transform', function (d) {
+                    return ('translate(' + d.x + ',' + d.y + ')');
+                });
+
+                // Check if the collisions changed, if so, refresh the piles
+                // This should give the effect of highlighting piles as the user
+                // moves a card around.
+                qview.getCardCollisions(d.id);
+                if (!_.isEqual(d.collisions, pcollisions)) {
+                    qview.refreshPiles();
+                    qview.highlightPiles(d.id);
+                }
+
+                /** Check if the card is over the trash
+                 // TODO: Add the card trash back in
+                 //                if ( d.xpos > (qview.touchWidth - 70) && d.ypos > (qview.touchHeight - 70)) {
+//                    d3.select('.cardTrash').transition().duration(200)
+//                            .style('font-size','65px');
+//                } else {
+//                    d3.select('.cardTrash').transition().duration(200)
+//                            .style('font-size','50px');
+//                }**/
+
+                if (!d.active) {
+                    d.active = true;
+                    d3.select(card).classed('activeCard', true);
+                    d3.select(card).classed('startingCard', false);
+                    qview.replaceCard(d);
+                }
+            },
+
+            createLayoutGrid: function () {
+                d3.layout.grid = function () {
+                    var mode = "equal",
+                            layout = _distributeEqually,
+                            x = d3.scale.ordinal(),
+                            y = d3.scale.ordinal(),
+                            size = [1, 1],
+                            actualSize = [0, 0],
+                            nodeSize = false,
+                            bands = false,
+                            padding = [0, 0],
+                            cols, rows;
+
+                    function grid(nodes) {
+                        return layout(nodes);
+                    }
+
+                    function _distributeEqually(nodes) {
+                        var i = -1,
+                                n = nodes.length,
+                                _cols = cols ? cols : 0,
+                                _rows = rows ? rows : 0,
+                                col, row;
+
+                        // FIXME: make explicit rows/cols exclusive? Or find a smart way to deal with overflows (repeat?)
+                        // FIXME: when rows are set, fill top-to-bottom (make test with 5 data points and 4 rows)
+
+                        if (_rows && !_cols) {
+                            _cols = Math.ceil(n / _rows)
+                        } else {
+                            _cols || (_cols = Math.ceil(Math.sqrt(n)));
+                            _rows || (_rows = Math.ceil(n / _cols));
+                        }
+
+                        if (nodeSize) {
+                            x.domain(d3.range(_cols)).range(d3.range(0, (size[0] + padding[0]) * _cols, size[0] + padding[0]));
+                            y.domain(d3.range(_rows)).range(d3.range(0, (size[1] + padding[1]) * _rows, size[1] + padding[1]));
+                            actualSize[0] = bands ? x(_cols - 1) + size[0] : x(_cols - 1);
+                            actualSize[1] = bands ? y(_rows - 1) + size[1] : y(_rows - 1);
+                        } else if (bands) {
+                            x.domain(d3.range(_cols)).rangeBands([0, size[0]], padding[0], 0);
+                            y.domain(d3.range(_rows)).rangeBands([0, size[1]], padding[1], 0);
+                            actualSize[0] = x.rangeBand();
+                            actualSize[1] = y.rangeBand();
+                        } else {
+                            x.domain(d3.range(_cols)).rangePoints([0, size[0]]);
+                            y.domain(d3.range(_rows)).rangePoints([0, size[1]]);
+                            actualSize[0] = x(1);
+                            actualSize[1] = y(1);
+                        }
+
+                        //if (DEBUG) console.log('cols/rows', _cols, _rows);
+
+                        while (++i < n) {
+                            col = i % _cols;
+                            row = Math.floor(i / _cols);
+
+                            //if (DEBUG) console.log(i, col, row);
+
+                            nodes[i].x = x(col);
+                            nodes[i].y = y(row);
+                        }
+
+                        return nodes;
+                    }
+
+                    // grid.mode = function(value) {
+                    //   if (!arguments.length) return mode;
+                    //   switch(mode = value) {
+                    //     case "equal":
+                    //       layout = _distributeEqually;
+                    //       break;
+                    //   }
+                    //   return grid;
+                    // }
+
+                    grid.size = function (value) {
+                        if (!arguments.length) return nodeSize ? actualSize : size;
+                        actualSize = [0, 0];
+                        nodeSize = (size = value) == null;
+                        return grid;
+                    }
+
+                    grid.nodeSize = function (value) {
+                        if (!arguments.length) return nodeSize ? size : actualSize;
+                        actualSize = [0, 0];
+                        nodeSize = (size = value) != null;
+                        return grid;
+                    }
+
+                    grid.rows = function (value) {
+                        if (!arguments.length) return rows;
+                        rows = value;
+                        return grid;
+                    }
+
+                    grid.cols = function (value) {
+                        if (!arguments.length) return cols;
+                        cols = value;
+                        return grid;
+                    }
+
+                    grid.bands = function () {
+                        bands = true;
+                        return grid;
+                    }
+
+                    grid.points = function () {
+                        bands = false;
+                        return grid;
+                    }
+
+                    grid.padding = function (value) {
+                        if (!arguments.length) return padding;
+                        padding = value;
+                        return grid;
+                    }
+
+                    return grid;
+                };
+            }
+        });
+    </script>
+</dom-module>
