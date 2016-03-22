@@ -121,7 +121,7 @@
       "controlmodule": "boilerplate",
       "sortIndex": -10,
       "prompt": "Please read the directions here for the next task.",
-      "content": "<p>Thinking about the video you’ve just watched, which of the following characters spoke directly to one another? Drag a line between the two characters to connect them together.</p><p>To delete a line, just re-draw it over the existing line.</p><div class=\"flex\"><img style=\"width: 100%;\" src=\"./assets/nodelink_starwars.png\"></img></div>"
+      "content": "<p> Thinking about the video you’ve just watched, which of the following characters spoke directly to one another? Please draw a line between circles with the characters’ names to indicate that those two characters spoke to one another. For instance, did Mom talk to Dad? If so, draw a line from “Mom” to “Dad.” Feel free to use your character list as you complete this exercise.</p><p>To delete a line, just re-draw it over the existing line.</p><h3>Here is an example:</h3><div class=\"flex\"><img style=\"width: 100%;\" src=\"./assets/nodelink_starwars.png\"></img></div>"
     },
     {
       "eid": "ps1",
@@ -130,7 +130,7 @@
       "sortIndex": 0,
       "title": "nodelinkTask",
       "controlmodule": "nodelink",
-      "prompt": "Draw lines between the characters by dragging from one character to the other.",
+      "prompt": "Draw lines between the characters by dragging from one character to the other. Re-draw the line to remove it.",
       "tieDetails": {
         "relation": "communicate",
         "type": "undirected",

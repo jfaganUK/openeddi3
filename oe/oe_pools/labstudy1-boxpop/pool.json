@@ -121,7 +121,7 @@
       "controlmodule": "boilerplate",
       "sortIndex": -10,
       "prompt": "Please read the directions here for the next task.",
-      "content": "<p>Thinking about the video you’ve just watched, which of the following characters spoke directly to one another? You will be presented with a pair of characters. Decide if you think these two characters shared a direct communication.</p>"
+      "content": "<p>Thinking about the video you've just watched, which of the following characters spoke directly with one another? Please answer this question for each pair of characters in the video. It does not matter if only one person in the pair spoke; please indicate \"yes\" if EITHER of the characters spoke with the other one in the pair.</p>"
     },
     {
       "eid": "ps1",
