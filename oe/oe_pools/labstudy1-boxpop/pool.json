@@ -130,11 +130,11 @@
       "sortIndex": 0,
       "title": "altertiesTask",
       "controlmodule": "alterties",
-      "prompt": "Click communicate or did not communicate for each pair.",
+      "prompt": "Please indicate \"yes\" if EITHER of the characters spoke with the other one in the pair.",
       "verb": "communicated with",
       "connectOptions": {
-        "connected": "Communicated",
-        "notconnected": "Did not communicate"
+        "connected": "Yes",
+        "notconnected": "No"
       },
       "tieDetails": {
         "relation": "communicate",
