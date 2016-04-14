@@ -11,7 +11,7 @@ function getResponseTable(eddi, response) {
     var o = {};
 
     switch (eddi.controltype) {
-        case 'radiolist':
+        case 'radio':
             o = parseRadiolist(eddi, response);
             break;
         case 'checklist':

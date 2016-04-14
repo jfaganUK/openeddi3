@@ -44,7 +44,7 @@ function responsesNameDetails(poolid, callback) {
     });
 
     // add columns for the lists
-    fq.push(function addNamelistColmns(cb) {
+    fq.push(function addNamelistColumns(cb) {
         var namelists = [], newResults = [];
         // first get a unique list of all namelists
         _.each(names, function (name) {
