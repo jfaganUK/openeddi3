@@ -86,7 +86,7 @@ bower install
 Configure the Log File
 ======================
 
-This is the config file for OpenEddi:
+This is the config file for OpenEddi is located in ```./oe/config.json```.
 
 ```
 {

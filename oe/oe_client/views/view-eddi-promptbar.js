@@ -3,13 +3,12 @@
  * oe/oe_client/views/view-eddi-promptbar.js
  */
 
-"use strict";
 var PromptBarModel = require('../models/model-eddi-promptbar');
-var PromptBarTemplate = require('../templates/template-eddi-promptbar.ejs');
+var template = require('../templates/template-blank-template.ejs');
 
-module.exports = Mn.ItemView.extend({
+module.exports = Mn.PolymerView.extend({
+    tagName: 'oe-eddi-promptbar',
     model: PromptBarModel,
-    template: PromptBarTemplate,
-    initialize: function() {
-    }
+    template: template,
+    _publishedKeys: ['oe', 'response']
 });

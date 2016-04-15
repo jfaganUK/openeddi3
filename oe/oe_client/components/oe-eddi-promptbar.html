@@ -10,17 +10,31 @@
             height: 128px;
         }
 
+        #prompt-bar-container {
+            background-color: white;
+            position: static;
+            border-bottom: rgba(0, 0, 0, 0.3) 1px solid;
+        }
+
+        #eddiPrompt {
+            margin: 0;
+            padding: 1em 1em;
+        }
+
         .oe-eddi-details {
+            position: absolute;
+            left: 1em;
+            bottom: 1em;
             font-size: 10px;
         }
     </style>
     <template>
-        <paper-toolbar>
-            <div class="flex"></div>
-            <div class="middle" inner-h-t-m-l="{{oe.prompt}}"></div>
-            <div class="bottom oe-eddi-details"><span>{{oe.eid}}</span> - <span>{{oe.eddiTitle}}</span> - <span>{{oe.sortIndex}}</span>
+        <div id="prompt-bar-container">
+            <div id="eddiPrompt" inner-h-t-m-l="{{oe.prompt}}"></div>
+            <div class="oe-eddi-details">
+                <span>{{oe.eid}}</span> - <span>{{oe.eddiTitle}}</span> - <span>{{oe.sortIndex}}</span>
             </div>
-        </paper-toolbar>
+        </div>
     </template>
     <script>
         Polymer({
@@ -37,7 +51,9 @@
                     },
                     notify: true
                 }
-            }
+            },
+            ready: function () {
+                }
         });
     </script>
 </dom-module>
