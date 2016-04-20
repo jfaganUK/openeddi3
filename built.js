@@ -57895,6 +57895,13 @@ module.exports = Mn.PolymerView.extend({
         this.options = options || {};
         var oe = this.model.get('oe');
         oe.names = app.currentPool.namelist.toJSON();
+        oe.names.forEach(function (n) {
+            if (!n.details[oe.eid]) {
+                n.nameResponse = {value: '', other: ''};
+            } else {
+                n.nameResponse = n.details[oe.eid];
+            }
+        });
         this.model.set('oe', oe);
     }
 });

@@ -33,7 +33,7 @@
         }
     </style>
     <template>
-        Checklist
+
         <div id="name-checklist-container">
             <div id="checklist-header" class="layout horizontal">
                 <h3 class="flex">{{name.name}}</h3>
@@ -43,13 +43,15 @@
             </div>
             <div id="checklist-container" class="layout vertical">
                 <template is="dom-repeat" items="{{arrayPrompts}}">
-                    <paper-checkbox on-change="saveCheck">{{item.prompt}}</paper-checkbox>
+                    <paper-checkbox on-change="saveCheck" checked$="{{_isChecked(item, name.nameResponse)}}">
+                        {{item.prompt}}
+                    </paper-checkbox>
                 </template>
             </div>
             <template is="dom-if" if="{{showOther}}">
                 <div id="otherContainer">
                     <paper-input label="Other" class="flex" id="otherInput" on-change="saveOther"
-                                 value="{{otherValue}}">
+                                 value="{{name.nameResponse.other}}">
                         <paper-icon-button suffix icon="check" on-tap="saveOther"></paper-icon-button>
                         <iron-a11y-keys id="a11y" target="[[otherInput]]" keys="enter"
                                         on-keys-pressed="saveOther"></iron-a11y-keys>
@@ -89,13 +91,21 @@
             _goNext: function () {
                 this.fire('boxpop');
             },
+            _isChecked: function (item, nr) {
+                if (nr.value[item.arrayid]) {
+                    return nr.value[item.arrayid];
+                } else {
+                    return false;
+                }
+                return false;
+            },
             saveCheck: function (e) {
                 var checked = e.target.checked;
                 var arrayid = e.model.item.arrayid;
-                this.set('nameResponse.value.' + arrayid, checked);
+                this.set('name.nameResponse.value.' + arrayid, checked);
             },
             saveOther: function () {
-                this.set('nameResponse.other', this.otherValue);
+                this.set('name.nameResponse.other', this.otherValue);
             }
         });
     </script>

@@ -23,12 +23,12 @@
 
         <oe-ni-boxpop-undo last-save="{{lastSave}}" array-prompts="{{oe.arrayPrompts}}"></oe-ni-boxpop-undo>
         <neon-animated-pages id="name-pager" class="flex" selected="[[nameIndex]]">
-            <template is="dom-repeat" items="{{oe.names}}" filter="nameFilter">
+            <template is="dom-repeat" id="boxpopNames" items="{{oe.names}}" filter="nameFilter">
 
                 <!-- NI Radio Type-->
                 <template is="dom-if" if="{{_isRadio()}}">
                     <oe-ni-boxpop-radio name="{{item}}" array-prompts="{{oe.arrayPrompts}}" on-boxpop="saveResponse"
-                                        show-other="{{oe.other}}"></oe-ni-boxpop-radio>
+                                        oe="[[oe]]" show-other="{{oe.other}}"></oe-ni-boxpop-radio>
                 </template>
 
                 <!-- NI Shorttext type -->
@@ -99,7 +99,7 @@
                 var o = {
                     id: e.model.get('item.id'),
                     name: e.model.get('item.name'),
-                    value: e.target.nameResponse,
+                    value: e.target.name.nameResponse,
                     eid: this.oe.eid
                 };
                 this.set('lastSave', o);

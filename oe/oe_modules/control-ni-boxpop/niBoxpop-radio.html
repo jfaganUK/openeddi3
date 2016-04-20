@@ -1,5 +1,7 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/paper-ripple/paper-ripple.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html"/>
 <link rel="import" href="/bower_components/neon-animation/animations/slide-from-left-animation.html"/>
 <link rel="import" href="/bower_components/neon-animation/animations/slide-right-animation.html"/>
@@ -39,18 +41,41 @@
             max-height: 14em;
             overflow-y: scroll;
         }
+
+        .radio-item-selected-check {
+            color: rgb(13, 144, 79);
+        }
+
+        .radio-item-selected {
+            background-color: #f0fab4;
+            transition: background-color 0.5s ease;
+        }
+
+        .radio-item {
+            margin: 0.5em;
+            cursor: pointer;
+        }
     </style>
     <template>
 
         <div id="nameAnswerBox" class="layout vertical">
             <div class="layout horizontal"><h3>{{name.name}}</h3></div>
             <div class="button-container">
-                <template is="dom-repeat" items="{{arrayPrompts}}">
-                    <paper-material class="select-button" on-tap="itemSelect">{{item.prompt}}</paper-material>
+                <template id="buttonList" is="dom-repeat" items="{{arrayPrompts}}">
+                    <paper-material class$="radio-item {{_isSelected(item, name.nameResponse.value)}}">
+                        <section id="radio-item-card">
+                            <div class="layout horizontal">
+                                <paper-icon-button icon="done" on-tap="itemSelect"></paper-icon-button>
+                                <span id="nameCardName" on-tap="itemSelect" class="flex">{{item.prompt}}</span>
+                                <paper-ripple class="fit" on-tap="itemSelect"></paper-ripple>
+                            </div>
+                        </section>
+                    </paper-material>
                 </template>
             </div>
-            <template is="dom-if" if="{{showOther}}">
-                <oe-boxpop-other other-value="{{nameResponse.other}}" on-other-change="otherChange"></oe-boxpop-other>
+            <template id="otherEntry" is="dom-if" if="{{showOther}}">
+                <oe-boxpop-other other-value="{{name.nameResponse.other}}"
+                                 on-other-change="otherChange"></oe-boxpop-other>
             </template>
         </div>
     </template>
@@ -63,6 +88,7 @@
             },
             properties: {
                 name: {type: 'Object', notify: true},
+                oe: {type: Object},
                 arrayPrompts: {type: 'Array', notify: true},
                 answered: {type: Boolean, value: false},
                 nameResponse: {type: Object, notify: true, value: {value: '', other: ''}},
@@ -84,15 +110,28 @@
                     }
                 }
             },
+            _getDefaultNameResponse: function () {
+                return {value: '', other: ''};
+            },
+            _isSelected: function (item, v) {
+                if (v) {
+                    if (item.prompt === v) {
+                        return 'radio-item-selected';
+                    }
+                }
+                return '';
+            },
             itemSelect: function (e) {
                 var val = e.model.get('item.prompt');
-                this.set('nameResponse.value', val);
+                this.set('name.details.' + this.oe.eid, val);
+                this.set('name.nameResponse.value', val);
+                console.log(this.name.nameResponse);
                 this.fire('boxpop');
             },
             otherChange: function (e) {
                 console.log('Other change');
                 e.stopPropagation();
-                this.set('nameResponse.value', '');
+                this.set('name.nameResponse.value', '');
                 this.fire('boxpop');
             }
         });

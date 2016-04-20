@@ -20,7 +20,8 @@
     <template>
         <div class="layout vertical" id="shorttextContainer" on-tap="focusInput">
             <h3>{{name.name}}</h3>
-            <paper-input id="shorttextInput" value="{{nameResponse.value}}" label="{{prompt}}" on-change="saveResponse">
+            <paper-input id="shorttextInput" value="{{name.nameResponse.value}}" label="{{prompt}}"
+                         on-change="saveResponse">
                 <paper-icon-button suffix icon="check" on-tap="saveResponse"></paper-icon-button>
             </paper-input>
         </div>
@@ -62,12 +63,10 @@
             },
             _getNameResponse: function () {
                 var details = this.name.details[this.oe.eid];
-//                console.log('Name: ' + this.name.name);
-//                console.table(this.name.details);
                 if (details) {
-                    this.set('nameResponse.value', details.value);
+                    this.set('name.nameResponse.value', details.value);
                 } else {
-                    this.set('nameResponse.value', '');
+                    this.set('name.nameResponse.value', '');
                 }
             },
             attached: function () {
