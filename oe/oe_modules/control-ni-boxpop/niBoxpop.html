@@ -85,6 +85,17 @@
                 this.$['name-pager'].selected = 0;
             },
             nameFilter: function (e) {
+                return this._inNameList(e) && this._detailFilter(e);
+            },
+            _inNameList: function (e) {
+                if (this.oe.namelist) {
+                    var ix = _.indexOf(e.lists, this.oe.namelist);
+
+                    return (ix > -1);
+                }
+                return true;
+            },
+            _detailFilter: function (e) {
                 if (this.oe.filter) {
                     if (this.oe.filter.details) {
                         var fil = this.oe.filter.details;
