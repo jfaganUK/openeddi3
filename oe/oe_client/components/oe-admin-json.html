@@ -1,15 +1,19 @@
-<!-- view: oe/oe_client/views/view-admin-pool-listing.js -->
+<!-- view: oe/oe_client/views/view-admin-json.js -->
+<!--Created by Apax Software to facilitate direct JSON editing-->
 <html>
 <head>
     <link rel="import" href="/bower_components/polymer/polymer.html">
     <link rel="import" href="/bower_components/paper-button/paper-button.html">
     <link rel="import" href="/bower_components/paper-input/paper-input.html">
+    <link rel="import" href="/bower_components/paper-input/paper-textarea.html">
     <link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
     <link rel="import" href="/bower_components/paper-button/paper-button.html">
     <link rel="import" href="/bower_components/iron-icon/iron-icon.html">
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="/bower_components/paper-material/paper-material.html">
     <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
-    <dom-module id="oe-admin-design-pooldetails">
+    <dom-module id="oe-admin-json">
         <style>
             /* TODO(polyup): For speed, consider reworking these styles with .classes
                              and #ids rather than [attributes].
@@ -20,7 +24,7 @@
 
             [layout][vertical] {
             @apply(- -layout-vertical);
-            }
+            }river 
 
             [layout][flex] {
             @apply(- -layout-flex);
@@ -64,64 +68,69 @@
 
         </style>
         <template>
-            <div class="layout vertical flex" id="wrapper">
-                <div id="container">
-                    <h2>{{poollogic.poollogic.title}}</h2>
-                    <div id="poolListingStatsTable" class="layout vertical">
+            <test-fixture id="JSONFixture">
+                <div class="layout vertical flex" id="wrapper">
+                    <div id="container">
+                        <paper-textarea label="Raw JSON" width="100%" id="jsonInput" value="[[getJSON(poollogic.poollogic)]]"></paper-textarea>
 
                         <div class="poolListingStatsRow layout horizontal">
-                            <div>Title:</div>
-                            <div flex="">
-                                <paper-input value="{{poollogic.poollogic.title}}" on-blur="savePool"></paper-input>
-                            </div>
-                        </div>
-                        <div class="poolListingStatsRow layout horizontal">
-                            <div>Description:</div>
-                            <div flex="">
-                                <paper-input value="{{poollogic.poollogic.description}}"
-                                             on-blur="savePool"></paper-input>
-                            </div>
-                        </div>
-                        <div class="poolListingStatsRow layout horizontal">
-                            <div>Introduction:</div>
-                            <div flex="">
-                                <paper-input value="{{poollogic.poollogic.introduction}}"
-                                             on-blur="savePool"></paper-input>
-                            </div>
-                        </div>
-                        <div class="poolListingStatsRow layout horizontal">
-                            <div>Afterword:</div>
-                            <div flex="">
-                                <paper-input value="{{poollogic.poollogic.afterward}}" on-blur="savePool"></paper-input>
-                            </div>
-                        </div>
-                        <div class="poolListingStatsRow layout horizontal">
-                            <paper-button raised="" flex="" on-tap="pushPool"><iron-icon icon="icons:system-update-alt"></iron-icon> Push Pool</paper-button>
-                            <!--<paper-button raised="" flex="" on-tap="editJSON"><iron-icon icon="icons:assignment"></iron-icon> Edit JSON</paper-button>-->
+                            <paper-button raised="" flex="" id="btnValidateJSON" on-tap="validateJSON">Validate JSON</paper-button>
+                            <paper-toast fitinto="container" id="toastValid" text="Valid JSON"></paper-toast>
+                            <paper-toast fitinto="container" id="toastInvalid" text="Invalid JSON"></paper-toast>
+                            <paper-button raised="" flex="" on-tap="saveJSON">Save Pool</paper-button>
+                            <paper-button raised="" flex="" on-tap="pushJSON">Push Pool</paper-button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </test-fixture>
         </template>
         <script>
             //noinspection JSUnusedGlobalSymbols
             Polymer({
-                is: 'oe-admin-design-pooldetails',
+                is: 'oe-admin-json',
                 properties: {
                     attrUpdate: {
                         notify: true,
                         observer: 'attrUpdateChanged'
                     },
-                    poollogic: {notify: true}
+                    poollogic: {notify: true}                
                 },
+
                 attrUpdateChanged: function () {
+                    
                 },
                 //                console.log(this.poollogic);
-                savePool: function () {
-                    app.channels.pool.command('save-pool-design', this.poollogic);
+                saveJSON: function () {
+                    try {
+                        JSON.parse(this.$.jsonInput.value);
+                        this.poollogic.poollogic = this.$.jsonInput.value;
+                        app.channels.pool.command('save-pool-design', this.poollogic);
+                    }    
+                    catch(err) {
+                        this.$.toastInvalid.open();
+                    }
                 },
-                pushPool: function () {
-                    app.channels.pool.command('push-pool', this.poollogic);
+                pushJSON: function () {
+                    try {
+                        JSON.parse(this.$.jsonInput.value);
+                        this.poollogic.poollogic = this.$.jsonInput.value;
+                        app.channels.pool.command('push-pool', this.poollogic);
+                    }    
+                    catch(err) {
+                        this.$.toastInvalid.open();
+                    }
+                },
+                getJSON: function (poollogic) {
+                    return JSON.stringify(this.poollogic, null, 4); 
+                },
+                validateJSON: function () {
+                    try {
+                        JSON.parse(this.$.jsonInput.value);
+                        this.$.toastValid.open();
+                    }
+                    catch(err) {
+                        this.$.toastInvalid.open();
+                    }
                 }
             });
         </script>

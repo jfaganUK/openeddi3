@@ -9,6 +9,8 @@ var PoolListingsLayout = require('../views/view-admin-pool-listing-layout');
 var PoolListingCollection = require('../collections/collection-admin-pool-listings');
 var ViewResponses = require('../views/view-admin-responses');
 var LayoutDesign = require('../layouts/layout-admin-design');
+var LayoutJSON = require('../layouts/layout-admin-json');
+var ViewAdminJSON = require('../views/view-admin-design-json');
 var ModelPoolDesign = require('../models/model-admin-pooldesign');
 
 module.exports = Mn.LayoutView.extend({
@@ -34,6 +36,7 @@ module.exports = Mn.LayoutView.extend({
         app.channels.navigation.comply('load-admin-responses', this.loadViewResponses, this);
         app.channels.navigation.comply('load-admin-listings', this.loadAdminListings, this);
         app.channels.navigation.comply('load-admin-design', this.loadPoolDesign, this);
+        app.channels.navigation.comply('load-admin-json', this.loadPoolJSON, this);
         app.channels.pool.comply('create-new-pool', this.createNewPool, this);
     },
 
@@ -64,6 +67,9 @@ module.exports = Mn.LayoutView.extend({
                 break;
             case 'pooldesign' :
                 this.loadPoolDesign(opts.poolid);
+                break;
+            case 'pooljson' :
+                this.loadPoolJSON(opts.poolid);
                 break;
             default:
                 this.loadAdminListings();
@@ -113,6 +119,12 @@ module.exports = Mn.LayoutView.extend({
     loadPoolDesign: function (poolid) {
         app.router.navigate('admin/design/' + poolid);
         var pd = new LayoutDesign({poolid: poolid});
+        this.main.show(pd);
+    },
+
+    loadPoolJSON: function (poolid) {
+        app.router.navigate('admin/json/' + poolid);
+        var pd = new LayoutJSON({poolid: poolid});
         this.main.show(pd);
     },
 

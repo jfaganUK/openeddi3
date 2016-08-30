@@ -50,6 +50,10 @@ module.exports = Backbone.Router.extend({
         app.channels.navigation.command('load-landing');
     },
 
+    loadAdminJSON: function (poolid) {
+        app.channels.navigation.command('load-admin-json', poolid);
+    },
+
     // What happens if they go to 'pool/' with no poolid? I think it should load the landing page...
     loadPool: function(poolid) {
         app.appState.set('poolid', poolid);
