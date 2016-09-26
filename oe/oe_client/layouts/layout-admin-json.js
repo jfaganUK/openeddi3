@@ -19,7 +19,9 @@ var LayoutAdminJSON = Mn.LayoutView.extend({
         this.page = opts.page || 'pooljson';
 
         app.channels.pool.comply('save-pool-design', this.savePoolDesign, this);
+        app.channels.pool.comply('save-pool-json', this.savePoolJSON, this);
         app.channels.pool.comply('push-pool', this.pushPool, this);
+        app.channels.pool.comply('push-json', this.pushJSON, this);
         app.channels.pool.reply('get-pool-design-model', this.giveDesignModel, this);
 
     },
@@ -47,9 +49,17 @@ var LayoutAdminJSON = Mn.LayoutView.extend({
     savePoolDesign: function () {
         this.model.save();
     },
+    savePoolJSON: function (poollogic) {
+        this.model.attributes.poollogic = poollogic;
+        this.model.save();
+    },
     pushPool: function () {
         this.model.push();
     },
+    pushJSON: function(poollogic) {
+        this.model.attributes.poollogic = poollogic;
+        this.model.push();
+    }
     giveDesignModel: function () {
         return (this.model);
     }

@@ -71,17 +71,20 @@
             <test-fixture id="JSONFixture">
                 <div class="layout vertical flex" id="wrapper">
                     <div id="container">
-                        <paper-textarea label="Raw JSON" width="100%" id="jsonInput" value="[[getJSON(poollogic.poollogic)]]"></paper-textarea>
+                        <paper-textarea label="Raw JSON" width="100%" id="jsonInput" value="[[getJSON(poollogic)]]"></paper-textarea>
 
                         <div class="poolListingStatsRow layout horizontal">
-                            <paper-button raised="" flex="" id="btnValidateJSON" on-tap="validateJSON">Validate JSON</paper-button>
-                            <paper-toast fitinto="container" id="toastValid" text="Valid JSON"></paper-toast>
-                            <paper-toast fitinto="container" id="toastInvalid" text="Invalid JSON"></paper-toast>
-                            <paper-button raised="" flex="" on-tap="saveJSON">Save Pool</paper-button>
-                            <paper-button raised="" flex="" on-tap="pushJSON">Push Pool</paper-button>
-                        </div>
+                        <paper-button raised="" flex="" id="btnValidateJSON" on-tap="validateJSON">Validate JSON</paper-button>
+                        <paper-toast fitinto="container" id="toastValid" text="Valid JSON"></paper-toast>
+                        <paper-toast fitinto="container" id="toastInvalid" text="Invalid JSON"></paper-toast>
+                        <paper-button raised="" flex="" on-tap="saveJSON">Save Pool</paper-button>
+                        <paper-button raised="" flex="" on-tap="pushJSON">Push Pool</paper-button>
+
+                        <!--<paper-button raised="" flex="" on-tap="editJSON"><iron-icon icon="icons:assignment"></iron-icon> Edit JSON</paper-button>-->
                     </div>
-                </div>
+                    </div>
+                    
+            </div>
             </test-fixture>
         </template>
         <script>
@@ -93,7 +96,8 @@
                         notify: true,
                         observer: 'attrUpdateChanged'
                     },
-                    poollogic: {notify: true}                
+                    oe: {notify: true},
+                    poollogic: {notify: true}    
                 },
 
                 attrUpdateChanged: function () {
@@ -102,9 +106,9 @@
                 //                console.log(this.poollogic);
                 saveJSON: function () {
                     try {
-                        JSON.parse(this.$.jsonInput.value);
-                        this.poollogic.poollogic = this.$.jsonInput.value;
-                        app.channels.pool.command('save-pool-design', this.poollogic);
+
+                        this.poollogic = JSON.parse(this.$.jsonInput.value);
+                        app.channels.pool.command('save-pool-json', this.poollogic);
                     }    
                     catch(err) {
                         this.$.toastInvalid.open();
@@ -112,9 +116,8 @@
                 },
                 pushJSON: function () {
                     try {
-                        JSON.parse(this.$.jsonInput.value);
-                        this.poollogic.poollogic = this.$.jsonInput.value;
-                        app.channels.pool.command('push-pool', this.poollogic);
+                        this.poollogic = JSON.parse(this.$.jsonInput.value);
+                        app.channels.pool.command('push-json', this.poollogic);
                     }    
                     catch(err) {
                         this.$.toastInvalid.open();
