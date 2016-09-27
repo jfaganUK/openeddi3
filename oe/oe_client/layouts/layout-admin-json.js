@@ -59,7 +59,7 @@ var LayoutAdminJSON = Mn.LayoutView.extend({
     pushJSON: function(poollogic) {
         this.model.attributes.poollogic = poollogic;
         this.model.push();
-    }
+    },
     giveDesignModel: function () {
         return (this.model);
     }
