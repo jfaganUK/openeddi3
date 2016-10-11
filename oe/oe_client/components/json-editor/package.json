@@ -1,0 +1,95 @@
+{
+  "_args": [
+    [
+      "json-editor",
+      "/home/ryan/openeddi3"
+    ]
+  ],
+  "_from": "json-editor@latest",
+  "_id": "json-editor@0.7.28",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/json-editor",
+  "_nodeVersion": "4.2.6",
+  "_npmOperationalInternal": {
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/json-editor-0.7.28.tgz_1470586639573_0.40505922865122557"
+  },
+  "_npmUser": {
+    "email": "jeremy@jeremydorn.com",
+    "name": "jdorn"
+  },
+  "_npmVersion": "3.5.2",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "json-editor",
+    "raw": "json-editor",
+    "rawSpec": "",
+    "scope": null,
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "https://registry.npmjs.org/json-editor/-/json-editor-0.7.28.tgz",
+  "_shasum": "2aa5b0990a2b5076789158e7dd8a2d2108ce9cc5",
+  "_shrinkwrap": null,
+  "_spec": "json-editor",
+  "_where": "/home/ryan/openeddi3",
+  "author": {
+    "email": "jeremy@jeremydorn.com",
+    "name": "Jeremy Dorn",
+    "url": "http://jeremydorn.com"
+  },
+  "bugs": {
+    "url": "https://github.com/jdorn/json-editor/issues"
+  },
+  "dependencies": {},
+  "description": "JSON Schema based editor",
+  "devDependencies": {
+    "grunt": "~1.0.1",
+    "grunt-contrib-concat": "~1.0.0",
+    "grunt-contrib-jshint": "~1.0.0",
+    "grunt-contrib-uglify": "~1.0.0",
+    "grunt-contrib-watch": "~1.0.0"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "2aa5b0990a2b5076789158e7dd8a2d2108ce9cc5",
+    "tarball": "https://registry.npmjs.org/json-editor/-/json-editor-0.7.28.tgz"
+  },
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "gitHead": "26e221593e3678794d4abf6c0ba98ccb180c7387",
+  "homepage": "https://github.com/jdorn/json-editor#readme",
+  "keywords": [
+    "editor",
+    "json",
+    "jsonschema",
+    "schema"
+  ],
+  "license": "MIT",
+  "main": "dist/jsoneditor.js",
+  "maintainers": [
+    {
+      "name": "jdorn",
+      "email": "jeremy@jeremydorn.com"
+    }
+  ],
+  "name": "json-editor",
+  "optionalDependencies": {},
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jdorn/json-editor.git"
+  },
+  "scripts": {
+    "build": "npm install && grunt",
+    "start": "grunt watch",
+    "test": "grunt"
+  },
+  "title": "JSONEditor",
+  "version": "0.7.28"
+}

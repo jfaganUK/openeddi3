@@ -2,6 +2,8 @@
 <!--Created by Apax Software to facilitate direct JSON editing-->
 <html>
 <head>
+    <!--<link href="jsoneditor/dist/jsoneditor.min.css" rel="stylesheet" type="text/css">-->
+    <script src="json-editor/dist/jsoneditor.js"></script>
     <link rel="import" href="/bower_components/polymer/polymer.html">
     <link rel="import" href="/bower_components/paper-button/paper-button.html">
     <link rel="import" href="/bower_components/paper-input/paper-input.html">
@@ -13,6 +15,7 @@
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
     <link rel="import" href="/bower_components/paper-material/paper-material.html">
     <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+
     <dom-module id="oe-admin-json">
         <style>
             /* TODO(polyup): For speed, consider reworking these styles with .classes
@@ -67,10 +70,19 @@
             }
 
         </style>
+
         <template>
+
             <test-fixture id="JSONFixture">
                 <div class="layout vertical flex" id="wrapper">
+                    
                     <div id="container">
+
+                    <span id='valid_indicator'></span>
+                    <div id='jsoneditor'></div>
+
+                    
+
                         <paper-textarea label="Raw JSON" width="100%" id="jsonInput" value="[[getJSON(poollogic)]]"></paper-textarea>
 
                         <div class="poolListingStatsRow layout horizontal">
@@ -82,10 +94,9 @@
 
                         <!--<paper-button raised="" flex="" on-tap="editJSON"><iron-icon icon="icons:assignment"></iron-icon> Edit JSON</paper-button>-->
                     </div>
-                    </div>
-                    
             </div>
             </test-fixture>
+            
         </template>
         <script>
             //noinspection JSUnusedGlobalSymbols
@@ -101,7 +112,128 @@
                 },
 
                 attrUpdateChanged: function () {
+                    if (this.poollogic) {
+                        //console.log("pool logic");
+                        //console.log(this.poollogic);
+                        this.setupForm();
+                    } 
+                    else {
+                        console.log('poollogic ready!');
+                        // For some reason the data is pulled slower than the comoponent is ready
+                        // So we need to listen for when the attributes are updated
+                        // then set everything up as soon as they're ready.
+                        // There has got to be a better way.
+                        function isThisPoolLogic(ev) {
+                            if (self.poollogic && self.poollogic.poolid) {
+                                console.log('setup form');
+                                self.setupForm();
+                            }
+                        }
+
+                        app.channels.pool.on('attributes-updated', _.bind(isThisPoolLogic, this));
+                    }
                     
+                },
+
+                setupForm: function() {
+                    var starting_value  = JSON.stringify(this.poollogic, null, 4);
+                    //starting_value = starting_value.replace(/\"([^(\")"]+)\":/g,"$1:");
+                    starting_value = JSON.parse(starting_value);
+                    
+                    /*var starting_value2 = [
+                    {
+                      poollogic: {poolid: "1234234"}
+                    }
+                    ];
+
+                    console.log(starting_value);
+                    console.log(starting_value2);*/
+                    var editor = new JSONEditor(this.$.jsoneditor, {
+                        //The schema
+                        schema: {
+                          type: "object",
+                              properties: {
+
+                                poollogic: {
+                                  type: "object",
+                                  
+                                  properties: {
+                                    poolid: { type: "string" },
+                                    title: { type: "string"  },
+                                    description: { type: "string" },
+                                    introduction: { type: "string" },
+                                    afterward: { type: "string" },
+                                    dateCreated: { type: "string" }, 
+                                    username: {type:"string"},
+                                    meta: {type:"string"},
+                                    sheetOrder: { type: "array", items: { type: "string" }}
+                                    }
+                                },
+
+                                sheetlogic: {
+                                  type: "array", 
+                                  items: { type: "object", 
+                                    properties: { sheetid: { type: "string" },
+                                    title: { type: "string" },
+                                    description: { type: "string" } 
+                                    }
+                                  }
+                                },
+
+                                eddilogic: {
+                                  type: "array",
+                                  items: { 
+                                    type: "object",
+                                    properties: {
+                                      eid: { type: "string" },
+                                      sheetid: { type: "string" },
+                                      poolid: { type: "string" },
+                                      sortIndex: { type: "integer" },
+                                      title: { type: "string" },
+                                      controlmodule: { type: "string" },
+                                      prompt: { type: "string" }
+                                    }
+                                  }
+                                }
+
+                              }
+                         }, //end of schema
+                         disable_properties: true,
+                         required_by_default: true,
+                        
+                         startval: starting_value,
+                         disable_collapse: true
+                             
+                    });
+
+                    //console.log("Starting Value");
+                    //console.log(starting_value);
+                    //if(starting_value != "") {
+
+                    //editor.setValue(starting_value2);
+                    //}
+
+                    //var value = editor.getValue();
+                    //console.log("Value");
+                    //console.log(value);
+
+                    //Hook up the validation indicator to update its status whenever the editor changes
+                    /*editor.on('change',function() {
+                        //Get an array of errors from the validator
+                        var errors = editor.validate();
+                        var indicator = docment.getElementById('valid_indicator');
+
+                        //Not valid
+                        if(errors.length) {
+                            indicator.style.color = 'red';
+                            indicator.textContent = "not valid";
+                        }
+                        //Valid
+                        else {
+                            indicator.style.color = 'green';
+                            indicator.textContent = "valid";
+                        }
+                    });*/  
                 },
                 //                console.log(this.poollogic);
                 saveJSON: function () {
