@@ -29,7 +29,7 @@
     <script>
         Polymer({
             is: 'oe-boxpop-shorttext',
-            behaviors: [Polymer.NeonAnimatableBehavior],
+            behaviors: [Polymer.NeonAnimatableBehavior, Polymer.IronResizableBehavior],
             properties: {
                 nameResponse: {type: Object, value: {value: ''}, notify: true},
                 name: {type: Object, notify: true},
@@ -38,12 +38,12 @@
                 animationConfig: {
                     value: function () {
                         return {
-                            'exit': {
+                            exit: {
                                 name: 'slide-right-animation',
                                 timing: {duration: 200},
                                 node: this
                             },
-                            'entry': {
+                            entry: {
                                 name: 'slide-from-left-animation',
                                 timing: {delay: 250},
                                 node: this

@@ -1,0 +1,329 @@
+{
+  "poollogic": {
+    "poolid": "borgmaio",
+    "title": "Ego Network Survey - Borgatti, Miao",
+    "description": "Tell us about your people.",
+    "introduction": "Introduction goes here.",
+    "afterward": "The afterword (exit message) goes here.",
+    "sheetOrder": [
+      "yourworld1",
+      "yourworld2",
+      "yourworld3",
+      "alterinterpret",
+      "altertie1",
+      "altertie2"
+    ],
+    "dateCreated": "2016-10-16 16:14:00-04:00"
+  },
+  "sheetlogic": [
+    {
+      "sheetid": "yourworld1",
+      "title": "Tell us about your social world",
+      "description": ""
+    },
+    {
+      "sheetid": "yourworld2",
+      "title": "Tell us about your social world",
+      "description": ""
+    },
+    {
+      "sheetid": "yourworld3",
+      "title": "Tell us about your social world",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret",
+      "title": "Who are these people?",
+      "description": ""
+    },
+    {
+      "sheetid": "altertie1",
+      "title": "Connections",
+      "description": ""
+    },
+    {
+      "sheetid": "altertie2",
+      "title": "Connections",
+      "description": ""
+    }
+  ],
+  "eddilogic": [
+    {
+      "eid": "description",
+      "sheetid": "yourworld1",
+      "poolid": "borgmaio",
+      "title": "directionsBoiler",
+      "controlmodule": "boilerplate",
+      "sortIndex": -10,
+      "prompt": "Please read the directions.",
+      "content": "<p>In this questionnaire we want to collect some data on the people you work with regularly  – who you interact with to get your work done.</p><p> You do not need to use complete names – any names will do as long as you can remember who they refer to. For example, you might have “Jim H.” or  “JS in Marketing” or “my boss’s boss”.</p>"
+    },
+    {
+      "eid": "yourworld1",
+      "sheetid": "yourworld1",
+      "poolid": "borgmaio",
+      "sortIndex": 1,
+      "title": "yourworld1",
+      "controlmodule": "basicnamegen",
+      "prompt": "Please list all of the people that you work with on a weekly basis, or perhaps every two weeks, including people in other departments and organizations.",
+      "namelist": "mainlist"
+    },
+    {
+      "eid": "yourworld2",
+      "sheetid": "yourworld2",
+      "poolid": "borgmaio",
+      "sortIndex": 1,
+      "title": "yourworld2",
+      "controlmodule": "basicnamegen",
+      "prompt": "<p>Here is a list of the people you mentioned in question 1. Look it over and see if there is anyone you would to add.</p><p> For example, maybe a mentor from a previous job that you still consult with about work matters. Maybe your spouse. How about people you dislike or cause problems for you? The objective is to put together a reasonable picture of your world at work.</p>",
+      "namelist": "mainlist"
+    },
+    {
+      "eid": "yourworld3",
+      "sheetid": "yourworld3",
+      "poolid": "borgmaio",
+      "sortIndex": 1,
+      "title": "yourworld3",
+      "controlmodule": "basicnamegen",
+      "prompt": "Did you include your boss and your direct subordinates? If not, please add them now.",
+      "namelist": "mainlist"
+    },
+    {
+      "eid": "alter-description",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "title": "alterDescriptionBoiler",
+      "controlmodule": "boilerplate",
+      "sortIndex": -10,
+      "prompt": "Please read the directions.",
+      "content": "<p>For each person listed below, please answer the questions about them. You don’t have to give exact answers. For example, if we ask what organization does the person work for, we don’t need the exact name. You could just say “my company” or “biggest client”, etc. The same goes for which department they’re in. We only ask that you be consistent, so that if you use “my company” you always write exactly that, so that the computer knows it is the same organization.</p><p>Also, you won’t necessarily know the answers to all of the questions. In those cases, please guess. For example, if we ask about someone’s age, you can make an exact guess, such as “52”,  or you could say “50s”.</p>"
+    },
+    {
+      "eid": "alterAge",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 1,
+      "title": "alterAge",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>What is each person's <strong>age</strong>?</p> <p>Also, you won’t necessarily know the answers to all of the questions. In those cases, please guess. For example, if we ask about someone’s age, you can make an exact guess, such as “52”,  or you could say “50s”.</p>",
+      "namelist": "mainlist",
+      "controltype": "shorttext"
+    },
+    {
+      "eid": "alterGender",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 2,
+      "title": "alterGender",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>What is each person's <strong>gender</strong>?",
+      "namelist": "mainlist",
+      "controltype": "radio",
+      "other": true,
+      "arrayPrompts": [
+        {
+          "arrayid": 0,
+          "prompt": "Male",
+          "value": "male"
+        },
+        {
+          "arrayid": 1,
+          "prompt": "Female",
+          "value": "female"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Prefer not to say",
+          "value": "preferNotToSay"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Trans*",
+          "value": "trans"
+        }
+      ]
+    },
+    {
+      "eid": "alterOrganization",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 3,
+      "title": "alterOrganization",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>What is each person's <strong>organization</strong>?</p><p>For example, if we ask what organization does the person work for, we don’t need the exact name. You could just say “my company” or “biggest client”, etc.</p>",
+      "namelist": "mainlist",
+      "controltype": "shorttext"
+    },
+    {
+      "eid": "alterDepartment",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 4,
+      "title": "alterDepartment",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>What is each person's <strong>department</strong>?</p>",
+      "namelist": "mainlist",
+      "controltype": "shorttext"
+    },
+    {
+      "eid": "alterExperience",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 5,
+      "title": "alterExperience",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>How many <strong>years of experience</strong> does each person have?</p>",
+      "namelist": "mainlist",
+      "controltype": "shorttext"
+    },
+    {
+      "eid": "alterInfluential",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 6,
+      "title": "alterAge",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>How influential is each person in your organization?</p>",
+      "namelist": "mainlist",
+      "controltype": "radio",
+      "other": true,
+      "arrayPrompts": [
+        {
+          "arrayid": 0,
+          "prompt": "Not at all influential",
+          "value": "1"
+        },
+        {
+          "arrayid": 1,
+          "prompt": "Slightly influential",
+          "value": "2"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Moderately influential",
+          "value": "3"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Very influential",
+          "value": "4"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "Extremely influential",
+          "value": "5"
+        }
+      ]
+    },
+    {
+      "eid": "alterRelate",
+      "sheetid": "alterinterpret",
+      "poolid": "borgmaio",
+      "sortIndex": 7,
+      "title": "alterRelate",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>Your relationship with each person. Check all that apply.</p>",
+      "namelist": "mainlist",
+      "controltype": "checklist",
+      "other": true,
+      "arrayPrompts": [
+        {
+          "arrayid": 0,
+          "prompt": "Is your subordinate",
+          "value": "subordinate"
+        },
+        {
+          "arrayid": 1,
+          "prompt": "Is your boss",
+          "value": "boss"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Work closely with",
+          "value": "workclosely"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Someone you can discuss confidential matters with",
+          "value": "confidentialmatters"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "Socialize outside of work",
+          "value": "socialize"
+        },
+        {
+          "arrayid": 5,
+          "prompt": "Politically, is an ally",
+          "value": "ally"
+        },
+        {
+          "arrayid": 6,
+          "prompt": "Is a source of headaches for you",
+          "value": "headache"
+        },
+        {
+          "arrayid": 7,
+          "prompt": "Someone you ask advice about work matters",
+          "value": "advicework"
+        },
+        {
+          "arrayid": 8,
+          "prompt": "Someone you ask advice about career matters",
+          "value": "advicecareer"
+        }
+      ]
+    },
+    {
+      "eid": "altertie1",
+      "sheetid": "altertie1",
+      "poolid": "borgmaio",
+      "sortIndex": 0,
+      "title": "interactWeekly",
+      "controlmodule": "alterties",
+      "prompt": "Please indicate \"yes\" if the pair <strong>interacts at least weekly or once every two weeks</strong>.",
+      "verb": "communicated with",
+      "connectOptions": {
+        "connected": "Yes",
+        "notconnected": "No"
+      },
+      "tieDetails": {
+        "relation": "interact",
+        "type": "undirected",
+        "weighted": false
+      }
+    },
+    {
+      "eid": "altertie2",
+      "sheetid": "altertie2",
+      "poolid": "borgmaio",
+      "sortIndex": 0,
+      "title": "shareConfidence",
+      "controlmodule": "alterties",
+      "prompt": "Please indicate \"yes\" if the pair <strong>shares confidences with each other</strong>.",
+      "verb": "shares confidences with",
+      "connectOptions": {
+        "connected": "Yes",
+        "notconnected": "No"
+      },
+      "tieDetails": {
+        "relation": "confidence",
+        "type": "undirected",
+        "weighted": false
+      }
+    },
+    {
+      "eid": "endboiler",
+      "sheetid": "2",
+      "poolid": "borgmaio",
+      "sortIndex": -1,
+      "title": "endBoiler",
+      "controlmodule": "boilerplate",
+      "prompt": "<h3>All done, thanks!</h3>",
+      "content": "You're all done. Thanks for the help!"
+    }
+  ]
+}
+
+
+
