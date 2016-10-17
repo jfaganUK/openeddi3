@@ -119,12 +119,18 @@ module.exports = Backbone.Model.extend({
 
         var ties = this.attributes.details.ties;
 
+        // See there is a tie to this person already
         if (!_.has(ties, nameid)) {
             ties[nameid] = [];
             ties[nameid].push(tiedetails);
         } else {
+            // See if there is a tie of this relation type to this person
             var ix = _.indexOf(_.pluck(ties[nameid], 'relation'), tiedetails.relation);
-            ties[nameid][ix] = tiedetails;
+            if (ix === -1) {
+                ties[nameid].push(tiedetails);
+            } else {
+                ties[nameid][ix] = tiedetails;
+            }
         }
 
         if (savethis) {
