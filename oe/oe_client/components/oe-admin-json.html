@@ -83,7 +83,7 @@
 
                     
 
-                        <paper-textarea label="Raw JSON" width="100%" id="jsonInput" value="[[getJSON(poollogic)]]"></paper-textarea>
+                        <!--<paper-textarea label="Raw JSON" width="100%" id="jsonInput" value="[[getJSON(poollogic)]]"></paper-textarea>-->
 
                         <div class="poolListingStatsRow layout horizontal">
                         <paper-button raised="" flex="" id="btnValidateJSON" on-tap="validateJSON">Validate JSON</paper-button>
@@ -112,9 +112,8 @@
                 },
 
                 attrUpdateChanged: function () {
+                    //Make sure the pool logic is loaded fulloy before the components
                     if (this.poollogic) {
-                        //console.log("pool logic");
-                        //console.log(this.poollogic);
                         this.setupForm();
                     } 
                     else {
@@ -124,31 +123,25 @@
                         // then set everything up as soon as they're ready.
                         // There has got to be a better way.
                         function isThisPoolLogic(ev) {
-                            if (self.poollogic && self.poollogic.poolid) {
-                                console.log('setup form');
-                                self.setupForm();
+                            if (this.poollogic && this.poollogic.poolid) {
+                                //console.log('setup form');
+                                this.setupForm();
                             }
                         }
 
                         app.channels.pool.on('attributes-updated', _.bind(isThisPoolLogic, this));
                     }
+                    //this.setupForm();
                     
                 },
 
                 setupForm: function() {
                     var starting_value  = JSON.stringify(this.poollogic, null, 4);
-                    //starting_value = starting_value.replace(/\"([^(\")"]+)\":/g,"$1:");
                     starting_value = JSON.parse(starting_value);
                     
-                    /*var starting_value2 = [
+                    if(this.editor == null) 
                     {
-                      poollogic: {poolid: "1234234"}
-                    }
-                    ];
-
-                    console.log(starting_value);
-                    console.log(starting_value2);*/
-                    var editor = new JSONEditor(this.$.jsoneditor, {
+                    this.editor = new JSONEditor(this.$.jsoneditor, {
                         //The schema
                         schema: {
                           type: "object",
@@ -202,56 +195,64 @@
                          required_by_default: true,
                         
                          startval: starting_value,
-                         disable_collapse: true
+                         disable_collapse: false
                              
                     });
+                    }
 
-                    //console.log("Starting Value");
-                    //console.log(starting_value);
-                    //if(starting_value != "") {
-
-                    //editor.setValue(starting_value2);
-                    //}
-
-                    //var value = editor.getValue();
-                    //console.log("Value");
-                    //console.log(value);
-
+                    /*var indicator = this.$.valid_indicator;
                     //Hook up the validation indicator to update its status whenever the editor changes
-                    /*editor.on('change',function() {
+                    this.editor.on('change',function() {
                         //Get an array of errors from the validator
-                        var errors = editor.validate();
-                        var indicator = docment.getElementById('valid_indicator');
+                        var errors = this.editor.validate();
+                        //var indicator = this.$.valid_indicator;
 
                         //Not valid
                         if(errors.length) {
                             indicator.style.color = 'red';
-                            indicator.textContent = "not valid";
+                            indicator.textContent = "Not Valid";
                         }
                         //Valid
                         else {
                             indicator.style.color = 'green';
-                            indicator.textContent = "valid";
+                            indicator.textContent = "Valid JSON";
                         }
-                    });*/  
+                    });*/
                 },
-                //                console.log(this.poollogic);
                 saveJSON: function () {
                     try {
-
-                        this.poollogic = JSON.parse(this.$.jsonInput.value);
-                        app.channels.pool.command('save-pool-json', this.poollogic);
+                        var errors = this.editor.validate();
+                        if(errors.length) 
+                        {
+                            this.$.toastInvalid.open();
+                        }
+                        else 
+                        {
+                            this.poollogic = this.editor.getValue();
+                            app.channels.pool.command('save-pool-json', this.poollogic);
+                        }
+                        
                     }    
                     catch(err) {
+                        console.log(err);
                         this.$.toastInvalid.open();
                     }
                 },
                 pushJSON: function () {
                     try {
-                        this.poollogic = JSON.parse(this.$.jsonInput.value);
-                        app.channels.pool.command('push-json', this.poollogic);
+                        var errors = this.editor.validate();
+                        if(errors.length) 
+                        {
+                            this.$.toastInvalid.open();
+                        }
+                        else 
+                        {
+                            this.poollogic = this.editor.getValue();
+                            app.channels.pool.command('push-json', this.poollogic );
+                        }
                     }    
                     catch(err) {
+                        console.log(err);
                         this.$.toastInvalid.open();
                     }
                 },
@@ -260,10 +261,13 @@
                 },
                 validateJSON: function () {
                     try {
-                        JSON.parse(this.$.jsonInput.value);
+                        //var editor = new JSONEditor(this.$.jsoneditor);
+                        var jsonString = JSON.stringify(this.editor.getValue(), null, 4);
+                        JSON.parse(jsonString);
                         this.$.toastValid.open();
                     }
                     catch(err) {
+                        console.log(err);
                         this.$.toastInvalid.open();
                     }
                 }

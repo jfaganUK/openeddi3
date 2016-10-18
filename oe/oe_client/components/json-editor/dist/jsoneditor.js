@@ -3147,10 +3147,10 @@ JSONEditor.defaults.editors.object = JSONEditor.AbstractEditor.extend({
   setValue: function(value, initial) {
     var self = this;
     value = value || {};
-    console.log("value1");
-    console.log(value);
-    console.log(typeof value);
-    console.log(Array.isArray(value));
+    //console.log("value1");
+    //console.log(value);
+    //console.log(typeof value);
+    //console.log(Array.isArray(value));
     //if(typeof value !== "object"){ //} || Array.isArray(value)) {
     //  value = {};
       //console.log("value");
