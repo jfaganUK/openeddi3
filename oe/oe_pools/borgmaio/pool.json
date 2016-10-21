@@ -6,48 +6,133 @@
     "introduction": "Introduction goes here.",
     "afterward": "The afterword (exit message) goes here.",
     "sheetOrder": [
+      "consentpage",
+      "whoareyou",
       "yourworld1",
       "yourworld2",
       "yourworld3",
-      "alterinterpret",
+      "yourworld4",
+      "alterinterpret1",
+      "alterinterpret2",
+      "alterinterpret3",
+      "alterinterpret4",
+      "alterinterpret5",
+      "alterinterpret6",
+      "alterinterpret7",
+      "alterinterpret8",
       "altertie1",
-      "altertie2"
+      "altertie2",
+      "ending"
     ],
     "dateCreated": "2016-10-16 16:14:00-04:00"
   },
   "sheetlogic": [
     {
+      "sheetid": "consentpage",
+      "title": "Please read the consent",
+      "description": ""
+    },
+    {
+      "sheetid": "whoareyou",
+      "title": "Who are you?",
+      "description": ""
+    },
+    {
       "sheetid": "yourworld1",
-      "title": "Tell us about your social world",
+      "title": "Part 1. Your Network",
       "description": ""
     },
     {
       "sheetid": "yourworld2",
-      "title": "Tell us about your social world",
+      "title": "Part 1. Your Network",
       "description": ""
     },
     {
       "sheetid": "yourworld3",
-      "title": "Tell us about your social world",
+      "title": "Part 1. Your Network",
       "description": ""
     },
     {
-      "sheetid": "alterinterpret",
-      "title": "Who are these people?",
+      "sheetid": "yourworld4",
+      "title": "Part 1. Your Network",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret1",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret2",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret3",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret4",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret5",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret6",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret7",
+      "title": "Part 2. Describe these people",
+      "description": ""
+    },
+    {
+      "sheetid": "alterinterpret8",
+      "title": "Part 2. Describe these people",
       "description": ""
     },
     {
       "sheetid": "altertie1",
-      "title": "Connections",
+      "title": "Part 3. Connections",
       "description": ""
     },
     {
       "sheetid": "altertie2",
-      "title": "Connections",
+      "title": "Part 3. Connections",
+      "description": ""
+    },
+    {
+      "sheetid": "ending",
+      "title": "Thanks",
       "description": ""
     }
   ],
   "eddilogic": [
+    {
+      "eid": "consentQ",
+      "sheetid": "consentpage",
+      "poolid": "borgmaio",
+      "title": "consentQ",
+      "controlmodule": "consent",
+      "sortIndex": -10,
+      "prompt": "<p><h3>Ego Network Survey</h3></p><p>Thank you for participating in this class survey. The purpose is to demonstrate one approach to collecting social network data via survey. This approach is known as an egocentric study design. Some parts of the data will be shared in class (nothing will be shared outside of class). However, a special feature of egocentric data collection is that the respondent – in this case, you – does not need to give full or real names in responses to the questions, as long as you can remember who the nicknames refer to in real life. So the only bit that is not private is your name, since we need to know whose survey it is in order to discuss the results with you. Note that the data will not be used for research or any other purpose than that to contribute to this class.</p>",
+      "consent": "<p>Do you consent to participate?</p>"
+    },
+    {
+      "eid": "yourname",
+      "sheetid": "whoareyou",
+      "poolid": "borgmaio",
+      "title": "yourName",
+      "controlmodule": "shorttext",
+      "sortIndex": -10,
+      "prompt": "What is your name? <em>Please do NOT omit.</em>"
+    },
     {
       "eid": "description",
       "sheetid": "yourworld1",
@@ -75,7 +160,7 @@
       "sortIndex": 1,
       "title": "yourworld2",
       "controlmodule": "basicnamegen",
-      "prompt": "<p>Here is a list of the people you mentioned in question 1. Look it over and see if there is anyone you would to add.</p><p> For example, maybe a mentor from a previous job that you still consult with about work matters. Maybe your spouse. How about people you dislike or cause problems for you? The objective is to put together a reasonable picture of your world at work.</p>",
+      "prompt": "<p>Here is a list of the people you mentioned in the previous question. Look it over and see if there is anyone else that should be on that list. These should be people have an impact on your work, but don’t have to work where you work. It could be a mentor from a previous job that you still consult with about work matters. Important: don’t forget people you dislike or cause problems for you at work – political adversaries, stumbling blocks, etc.</p>",
       "namelist": "mainlist"
     },
     {
@@ -89,6 +174,16 @@
       "namelist": "mainlist"
     },
     {
+      "eid": "yourworld4",
+      "sheetid": "yourworld4",
+      "poolid": "borgmaio",
+      "sortIndex": 1,
+      "title": "yourworld4",
+      "controlmodule": "basicnamegen",
+      "prompt": "Please list people that you currently don’t have much interaction with, but would like to develop a relationship with in the future in order to either further your career or get accomplish some of your work goals.",
+      "namelist": "mainlist"
+    },
+    {
       "eid": "alter-description",
       "sheetid": "alterinterpret",
       "poolid": "borgmaio",
@@ -96,11 +191,11 @@
       "controlmodule": "boilerplate",
       "sortIndex": -10,
       "prompt": "Please read the directions.",
-      "content": "<p>For each person listed below, please answer the questions about them. You don’t have to give exact answers. For example, if we ask what organization does the person work for, we don’t need the exact name. You could just say “my company” or “biggest client”, etc. The same goes for which department they’re in. We only ask that you be consistent, so that if you use “my company” you always write exactly that, so that the computer knows it is the same organization.</p><p>Also, you won’t necessarily know the answers to all of the questions. In those cases, please guess. For example, if we ask about someone’s age, you can make an exact guess, such as “52”,  or you could say “50s”.</p>"
+      "content": "<p>For each person listed below, please answer the questions about them. You don’t have to give exact answers. For example, if we ask what organization does the person work for, we don’t need the exact name. You could just say “my company” or “biggest client”, etc. The same goes for which department they’re in. We only ask that you be consistent, so that if you use “my company” you always write exactly that, so that the computer knows it is the same organization.</p><p>Also, you won’t necessarily know the answers to all of the questions. In those cases, <strong>please guess</strong>. For example, if we ask about someone’s age, you can make an exact guess, such as “52”,  or you could say “50s”.</p>"
     },
     {
       "eid": "alterAge",
-      "sheetid": "alterinterpret",
+      "sheetid": "alterinterpret1",
       "poolid": "borgmaio",
       "sortIndex": 1,
       "title": "alterAge",
@@ -111,7 +206,7 @@
     },
     {
       "eid": "alterGender",
-      "sheetid": "alterinterpret",
+      "sheetid": "alterinterpret2",
       "poolid": "borgmaio",
       "sortIndex": 2,
       "title": "alterGender",
@@ -145,7 +240,7 @@
     },
     {
       "eid": "alterOrganization",
-      "sheetid": "alterinterpret",
+      "sheetid": "alterinterpret3",
       "poolid": "borgmaio",
       "sortIndex": 3,
       "title": "alterOrganization",
@@ -156,7 +251,7 @@
     },
     {
       "eid": "alterDepartment",
-      "sheetid": "alterinterpret",
+      "sheetid": "alterinterpret4",
       "poolid": "borgmaio",
       "sortIndex": 4,
       "title": "alterDepartment",
@@ -167,27 +262,32 @@
     },
     {
       "eid": "alterExperience",
-      "sheetid": "alterinterpret",
+      "sheetid": "alterinterpret5",
       "poolid": "borgmaio",
       "sortIndex": 5,
       "title": "alterExperience",
       "controlmodule": "niBoxpop",
-      "prompt": "<p>How many <strong>years of experience</strong> does each person have?</p>",
+      "prompt": "<p>How many <strong>years of experience in their industry</strong> does each person have?</p>",
       "namelist": "mainlist",
       "controltype": "shorttext"
     },
     {
       "eid": "alterInfluential",
-      "sheetid": "alterinterpret",
+      "sheetid": "alterinterpret6",
       "poolid": "borgmaio",
       "sortIndex": 6,
-      "title": "alterAge",
+      "title": "alterInfluential",
       "controlmodule": "niBoxpop",
-      "prompt": "<p>How influential is each person in your organization?</p>",
+      "prompt": "<p>How influential is each person in your organization? (If they are a coworker)</p>",
       "namelist": "mainlist",
       "controltype": "radio",
-      "other": true,
+      "other": false,
       "arrayPrompts": [
+        {
+          "arrayid": 5,
+          "prompt": "NA - not a coworker",
+          "value": "-1"
+        },
         {
           "arrayid": 0,
           "prompt": "Not at all influential",
@@ -216,10 +316,49 @@
       ]
     },
     {
-      "eid": "alterRelate",
-      "sheetid": "alterinterpret",
+      "eid": "alterInteract",
+      "sheetid": "alterinterpret7",
       "poolid": "borgmaio",
       "sortIndex": 7,
+      "title": "alterInteract",
+      "controlmodule": "niBoxpop",
+      "prompt": "<p>How often do you interact with each person?</p>",
+      "namelist": "mainlist",
+      "controltype": "radio",
+      "other": false,
+      "arrayPrompts": [
+        {
+          "arrayid": 0,
+          "prompt": "Never",
+          "value": "1"
+        },
+        {
+          "arrayid": 1,
+          "prompt": "Rarely",
+          "value": "2"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Sometimes",
+          "value": "3"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Often",
+          "value": "4"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "Always",
+          "value": "5"
+        }
+      ]
+    },
+    {
+      "eid": "alterRelate",
+      "sheetid": "alterinterpret8",
+      "poolid": "borgmaio",
+      "sortIndex": 8,
       "title": "alterRelate",
       "controlmodule": "niBoxpop",
       "prompt": "<p>Your relationship with each person. Check all that apply.</p>",
@@ -259,20 +398,40 @@
         },
         {
           "arrayid": 6,
+          "prompt": "Politically, is an adversary",
+          "value": "adversary"
+        },
+        {
+          "arrayid": 7,
           "prompt": "Is a source of headaches for you",
           "value": "headache"
         },
         {
-          "arrayid": 7,
+          "arrayid": 8,
           "prompt": "Someone you ask advice about work matters",
           "value": "advicework"
         },
         {
-          "arrayid": 8,
+          "arrayid": 9,
           "prompt": "Someone you ask advice about career matters",
           "value": "advicecareer"
+        },
+        {
+          "arrayid": 10,
+          "prompt": "Someone you have to interact with because of your (or their) role",
+          "value": "interactrole"
         }
       ]
+    },
+    {
+      "eid": "connectionBoiler",
+      "sheetid": "altertie1",
+      "poolid": "borgmaio",
+      "sortIndex": -1,
+      "title": "connectionBoiler",
+      "controlmodule": "boilerplate",
+      "prompt": "<h3>Instructions</h3><p>Now we want to know which of your contacts interact with your other contacts. Again, we don’t assume you necessarily know the answers for sure; we are just looking for your best guess.</p>",
+      "content": ""
     },
     {
       "eid": "altertie1",
@@ -281,7 +440,7 @@
       "sortIndex": 0,
       "title": "interactWeekly",
       "controlmodule": "alterties",
-      "prompt": "Please indicate \"yes\" if the pair <strong>interacts at least weekly or once every two weeks</strong>.",
+      "prompt": "For each pair of persons, please indicate \"yes\" if they interact on a weekly or monthly basis.",
       "verb": "communicated with",
       "connectOptions": {
         "connected": "Yes",
@@ -300,27 +459,27 @@
       "sortIndex": 0,
       "title": "shareConfidence",
       "controlmodule": "alterties",
-      "prompt": "Please indicate \"yes\" if the pair <strong>shares confidences with each other</strong>.",
+      "prompt": "Please indicate \"yes\" if the pair <strong>trust each other</strong>.",
       "verb": "shares confidences with",
       "connectOptions": {
         "connected": "Yes",
         "notconnected": "No"
       },
       "tieDetails": {
-        "relation": "confidence",
+        "relation": "trust",
         "type": "undirected",
         "weighted": false
       }
     },
     {
       "eid": "endboiler",
-      "sheetid": "2",
+      "sheetid": "ending",
       "poolid": "borgmaio",
       "sortIndex": -1,
       "title": "endBoiler",
       "controlmodule": "boilerplate",
-      "prompt": "<h3>All done, thanks!</h3>",
-      "content": "You're all done. Thanks for the help!"
+      "prompt": "<h3>All done, thanks!</h3><p>You're all done. Thanks for the help!</p>",
+      "content": ""
     }
   ]
 }
