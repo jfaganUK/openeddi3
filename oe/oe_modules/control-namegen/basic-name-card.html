@@ -8,27 +8,27 @@
 <dom-module id="oe-basic-name-card">
     <style include="iron-flex iron-flex-alignment">
         #radio-item {
-                margin-left: 10px;
-                margin-right: 10px;
-                margin-bottom: 5px;
-                padding: 5px;
-                height: 100%;
-                background-color: white;
-            }
+            margin-left: 10px;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            padding: 5px;
+            height: 100%;
+            background-color: white;
+        }
 
-            #nameCardName {
-                height: 24px;
-                padding-top: 12px;
-            }
+        #nameCardName {
+            height: 24px;
+            padding-top: 12px;
+        }
 
-            .nameCardNameEdit > paper-input {
-                width: 90%;
-            }
+        .nameCardNameEdit > paper-input {
+            width: 90%;
+        }
 
-            #nameCardEdit {
-                display: none;
-            }
-        </style>
+        #nameCardEdit {
+            display: none;
+        }
+    </style>
     <template>
         <paper-material id="radio-item">
             <section id="nameCardShow">
@@ -66,11 +66,14 @@
             },
             editNameTapped: function () {
                 this.previousName = this.name;
-                var editBox = $(this.$.nameCardEdit);
-                editBox.show();
+                var editBox = this.$.nameCardEdit;
+                editBox.style.display = 'block';
+                editInput = editBox.getElementsByTagName('paper-input')[0];
+                editInput.$.input.focus();
+                editInput.$.input.select();
                 editBox.find('paper-input').focus();
                 editBox.find('paper-input').select();
-                $(this.$.nameCardShow).hide();
+                this.$.nameCardShow.style.display = "none";
             },
             removeNameTapped: function () {
                 this.fire('remove-name');
