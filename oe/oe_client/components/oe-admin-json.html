@@ -112,112 +112,103 @@
                 },
 
                 attrUpdateChanged: function () {
-                    //Make sure the pool logic is loaded fulloy before the components
+                    var self = this;
+                    this.initialSetup = true;
+                    //Make sure the pool logic is loaded fully before the components
                     if (this.poollogic) {
                         this.setupForm();
                     } 
                     else {
-                        console.log('poollogic ready!');
+                        console.log('poollogic not ready');
+                        //console.log('poollogic ready!');
                         // For some reason the data is pulled slower than the comoponent is ready
                         // So we need to listen for when the attributes are updated
                         // then set everything up as soon as they're ready.
                         // There has got to be a better way.
                         function isThisPoolLogic(ev) {
-                            if (this.poollogic && this.poollogic.poolid) {
+                            if (self.poollogic && self.poollogic.poolid) {
                                 //console.log('setup form');
-                                this.setupForm();
+                                console.log('poollogic ready!');
+                                self.setupForm();
                             }
                         }
 
                         app.channels.pool.on('attributes-updated', _.bind(isThisPoolLogic, this));
                     }
-                    //this.setupForm();
-                    
                 },
 
                 setupForm: function() {
-                    var starting_value  = JSON.stringify(this.poollogic, null, 4);
-                    starting_value = JSON.parse(starting_value);
-                    
-                    if(this.editor == null) 
+                    try 
                     {
-                    this.editor = new JSONEditor(this.$.jsoneditor, {
-                        //The schema
-                        schema: {
-                          type: "object",
-                              properties: {
-
-                                poollogic: {
-                                  type: "object",
-                                  
-                                  properties: {
-                                    poolid: { type: "string" },
-                                    title: { type: "string"  },
-                                    description: { type: "string" },
-                                    introduction: { type: "string" },
-                                    afterward: { type: "string" },
-                                    dateCreated: { type: "string" }, 
-                                    username: {type:"string"},
-                                    meta: {type:"string"},
-                                    sheetOrder: { type: "array", items: { type: "string" }}
-                                    }
-                                },
-
-                                sheetlogic: {
-                                  type: "array", 
-                                  items: { type: "object", 
-                                    properties: { sheetid: { type: "string" },
-                                    title: { type: "string" },
-                                    description: { type: "string" } 
-                                    }
-                                  }
-                                },
-
-                                eddilogic: {
-                                  type: "array",
-                                  items: { 
-                                    type: "object",
-                                    properties: {
-                                      eid: { type: "string" },
-                                      sheetid: { type: "string" },
-                                      poolid: { type: "string" },
-                                      sortIndex: { type: "integer" },
-                                      title: { type: "string" },
-                                      controlmodule: { type: "string" },
-                                      prompt: { type: "string" }
-                                    }
-                                  }
-                                }
-
-                              }
-                         }, //end of schema
-                         disable_properties: true,
-                         required_by_default: true,
+                        console.log(this.poollogic);
+                        var starting_value  = JSON.stringify(this.poollogic, null, 4);
+                        starting_value = JSON.parse(starting_value);
                         
-                         startval: starting_value,
-                         disable_collapse: false
-                             
-                    });
+                        if(this.editor == null) 
+                        {
+                        this.editor = new JSONEditor(this.$.jsoneditor, {
+                            //The schema
+                            schema: {
+                              type: "object",
+                                  properties: {
+
+                                    poollogic: {
+                                      type: "object",
+                                      
+                                      properties: {
+                                        poolid: { type: "string" },
+                                        title: { type: "string"  },
+                                        description: { type: "string" },
+                                        introduction: { type: "string" },
+                                        afterward: { type: "string" },
+                                        dateCreated: { type: "string" }, 
+                                        username: {type:"string"},
+                                        meta: {type:"string"},
+                                        sheetOrder: { type: "array", items: { type: "string" }}
+                                        }
+                                    },
+
+                                    sheetlogic: {
+                                      type: "array", 
+                                      items: { type: "object", 
+                                        properties: { sheetid: { type: "string" },
+                                        title: { type: "string" },
+                                        description: { type: "string" } 
+                                        }
+                                      }
+                                    },
+
+                                    eddilogic: {
+                                      type: "array",
+                                      items: { 
+                                        type: "object",
+                                        properties: {
+                                          eid: { type: "string" },
+                                          sheetid: { type: "string" },
+                                          poolid: { type: "string" },
+                                          sortIndex: { type: "integer" },
+                                          title: { type: "string" },
+                                          controlmodule: { type: "string" },
+                                          prompt: { type: "string" }
+                                        }
+                                      }
+                                    }
+
+                                  }
+                             }, //end of schema
+                             disable_properties: true,
+                             required_by_default: true,
+                            
+                             startval: starting_value,
+                             disable_collapse: false
+                                 
+                        });
+                        }
+                    }
+                    catch(err) {
+                        console.log(err);
                     }
 
-                    /*var indicator = this.$.valid_indicator;
-                    //Hook up the validation indicator to update its status whenever the editor changes
-                    this.editor.on('change',function() {
-                        //Get an array of errors from the validator
-                        var errors = this.editor.validate();
-                        //var indicator = this.$.valid_indicator;
-
-                        //Not valid
-                        if(errors.length) {
-                            indicator.style.color = 'red';
-                            indicator.textContent = "Not Valid";
-                        }
-                        //Valid
-                        else {
-                            indicator.style.color = 'green';
-                            indicator.textContent = "Valid JSON";
-                        }
-                    });*/
                 },
                 saveJSON: function () {
                     try {
