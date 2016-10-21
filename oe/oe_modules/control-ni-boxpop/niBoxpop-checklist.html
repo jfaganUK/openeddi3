@@ -69,7 +69,11 @@
                 arrayPrompts: {type: Array},
                 showOther: {type: Boolean},
                 oe: {type: Object},
-                nameResponse: {type: Object, value: {value: {}, other: ''}, notify: true},
+                nameResponse: {
+                    type: Object, value: function () {
+                        return {value: {}, other: ''};
+                    }, notify: true
+                },
                 otherValue: {type: String, notify: true},
                 animationConfig: {
                     value: function () {
