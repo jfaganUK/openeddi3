@@ -1,8 +1,8 @@
 {
   "poollogic": {
     "poolid": "borgmaio",
-    "title": "Ego Network Survey - Borgatti, Miao",
-    "description": "Tell us about your people.",
+    "title": "Ego Network Survey",
+    "description": "Survey of personal contacts, and who they know.",
     "introduction": "Introduction goes here.",
     "afterward": "The afterword (exit message) goes here.",
     "sheetOrder": [
@@ -29,7 +29,7 @@
   "sheetlogic": [
     {
       "sheetid": "consentpage",
-      "title": "Please read the consent",
+      "title": "",
       "description": ""
     },
     {
@@ -131,7 +131,7 @@
       "title": "yourName",
       "controlmodule": "shorttext",
       "sortIndex": -10,
-      "prompt": "What is your name? <em>Please do NOT omit.</em>"
+      "prompt": "What is your name? (Please do NOT omit.)"
     },
     {
       "eid": "description",
@@ -140,8 +140,8 @@
       "title": "directionsBoiler",
       "controlmodule": "boilerplate",
       "sortIndex": -10,
-      "prompt": "Please read the directions.",
-      "content": "<p>In this questionnaire we want to collect some data on the people you work with regularly  – who you interact with to get your work done.</p><p> You do not need to use complete names – any names will do as long as you can remember who they refer to. For example, you might have “Jim H.” or  “JS in Marketing” or “my boss’s boss”.</p>"
+      "prompt": "",
+      "content": ""
     },
     {
       "eid": "yourworld1",
@@ -150,7 +150,7 @@
       "sortIndex": 1,
       "title": "yourworld1",
       "controlmodule": "basicnamegen",
-      "prompt": "Please list all of the people that you work with on a weekly basis, or perhaps every two weeks, including people in other departments and organizations.",
+      "prompt": "<p>In this questionnaire we want to collect some data on the people you work with regularly  – who you interact with to get your work done.</p><p> You do not need to use complete names – any names will do as long as you can remember who they refer to. For example, you might have “Jim H.” or  “JS in Marketing” or “my boss’s boss”.</p><p>Please list the most important people that you work with on a weekly basis or monthly basis, including people in other departments and organizations.</p>",
       "namelist": "mainlist"
     },
     {
@@ -160,7 +160,7 @@
       "sortIndex": 1,
       "title": "yourworld2",
       "controlmodule": "basicnamegen",
-      "prompt": "<p>Here is a list of the people you mentioned in the previous question. Look it over and see if there is anyone else that should be on that list. These should be people have an impact on your work, but don’t have to work where you work. It could be a mentor from a previous job that you still consult with about work matters. Important: don’t forget people you dislike or cause problems for you at work – political adversaries, stumbling blocks, etc.</p>",
+      "prompt": "<p>Here is a list of the people you mentioned in Question 1. Look it over and see if there is anyone else that should be on that list. These should be people have an impact on your work, but don’t have to work where you work. It could be a mentor from a previous job that you still consult with about work matters. Important: don’t forget people you dislike or cause problems for you at work – political adversaries, stumbling blocks, etc.</p><p>The objective is to put together a reasonable picture of the important people in your social world that affect your work.</p>",
       "namelist": "mainlist"
     },
     {
@@ -190,8 +190,8 @@
       "title": "alterDescriptionBoiler",
       "controlmodule": "boilerplate",
       "sortIndex": -10,
-      "prompt": "Please read the directions.",
-      "content": "<p>For each person listed below, please answer the questions about them. You don’t have to give exact answers. For example, if we ask what organization does the person work for, we don’t need the exact name. You could just say “my company” or “biggest client”, etc. The same goes for which department they’re in. We only ask that you be consistent, so that if you use “my company” you always write exactly that, so that the computer knows it is the same organization.</p><p>Also, you won’t necessarily know the answers to all of the questions. In those cases, <strong>please guess</strong>. For example, if we ask about someone’s age, you can make an exact guess, such as “52”,  or you could say “50s”.</p>"
+      "prompt": "<p>For each person listed below, please answer the questions about them. You don’t have to give exact answers. For example, if we ask what organization does the person work for, you don’t need to give an exact name. You could just say “my company” or “biggest client”, etc. The same goes for which department they’re in. We only ask that you be consistent, so that if you use “my company” you always write exactly that, so that the computer knows it is the same organization.</p><p>Also, you won’t necessarily know the answers to all of the questions. In those cases, please guess. For example, if we ask about someone’s age, you can make an exact guess, such as “52”, or you could say “50s”.</p>",
+      "content": ""
     },
     {
       "eid": "alterAge",
@@ -200,7 +200,7 @@
       "sortIndex": 1,
       "title": "alterAge",
       "controlmodule": "niBoxpop",
-      "prompt": "<p>What is each person's <strong>age</strong>?</p> <p>Also, you won’t necessarily know the answers to all of the questions. In those cases, please guess. For example, if we ask about someone’s age, you can make an exact guess, such as “52”,  or you could say “50s”.</p>",
+      "prompt": "<p>What is each person's <strong>age</strong>?</p>",
       "namelist": "mainlist",
       "controltype": "shorttext"
     },
@@ -375,11 +375,6 @@
           "arrayid": 1,
           "prompt": "Is your boss",
           "value": "boss"
-        },
-        {
-          "arrayid": 2,
-          "prompt": "Work closely with",
-          "value": "workclosely"
         },
         {
           "arrayid": 3,

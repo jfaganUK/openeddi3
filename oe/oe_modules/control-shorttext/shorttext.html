@@ -19,7 +19,7 @@
         <template is="dom-if" if="{{oe.helptext}}">
             <oe-helptext help-text="{{oe.helptext}}"></oe-helptext>
         </template>
-        <paper-input class="oe-shorttext-input" label="{{oe.prompt}}" value="{{response.value}}"
+        <paper-input class="oe-shorttext-input" label="Type your response here." value="{{response.value}}"
                      on-blur="updateResponse"></paper-input>
     </template>
     <script>

@@ -10,7 +10,8 @@
     </style>
     <template>
         <div class="layout horizontal">
-            <paper-input class="oe-nameinput flex" label="{{oe.prompt}}" value="{{newName}}">
+            <paper-input class="oe-nameinput flex" label="Enter a name here and press Enter, or click Add Name"
+                         value="{{newName}}">
                 <iron-a11y-keys keys="enter" on-keys-pressed="addNewName"></iron-a11y-keys>
             </paper-input>
             <paper-button on-tap="addNewName" raise="">Add Name</paper-button>
@@ -28,7 +29,10 @@
             ready: function () {
             },
             addNewName: function () {
-                //noinspection JSUnresolvedVariable
+                if (this.newName.trim() == '') {
+                    // if the name is blank then do nothing, I think
+                    return;
+                }
                 var o = {
                     namelist: this.oe.namelist,
                     name: this.newName
