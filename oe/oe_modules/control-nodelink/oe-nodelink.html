@@ -9,11 +9,13 @@
 
 // TODO have this response to the tablet turning
 <dom-module id="oe-nodelink">
+    <!--suppress HtmlUnknownAttribute -->
     <style include="iron-flex iron-flex-alignment">
         paper-toast {
-            bottom: 0;
+            /** Removed this, because I don't need it, I guess **/
+            /* bottom: 0;
             left: 0;
-            width: 100%;
+            width: 100%; */
         }
 
         paper-toast .undo {
@@ -29,13 +31,13 @@
         /*noinspection ALL*/
         path.link {
             fill: none;
-            stroke: #000;
+            stroke: blue;
             stroke-width: 4px;
             cursor: default;
         }
 
         /*noinspection ALL*/
-        path.link.dragline {
+        ::svg > path.link.dragline {
             pointer-events: none;
         }
 
@@ -147,7 +149,8 @@
                     tox: d.x,
                     toy: d.y
                 });
-                this.pointer.classed('hidden', false).attr('d', _.bind(this.pointer.drawline, this.pointer));
+                this.pointer.attr('d', _.bind(this.pointer.drawline, this.pointer)).
+                        style('display', 'block');
             },
             pointerDragging: function (d) {
                 // if we are actually dragging the pointer
@@ -176,28 +179,20 @@
                 }
             },
             getNodeAtPoint: function (x, y) {
-                // This works by creating a 0-width rectangle
-                // then it uses the getIntersectionList to see what items are intersected.
-                // Pick the first one, see if we can d3.select it and return
-                var svg = this.svg.node();
-                //noinspection JSUnresolvedFunction
-                var rect = svg.createSVGRect();
-                rect.x = x;
-                rect.y = y;
-                // Now to go through each element
-                //noinspection JSUnresolvedFunction
-                var ilist = svg.getIntersectionList(rect, svg);
-                var i = null, id;
-                for (var j = 0; j < ilist.length; j++) {
-                    if (ilist[j].__data__ && ilist[j].__data__.id) {
-                        id = ilist[j].__data__.id;
-                        i = this.nlGetD3NodeById(id);
-                        break;
+                // Loop through the nodes on the screen
+                // Just do some geometry to test if the current point is within the space of a node
+                var nd, dx, dy, dd, returnNode;
+                for (var i = 0; i < this.nd.length; i++) {
+                    nd = this.nd[i];
+                    dx = x - nd.x;
+                    dy = y - nd.y;
+                    dd = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+                    if (dd <= this.cRadius) {
+                        returnNode = this.nlGetD3NodeById(nd.id);
+                        this.touchHover = returnNode === null ? '' : returnNode.name;
+                        return returnNode;
                     }
                 }
-                //noinspection JSUnusedGlobalSymbols
-                this.touchHover = i === null ? '' : i.__data__.name;
-                return i;
             },
             getNodeNameFromID: function (id) {
                 var nm = app.currentPool.namelist.get(id);
@@ -205,7 +200,7 @@
             },
             pointerDragEnd: function (d) {
                 var res;
-                this.pointer.classed('hidden', true);
+                this.pointer.style('display', 'none');
                 if (this.pointer.hovernode) {
                     var id1 = this.pointer.node.id;
                     var id2 = this.pointer.hovernode.__data__.id;
@@ -266,7 +261,10 @@
                     self.pointerDragging.call(self, d);
                 });
                 // The pointer line
-                this.pointer = this.svg.append('svg:path').attr('class', 'link hidden').attr('d', 'M0,0L0,0');
+                this.pointer = this.svg.append('svg:path').attr('class', 'link hidden').
+                        style('stroke', 'blue').
+                        style('stroke-width', '2px').
+                        attr('d', 'M0,0L0,0');
                 // This will create the path instructions
                 this.set('pointer.drawline', function () {
                     return 'M' + this.locations.startx + ',' + this.locations.starty + ' L' + this.locations.tox + ',' + this.locations.toy;
@@ -440,14 +438,20 @@
                 this.nsEnter = this.ns.enter().insert('g').attr('class', 'ns').attr('transform', function () {
                     return 'translate(' + Math.random() * ww + ',' + Math.random() * hh + ')';
                 });
-                this.nsEnter.append('circle').attr('class', 'circ').attr('r', cr).style('stroke', function (d) {
-                    return d3.rgb(qview.cols(+d.details.relatetype)).darker(2);
-                }).style('fill', function (d) {
-                    return qview.cols(+d.details.relatetype);
-                });
-                this.nsEnter.append('text').attr('class', 'ndnm').attr('text-anchor', 'middle').text(function (d) {
-                    return d.name;
-                });
+                this.nsEnter.append('circle').attr('class', 'circ').attr('r', cr).
+                        style('stroke', function (d) {
+                            return d3.rgb(qview.cols(+d.details.relatetype)).darker(2);
+                        }).style('fill', function (d) {
+                            return qview.cols(+d.details.relatetype);
+                        });
+                this.nsEnter.append('text').attr('class', 'ndnm').attr('text-anchor', 'middle').
+                        style('user-select', 'none').
+                        style('-moz-user-select', 'none').
+                        style('-webkit-user-select', 'none').
+                        style('-ms-user-select', 'none').
+                        text(function (d) {
+                            return d.name;
+                        });
                 // Start moving the edge pointer around
                 this.ns.on('touchstart', function (d) {
                     d3.event.preventDefault();
@@ -478,15 +482,18 @@
                     return d.source.id + '-' + d.target.id;
                 });
                 //noinspection JSUnusedGlobalSymbols
-                this.lkEnter = this.lks.enter().insert('line', 'g.ns').attr('class', 'link').attr('x1', function (d) {
-                    return d.source.x;
-                }).attr('x2', function (d) {
-                    return d.target.x;
-                }).attr('y1', function (d) {
-                    return d.source.y;
-                }).attr('y2', function (d) {
-                    return d.target.y;
-                });
+                this.lkEnter = this.lks.enter().insert('line', 'g.ns').attr('class', 'link').
+                        style('stroke', 'black').
+                        style('stroke-width', '2px').
+                        attr('x1', function (d) {
+                            return d.source.x;
+                        }).attr('x2', function (d) {
+                            return d.target.x;
+                        }).attr('y1', function (d) {
+                            return d.source.y;
+                        }).attr('y2', function (d) {
+                            return d.target.y;
+                        });
                 this.lks.exit().transition().duration(this.animSpeed).attr('stroke-width', 0).remove();
                 this.tickNodeLink();
             },
