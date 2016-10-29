@@ -17,5 +17,7 @@ var b = browserify('./oe/oe.js');
 // jstify will allow browserify to use external template files
 b.transform('jstify',
     {engine: 'lodash', templateOpts: {variable: 'rc'}});
-b.bundle().pipe(fs.createWriteStream('built.js'));
+b.bundle().pipe(fs.createWriteStream('./oe/built.js'));
+
+require('./openeddi-vulcanize');
 

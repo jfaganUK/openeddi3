@@ -35717,8 +35717,6 @@ jQuery.extend( {
             };
 
 
-
-
 // The deferred used on DOM ready
             var readyList = jQuery.Deferred();
 
@@ -58370,7 +58368,7 @@ module.exports.design = design;
     126: [function (require, module, exports) {
 /**
  * Created by jfagan on 10/28/15.
- * oe/oe_modules/control-boilerplate/viewBoilerplate.js:3
+ * oe/oe_modules/control-ni-boxpop/viewNIBoxpop.js
  */
 
 var EddiModel = require('../../oe_client/models/model-eddi');

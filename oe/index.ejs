@@ -14,7 +14,7 @@
         // This is necessary with Polymer and Marionette. It needs to 'teach' the app about the shadow-dom.
         window.Polymer = window.Polymer || {dom: 'shadow'};
     </script>
-    <script src="/bower_components/webcomponentsjs/webcomponents.min.js"></script>
+    <script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
 
     <link rel="import" href="/bower_components/polymer/polymer.html">
 
@@ -55,7 +55,6 @@
 
     <!------- OE MODULE COMPONENTS ------------->
 
-    <% inspect(oeModules) %>
     <% for (var k in oeModules) {
     if (oeModules.hasOwnProperty(k)) {
         var components = oeModules[k].components;
@@ -76,5 +75,5 @@
 <body unresolved class="fullbleed vertical layout">
 <div id="app-space" class="flex vertical layout">OpenEddi</div>
 </body>
-<script src="/built.js"></script>
+<script src="./built.js"></script>
 </html>

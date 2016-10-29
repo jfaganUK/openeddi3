@@ -82,13 +82,14 @@ var sendOEApp = function (req, res, next) {
         req.session.visits = 1;
     }
     log('[sendOEApp] Visits: ' + req.session.visits);
-    res.render('index.ejs',
-        {
-            //csrfToken: req.csrfToken(),
-            csrfToken: '',
-            oe: {test: 'the test'},
-            oeModules: oeModules
-        });
+    res.sendFile('./oe/vulcanized-app.html');
+    //res.render('index.ejs',
+    //    {
+    //        //csrfToken: req.csrfToken(),
+    //        csrfToken: '',
+    //        oe: {test: 'the test'},
+    //        oeModules: oeModules
+    //    });
 };
 // Make sure to send the OE *only* if the route is / and no other
 app.use(/\/$/, sendOEApp);

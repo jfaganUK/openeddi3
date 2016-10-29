@@ -12,5 +12,6 @@
     "firstName": "Admin",
     "lastName": "McAdmin"
   },
-  "appPort": 4444
+  "appPort": 4444,
+  "dev": false
 }

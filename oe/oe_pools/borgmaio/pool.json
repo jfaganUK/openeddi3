@@ -134,16 +134,6 @@
       "prompt": "What is your name? (Please do NOT omit.)"
     },
     {
-      "eid": "description",
-      "sheetid": "yourworld1",
-      "poolid": "borgmaio",
-      "title": "directionsBoiler",
-      "controlmodule": "boilerplate",
-      "sortIndex": -10,
-      "prompt": "",
-      "content": ""
-    },
-    {
       "eid": "yourworld1",
       "sheetid": "yourworld1",
       "poolid": "borgmaio",
@@ -419,23 +409,13 @@
       ]
     },
     {
-      "eid": "connectionBoiler",
-      "sheetid": "altertie1",
-      "poolid": "borgmaio",
-      "sortIndex": -1,
-      "title": "connectionBoiler",
-      "controlmodule": "boilerplate",
-      "prompt": "<h3>Instructions</h3><p>Now we want to know which of your contacts interact with your other contacts. Again, we don’t assume you necessarily know the answers for sure; we are just looking for your best guess.</p>",
-      "content": ""
-    },
-    {
       "eid": "altertie1",
       "sheetid": "altertie1",
       "poolid": "borgmaio",
       "sortIndex": 0,
       "title": "interactWeekly",
       "controlmodule": "alterties",
-      "prompt": "For each pair of persons, please indicate \"yes\" if they interact on a weekly or monthly basis.",
+      "prompt": "<h3>Instructions</h3><p>Now we want to know which of your contacts interact with your other contacts. Again, we don’t assume you necessarily know the answers for sure; we are just looking for your best guess.</p><p>For each pair of persons, please indicate \"yes\" if they interact on a weekly or monthly basis.</p>",
       "verb": "communicated with",
       "connectOptions": {
         "connected": "Yes",
@@ -453,7 +433,7 @@
       "poolid": "borgmaio",
       "sortIndex": 0,
       "title": "shareConfidence",
-      "controlmodule": "alterties",
+      "controlmodule": "nodelink",
       "prompt": "Please indicate \"yes\" if the pair <strong>trust each other</strong>.",
       "verb": "shares confidences with",
       "connectOptions": {
