@@ -1,6 +1,6 @@
 /**
  * Created by jfagan on 10/28/15.
- * oe/oe_modules/control-boilerplate/viewBoilerplate.js:3
+ * oe/oe_modules/control-ni-boxpop/viewNIBoxpop.js
  */
 
 var EddiModel = require('../../oe_client/models/model-eddi');

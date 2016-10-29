@@ -30,7 +30,6 @@
                     <oe-ni-boxpop-radio name="{{item}}" array-prompts="{{oe.arrayPrompts}}" on-boxpop="saveResponse"
                                         oe="[[oe]]" show-other="{{oe.other}}"></oe-ni-boxpop-radio>
                 </template>
-
                 <!-- NI Shorttext type -->
                 <template is="dom-if" if="{{_isShorttext()}}">
                     <oe-boxpop-shorttext name="{{item}}" oe="[[oe]]" on-boxpop="saveResponse"></oe-boxpop-shorttext>
@@ -44,7 +43,7 @@
 
 
             </template>
-            <oe-ni-boxpop-endoflist on-startover="reset" on-nexteddi="nexteddi"></oe-ni-boxpop-endoflist>
+            <oe-ni-boxpop-endoflist on-startover="reset"></oe-ni-boxpop-endoflist>
         </neon-animated-pages>
     </template>
     <script>
@@ -119,10 +118,7 @@
             },
             undoLast: function () {
                 this.$['name-pager'].selectPrevious();
-            },
-            nexteddi: function () {
             }
-
         });
     </script>
 </dom-module>

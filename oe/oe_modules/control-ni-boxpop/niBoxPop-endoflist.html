@@ -27,7 +27,6 @@
         <div id="endofListBox" class="layout vertical">
             <!-- I would like to add a button here that goes to the next eddi, but that would not be entirely simple -->
             <paper-button id="startOverButton">Start Over</paper-button>
-            <!--  paper-button id="nexteddi">Please go to next question</paper-button -->
             <span id="nextQuestionMessage">Please go to next question</span>
         </div>
     </template>
@@ -54,14 +53,10 @@
                 }
             },
             listeners: {
-                'startOverButton.tap': 'startover',
-                'nexteddi.tap': 'nexteddi'
-            }, 
+                'startOverButton.tap': 'startover'
+            },
             startover: function () {
                 this.fire('startover');
-            },
-            nexteddi: function () {
-                this.fire('nexteddi');
             }
         })
     </script>
