@@ -3,7 +3,7 @@
 <head>
     <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
     <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
     <link rel="import" href="/bower_components/iron-collapse/iron-collapse.html">
@@ -53,15 +53,15 @@
                         <h3><span>{{eddiTitle}}</span> - <span>{{controlmodule}}</span></h3>
 
                         <p class="secondary-text-color">{{eid}}</p>
-                        <paper-input-decorator label="Eddi Title" floatinglabel="">
+                        <paper-input label="Eddi Title" floatinglabel="">
                             <input is="core-input" value="{{eddiTitle::input}}">
-                        </paper-input-decorator>
-                        <paper-input-decorator label="Eddi Prompt" floatinglabel="">
+                        </paper-input>
+                        <paper-input label="Eddi Prompt" floatinglabel="">
                             <input is="core-input" value="{{eddiPrompt::input}}">
-                        </paper-input-decorator>
-                        <paper-input-decorator label="Sheet ID" floatinglabel="">
+                        </paper-input>
+                        <paper-input label="Sheet ID" floatinglabel="">
                             <input is="core-input" value="{{sheetid::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
                     </div>
 
                 </div>

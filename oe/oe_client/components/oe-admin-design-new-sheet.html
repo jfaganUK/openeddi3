@@ -3,7 +3,7 @@
 <head>
     <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
     <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
@@ -45,16 +45,16 @@
                         <h3>{{sheetTitle}}</h3>
 
                         <p>Create a new sheet</p>
-                        <paper-input-decorator label="Sheet Title" floatinglabel="">
+                        <paper-input label="Sheet Title" floatinglabel="">
                             <input is="core-input" value="{{sheetTitle::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
                         <p>Describe the sheet.</p>
-                        <paper-input-decorator label="Sheet Description" floatinglabel="">
+                        <paper-input label="Sheet Description" floatinglabel="">
                             <input is="core-input" value="{{sheetDescription::input}}">
-                        </paper-input-decorator>
-                        <paper-input-decorator label="Sheet ID" floatinglabel="">
+                        </paper-input>
+                        <paper-input label="Sheet ID" floatinglabel="">
                             <input is="core-input" value="{{sheetid::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
 
                         <paper-button on-tap="createNewSheet">Create!</paper-button>
                     </div>

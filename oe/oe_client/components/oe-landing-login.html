@@ -1,7 +1,7 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
-<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-label/iron-label.html">
 <link rel="import" href="/bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
@@ -51,10 +51,10 @@
         <div id="login-container" vertical="" layout="">
             <paper-input id="oeLoginUsername" label="Username" always-float-label=""
                          value="{{loginUsername}}"></paper-input>
-            <paper-input-decorator label="Password" floatinglabel="">
+            <paper-input label="Password" floatinglabel="">
                 <input id="oeLoginPassword" is="core-input" name="password" value="{{loginPassword::input}}"
                        type="password">
-            </paper-input-decorator>
+            </paper-input>
             <span class="hidden error" id="noUserFound">Username not found.</span>
             <span class="hidden error" id="badPassword">Username and password do not match.</span>
             <span class="hidden success" id="loginSuccess">Login successful!</span>

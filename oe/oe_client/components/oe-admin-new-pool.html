@@ -3,7 +3,7 @@
 <head>
     <link rel="import" href="/bower_components/polymer/polymer.html">
     <link rel="import" href="/bower_components/paper-button/paper-button.html">
-    <link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
     <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
@@ -78,21 +78,21 @@
                         <h3>{{poolTitle}}</h3>
 
                         <p>Pool title is how the pool is presented to users and respondents.</p>
-                        <paper-input-decorator label="Pool Title" floatinglabel="">
+                        <paper-input label="Pool Title" floatinglabel="">
                             <input is="core-input" value="{{poolTitle::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
                         <p>Describe the pool.</p>
-                        <paper-input-decorator label="Pool Description" floatinglabel="">
+                        <paper-input label="Pool Description" floatinglabel="">
                             <input is="core-input" value="{{poolDescription::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
                         <p>The poolid is what is used in the database and the files on the server to identify the pool.
                             It
                             neds to be unique from other pools you currently have. <em>This part should not be changed
                                 after
                                 it is established.</em></p>
-                        <paper-input-decorator label="Pool ID" floatinglabel="">
+                        <paper-input label="Pool ID" floatinglabel="">
                             <input is="core-input" value="{{poolid::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
 
                         <paper-icon-button icon="create" on-tap="createNewPool">Create!</paper-icon-button>
                     </div>

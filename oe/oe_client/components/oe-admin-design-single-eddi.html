@@ -3,7 +3,7 @@
 <head>
     <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/paper-input/paper-input-decorator.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
     <link rel="import" href="/bower_components/iron-icons/iron-icons.html">
     <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
@@ -49,13 +49,13 @@
                         <h3>{{sheetTitle}}</h3>
 
                         <p class="secondary-text-color">{{sheetid}}</p>
-                        <paper-input-decorator label="Sheet Title" floatinglabel="">
+                        <paper-input label="Sheet Title" floatinglabel="">
                             <input is="core-input" on-blur="updateAttr" value="{{sheetTitle::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
                         <p>Describe the sheet.</p>
-                        <paper-input-decorator label="Sheet Description" on-blur="updateAttr" floatinglabel="">
+                        <paper-input label="Sheet Description" on-blur="updateAttr" floatinglabel="">
                             <input is="core-input" on-blur="updateAttr" value="{{sheetDescription::input}}">
-                        </paper-input-decorator>
+                        </paper-input>
                     </div>
 
                 </div>
