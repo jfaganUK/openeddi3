@@ -12,6 +12,10 @@
     "firstName": "Admin",
     "lastName": "McAdmin"
   },
+  "build": {
+    "minify": false,
+    "vulcanize": false
+  },
   "appPort": 4444,
   "dev": false
 }

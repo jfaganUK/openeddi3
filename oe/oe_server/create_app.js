@@ -75,21 +75,25 @@ app.use(cookieParser());
 // Specific paths to deal the the Backbone router
 app.locals.inspect = inspect;
 var sendOEApp = function (req, res, next) {
-    log('Send the OE app');
+    log('[sendOEApp] Send the OE app');
     if (req.session.visits) {
         req.session.visits++;
     } else {
         req.session.visits = 1;
     }
     log('[sendOEApp] Visits: ' + req.session.visits);
-    res.sendFile('./oe/vulcanized-app.html');
-    //res.render('index.ejs',
-    //    {
-    //        //csrfToken: req.csrfToken(),
-    //        csrfToken: '',
-    //        oe: {test: 'the test'},
-    //        oeModules: oeModules
-    //    });
+    if (OEConfig.build.vulcanize) {
+        res.sendFile('./oe/vulcanized-app.html', {root: appRoot});
+    } else {
+        res.render('index.ejs',
+            {
+                //csrfToken: req.csrfToken(),
+                csrfToken: '',
+                oe: {test: 'the test'},
+                oeModules: oeModules
+            });
+    }
+
 };
 // Make sure to send the OE *only* if the route is / and no other
 app.use(/\/$/, sendOEApp);
@@ -102,12 +106,18 @@ require('./api/index')(app);
 app.use('/oe_client', express.static(appRoot + '/oe/oe_client'));
 app.use('/bower_components/', express.static(appRoot + '/oe/bower_components'));
 app.use('/oe_modules', express.static(appRoot + '/oe/oe_modules'));
-app.use('/built.js', express.static(appRoot + '/built.js'));
 app.use('/oe.css', express.static(appRoot + '/oe/oe_client/oe.css'));
 app.use('/css', express.static(appRoot + '/oe/oe_client/css'));
 app.use('/demo', express.static(appRoot + '/oe/oe_client/components/demo-oe-eddi-promptbar.html'));
 app.use('/favicon.ico', express.static(appRoot + '/oe/oe_client/favicon.ico'));
 app.use('/assets', express.static(appRoot + '/oe/oe_client/assets'));
+
+// Buit.js - if we're using the minified build then
+if (OEConfig.build.minify) {
+    app.use('/built.js', express.static(appRoot + '/oe/built-min.js'));
+} else {
+    app.use('/built.js', express.static(appRoot + '/oe/built.js'));
+}
 
 // NOTE: do these two routes last.
 // The catch for oe_server errors

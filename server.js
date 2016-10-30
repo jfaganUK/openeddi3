@@ -76,8 +76,10 @@ var createAdminUser = function (callback) {
         });
 };
 
+var buildAppFile = require('./openeddi-build');
+
 // Start the oe_server
-var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, getExpressApp, createAdminUser];
+var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, getExpressApp, createAdminUser, buildAppFile];
 async.series(startServerQueue, function (err, results) {
     app.listen(OEConfig.appPort, '0.0.0.0');
     log('[startup] Listening on port ' + OEConfig.appPort);
