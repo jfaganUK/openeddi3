@@ -106,7 +106,7 @@ require('./api/index')(app);
 app.use('/oe_client', express.static(appRoot + '/oe/oe_client'));
 app.use('/bower_components/', express.static(appRoot + '/oe/bower_components'));
 app.use('/oe_modules', express.static(appRoot + '/oe/oe_modules'));
-app.use('/oe.css', express.static(appRoot + '/oe/oe_client/oe.css'));
+app.use('/oe_client/oe.css', express.static(appRoot + '/oe/oe_client/oe.css'));
 app.use('/css', express.static(appRoot + '/oe/oe_client/css'));
 app.use('/demo', express.static(appRoot + '/oe/oe_client/components/demo-oe-eddi-promptbar.html'));
 app.use('/favicon.ico', express.static(appRoot + '/oe/oe_client/favicon.ico'));

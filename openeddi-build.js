@@ -88,14 +88,14 @@ var renderOEEJS = function (callback) {
 var vulcanizeOpenEddi = function (callback) {
     var vulcan = new Vulcanize({
         abspath: appRoot + '/oe/',
-        excludes: [],
+        excludes: ["/bower_components/iron-flex-layout/iron-flex-layout-classes.html", "/bower_components/iron-flex-layout/iron-flex-layout.html"],
         stripExcludes: [],
-        inlineScripts: false,
-        inlineCss: false,
+        inlineScripts: true,
+        inlineCss: true,
         addedImports: [],
         redirects: [],
         implicitStrip: true,
-        stripComments: false,
+        stripComments: true,
         inputUrl: ''
     });
 
@@ -109,8 +109,8 @@ var vulcanizeOpenEddi = function (callback) {
             if (err) {
                 return log(err);
             }
-            callback();
             log('[openeddi-build] Vulcanized to file');
+            callback(null);
         });
     });
 };
@@ -127,7 +127,7 @@ var uglifyBuiltJS = function (callback) {
         if (err) {
             callback(err);
         } else {
-            callback()
+            callback(null)
         }
     });
 };
