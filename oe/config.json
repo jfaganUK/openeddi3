@@ -1,6 +1,6 @@
 {
   "db": {
-    "forceSync": false,
+    "forceSync": true,
     "database": "openeddi",
     "username": "openeddi",
     "password": "openeddi"
@@ -13,7 +13,7 @@
     "lastName": "McAdmin"
   },
   "build": {
-    "minify": false,
+    "minify": true,
     "vulcanize": true
   },
   "appPort": 4444,

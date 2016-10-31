@@ -25,7 +25,7 @@ var browserifyOpenEddi = function (callback) {
     var builtFile = fs.createWriteStream('./oe/built.js');
 
     // and bundle and export
-    log('[openeddi-build] Bundling all javascript files into build.js');
+    log('[openeddi-build] Bundling all javascript files into built.js');
     b.bundle().pipe(builtFile);
 
 
