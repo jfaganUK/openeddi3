@@ -6,7 +6,6 @@
 
 
 var fs = require('fs');
-var Vulcanize = require('vulcanize');
 var log = require('util').log;
 
 /**
@@ -86,6 +85,7 @@ var renderOEEJS = function (callback) {
  * @returns {void|*}
  */
 var vulcanizeOpenEddi = function (callback) {
+    var Vulcanize = require('vulcanize');
     var vulcan = new Vulcanize({
         abspath: appRoot + '/oe/',
         excludes: ["/bower_components/iron-flex-layout/iron-flex-layout-classes.html", "/bower_components/iron-flex-layout/iron-flex-layout.html"],

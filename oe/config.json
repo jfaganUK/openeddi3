@@ -14,8 +14,8 @@
   },
   "build": {
     "build": true,
-    "minify": false,
-    "vulcanize": false
+    "minify": true,
+    "vulcanize": true
   },
   "appPort": 4444,
   "dev": false
