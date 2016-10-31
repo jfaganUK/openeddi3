@@ -14,9 +14,9 @@
         // This is necessary with Polymer and Marionette. It needs to 'teach' the app about the shadow-dom.
         window.Polymer = window.Polymer || {dom: 'shadow'};
     </script>
-    <script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
+    <script src="/bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
-    <link rel="import" href="/bower_components/polymer/polymer.html">
+    <link rel="import" href="/bower_components/polymer/polymer-micro.html">
 
     <!------- POLYMER WEB-COMPONENTS ------->
     <link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">
@@ -70,6 +70,7 @@
            include="iron-flex iron-flex-alignment iron-flex-reverse iron-flex-factors iron-positioning">
     </style>
 
+    <!-- This is added here, in addition to the style import, due to compatibility with polyfills in the Vulcanized app -->
     <style>
         .layout.horizontal, .layout.vertical {
             display: -ms-flexbox;
