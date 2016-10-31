@@ -51,10 +51,7 @@
         <div id="login-container" vertical="" layout="">
             <paper-input id="oeLoginUsername" label="Username" always-float-label=""
                          value="{{loginUsername}}"></paper-input>
-            <paper-input label="Password" floatinglabel="">
-                <input id="oeLoginPassword" is="core-input" name="password" value="{{loginPassword::input}}"
-                       type="password">
-            </paper-input>
+            <paper-input label="Password" floatinglabel="" type="password" value="{{loginPassword}}"></paper-input>
             <span class="hidden error" id="noUserFound">Username not found.</span>
             <span class="hidden error" id="badPassword">Username and password do not match.</span>
             <span class="hidden success" id="loginSuccess">Login successful!</span>

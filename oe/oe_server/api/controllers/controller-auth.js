@@ -14,8 +14,7 @@ var _ = require('lodash');
 var csrfProtection = csrf();
 
 function getAuth(req, res, next) {
-    log('[getAuth] Confirming authentication');
-    log("Authenticating " + req.body.username);
+    log("[getAuth] Authenticating " + req.body.username);
     var d = {auth: false};
     if (req.session.admin && req.session.admin === true) {
         // TODO: fetch and return user data here. that will fix the username issue.
@@ -34,6 +33,7 @@ function userLogin(req, res, next) {
 
     if (!password) {
         log('[userLogin] No password provided - quitting');
+        returnMessage = 'Invalid username or password';
         res.status(200).json({error: returnMessage, errid: 2});
         return;
     }
