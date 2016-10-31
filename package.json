@@ -49,6 +49,7 @@
     "grunt-vulcanize": "~0.6.4"
   },
   "dependencies": {
+    "grunt-vulcanize": "~0.6.4",
     "async": "~1.2.1",
     "bcryptjs": "~2.1.0",
     "body-parser": "~1.12.0",
