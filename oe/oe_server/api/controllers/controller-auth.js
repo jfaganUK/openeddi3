@@ -32,6 +32,12 @@ function userLogin(req, res, next) {
         returnMessage;
     log('[userLogin] User logging in: ' + username);
 
+    if (!password) {
+        log('[userLogin] No password provided - quitting');
+        res.status(200).json({error: returnMessage, errid: 2});
+        return;
+    }
+
     var sess = req.session;
     if (sess.logins) {
         sess.logins++;
@@ -53,6 +59,8 @@ function userLogin(req, res, next) {
                 res.status(200).json({error: returnMessage, errid: 1});
             } else {
                 // Found the user. Test the password.
+                log(password);
+                log(user.dataValues.pwd);
                 if (bcrypt.compareSync(password, user.dataValues.pwd)) {
                     // Success. Log them in.
                     req.session.admin = true;

@@ -76,10 +76,19 @@ var createAdminUser = function (callback) {
         });
 };
 
-var buildAppFile = require('./openeddi-build');
+// Compile the application - or not
+var compileAppFile = function (callback) {
+    if (OEConfig.build.build) {
+        require('./openeddi-build')(callback);
+    } else {
+        callback(null);
+    }
+};
 
-// Start the oe_server
-var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, getExpressApp, createAdminUser, buildAppFile];
+// The oe_server start queue
+var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, getExpressApp, createAdminUser, compileAppFile];
+
+// 3.. 2.. 1.. Launch!
 async.series(startServerQueue, function (err, results) {
     if (err) {
         log(err);
