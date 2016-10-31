@@ -6,6 +6,7 @@
 
 
 var fs = require('fs');
+var Vulcanize = require('vulcanize');
 var log = require('util').log;
 
 /**
@@ -24,7 +25,7 @@ var browserifyOpenEddi = function (callback) {
     var builtFile = fs.createWriteStream('./oe/built.js');
 
     // and bundle and export
-    log('[openeddi-build] Bundling all javascript files into built.js');
+    log('[openeddi-build] Bundling all javascript files into build.js');
     b.bundle().pipe(builtFile);
 
 
@@ -85,17 +86,20 @@ var renderOEEJS = function (callback) {
  * @returns {void|*}
  */
 var vulcanizeOpenEddi = function (callback) {
-    var Vulcanize = require('vulcanize');
+    var vulcanExcludes = ["/bower_components/iron-flex-layout/iron-flex-layout-classes.html",
+        "/bower_components/iron-flex-layout/iron-flex-layout.html"];
+    // Excluding these things lets chrome work, but then firefox doesn't work
+    // if they are not excluded firefox works, but the classes don't register for Chrome
     var vulcan = new Vulcanize({
         abspath: appRoot + '/oe/',
-        excludes: ["/bower_components/iron-flex-layout/iron-flex-layout-classes.html", "/bower_components/iron-flex-layout/iron-flex-layout.html"],
+        excludes: [],
         stripExcludes: [],
         inlineScripts: true,
         inlineCss: true,
         addedImports: [],
         redirects: [],
         implicitStrip: true,
-        stripComments: true,
+        stripComments: false,
         inputUrl: ''
     });
 

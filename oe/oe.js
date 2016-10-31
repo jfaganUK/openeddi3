@@ -76,7 +76,6 @@ app.on('start', function() {
 
 // Need to wait until webcomponents are ready before launching the application
 window.addEventListener('WebComponentsReady', function () {
-
     // We want to retrieve the appstate from localstorage, if it exists there.
     // That way, on a refresh, the previous state can be restored
     AppState = require('./oe_client/models/model-appstate');

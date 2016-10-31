@@ -415,7 +415,7 @@
       "sortIndex": 0,
       "title": "interactWeekly",
       "controlmodule": "nodelink",
-      "prompt": "<h3>Instructions</h3><p>Now we want to know which of your contacts interact with your other contacts. Again, we don’t assume you necessarily know the answers for sure; we are just looking for your best guess.</p><p>For each pair of persons, please indicate \"yes\" if they interact on a weekly or monthly basis.</p>",
+      "prompt": "<h3>Instructions</h3><p>Now we want to know which of your contacts interact with your other contacts. Again, we don’t assume you necessarily know the answers for sure; we are just looking for your best guess.</p><p>Click and drag a line between two people  if they <strong>interact on a weekly or monthly basis</strong>.</p>",
       "verb": "interacted with",
       "connectOptions": {
         "connected": "Yes",
@@ -434,7 +434,7 @@
       "sortIndex": 0,
       "title": "trustTie",
       "controlmodule": "nodelink",
-      "prompt": "Please indicate \"yes\" if the pair <strong>trust each other</strong>.",
+      "prompt": "Click and drag a line between two people if the pair <strong>trust each other</strong>.",
       "verb": "shares confidences with",
       "connectOptions": {
         "connected": "Yes",
