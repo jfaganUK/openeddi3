@@ -143,7 +143,7 @@ module.exports = Backbone.Model.extend({
 
     // Does this have a tie with nameid of a certain relationship?
     hasTieWith: function (nameid, relation) {
-        var otherName = app.names.get(nameid);
+        var otherName = app.currentPool.namelist.get(nameid);
         if (otherName === undefined) {
             return;
         }

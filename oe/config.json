@@ -13,7 +13,7 @@
     "lastName": "McAdmin"
   },
   "build": {
-    "build": false,
+    "build": true,
     "minify": false,
     "vulcanize": false
   },

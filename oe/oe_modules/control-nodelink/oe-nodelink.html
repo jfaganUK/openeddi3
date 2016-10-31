@@ -584,6 +584,7 @@
             /**** Load the link data (stored in the name data) ****/
             loadNodeLinkLinks: function () {
                 var nameModels = this.graph.get('nodes');
+                var td = this.graph.get('tieDetails');
                 // look at this silly line, hehe
                 var tieData = _.pluck(_.pluck(_.pluck(nameModels, 'attributes'), 'details'), 'ties');
                 var nmids = app.currentPool.namelist.pluck('id');
@@ -597,10 +598,12 @@
                             nm1 = app.currentPool.namelist.get(src);
                             nm2 = app.currentPool.namelist.get(targets[j]);
                             if (nm1 && nm2) {
-                                this.links.push({
-                                    source: nm1.attributes,
-                                    target: nm2.attributes
-                                });
+                                if (nm1.hasTieWith(nm2.id, td.relation)) {
+                                    this.links.push({
+                                        source: nm1.attributes,
+                                        target: nm2.attributes
+                                    });
+                                }
                             }
                         }
                     }
