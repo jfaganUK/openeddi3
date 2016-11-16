@@ -76,6 +76,43 @@ var createAdminUser = function (callback) {
         });
 };
 
+// Get the list of the oe pools and double-check that they have a db entry in PoolDesign
+function syncPoolListings(callback) {
+
+    var path = appRoot + '/oe/oe_pools/';
+    var poolListings = [];
+    var pools = {};
+    var ModelPoolDesign = models.PoolDesign;
+
+    var dirs = fs.readdirSync(path).filter(function (file) {
+        return fs.statSync(path + '/' + file).isDirectory();
+    });
+
+    _.forEach(dirs, function (d) {
+        var jsonFile = path + d + '/pool.json';
+        // Has to by Sync otherwise I get empty returns some times.
+        var jsonRead = fs.readFileSync(jsonFile, 'utf8');
+        var jsonData = JSON.parse(jsonRead);
+        pools[jsonData.poollogic.poolid] = jsonData;
+        
+        ModelPoolDesign.findOrCreate({
+            where: {poolid: jsonData.poollogic.poolid},
+            defaults: {
+                poolid: jsonData.poollogic.poolid,
+                poollogic: jsonData,
+                username: jsonData.poollogic.username,
+                meta: jsonData.poollogic.meta,
+                dateInserted: jsonData.poollogic.dateInserted,
+                updatedAt: jsonData.poollogic.updatedAt
+            }
+        });
+
+    });
+    log('[syncPoolListings] PoolDesign entries created');
+    callback(null);
+    
+}
+
 // Compile the application - or not
 var compileAppFile = function (callback) {
     if (OEConfig.build.build) {
@@ -86,7 +123,7 @@ var compileAppFile = function (callback) {
 };
 
 // The oe_server start queue
-var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, getExpressApp, createAdminUser, compileAppFile];
+var startServerQueue = [loadConfig, loadEddiModules, setupDatabase, syncPoolListings, getExpressApp, createAdminUser, compileAppFile];
 
 // 3.. 2.. 1.. Launch!
 async.series(startServerQueue, function (err, results) {
