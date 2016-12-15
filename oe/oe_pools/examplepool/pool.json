@@ -151,6 +151,25 @@
       ]
     },
     {
+      "eid": "103a",
+      "sheetid": "1",
+      "poolid": "test1",
+      "sortIndex": 2,
+      "title": "twentyish",
+      "controlmodule": "shorttext",
+      "prompt": "What does it feel like to be twenty-ish?",
+      "conditions": {
+        "comparator": "&&",
+        "values": [
+          {
+            "eid": "103",
+            "comparator": "===",
+            "value": "2"
+          }
+        ]
+      }
+    },
+    {
       "eid": "201",
       "sheetid": "2",
       "poolid": "test1",

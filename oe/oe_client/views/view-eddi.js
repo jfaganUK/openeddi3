@@ -4,6 +4,8 @@
  */
 "use strict";
 
+// JF: Is this even used? I don't think it is.
+
 var PolymerView = require('./marionette.polymerview');
 var template = require('../../oe_modules/shorttext/template-shorttext.ejs')();
 

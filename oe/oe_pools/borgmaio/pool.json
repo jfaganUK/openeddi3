@@ -190,7 +190,7 @@
       "sortIndex": 1,
       "title": "alterAge",
       "controlmodule": "niBoxpop",
-      "prompt": "<p>What is each person's <strong>age</strong>?</p>",
+      "prompt": "<p>For each person listed below, please answer the questions about them. You don’t have to give exact answers. For example, if we ask what organization does the person work for, you don’t need to give an exact name. You could just say “my company” or “biggest client”, etc. The same goes for which department they’re in. We only ask that you be consistent, so that if you use “my company” you always write exactly that, so that the computer knows it is the same organization.</p><p>Also, you won’t necessarily know the answers to all of the questions. In those cases, please guess. For example, if we ask about someone’s age, you can make an exact guess, such as “52”, or you could say “50s”.</p><br><p>What is each person's <strong>age</strong>?</p>",
       "namelist": "mainlist",
       "controltype": "shorttext"
     },

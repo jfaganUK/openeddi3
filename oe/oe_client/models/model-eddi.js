@@ -57,8 +57,8 @@ module.exports = Backbone.Model.extend({
 
             // test each condition
             for(var i = 0; i < conds.length; i++) {
-                var mod = app.survey.questions.where({qid: conds[i].qid}).pop();
-                var val = mod.attributes.response.value;
+                var m = app.currentPool.eddis.get({eid: conds[i].eid});
+                var val = m.get('response').value;
                 if( typeof val === 'undefined') {
                     results.push(null);
                     continue;

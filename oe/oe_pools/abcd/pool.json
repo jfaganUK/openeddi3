@@ -1,12 +1,12 @@
 {
     "poollogic": {
-        "poolid": "labstudy1-boxpop",
-        "title": "LabStudy1 Boxpop Task",
-        "description": "Boxpop task.",
+        "poolid": "abcd",
+        "title": "Learning OpenEddi JSON",
+        "description": "Learning us some JSON",
         "introduction": "Introduction goes here.",
-        "afterward": "The afterword (exit message) goes here.",
-        "dateCreated": "2016-11-17T14:24:04.632Z",
-        "username": null,
+        "afterward": "The afterward (exit message) goes here.",
+        "dateCreated": "2016-11-21T21:53:26.882Z",
+        "username": "",
         "meta": null,
         "sheetOrder": [
             "getid",
@@ -92,52 +92,37 @@
         {
             "sheetid": "getid",
             "title": "Enter ID",
-            "description": "Boxpop characters"
+            "description": "Node link characters"
         },
         {
             "sheetid": "1",
-            "title": "Boxpop",
-            "description": "Boxpop characters"
+            "title": "Node link",
+            "description": "Node link characters"
         },
         {
             "sheetid": "2",
             "title": "Go back",
-            "description": "Boxpopcharacters"
+            "description": "Node link characters"
         }
     ],
     "eddilogic": [
         {
             "eid": "getid",
             "sheetid": "getid",
-            "poolid": "labstudy1-boxpop",
+            "poolid": "abcd",
             "sortIndex": 0,
             "title": "studyID",
             "controlmodule": "shorttext",
-            "prompt": "Please enter your study ID in the box."
-        },
-        {
-            "eid": "description",
-            "sheetid": "1",
-            "poolid": "labstudy1-boxpop",
-            "sortIndex": -10,
-            "title": "demoBoiler",
-            "controlmodule": "boilerplate",
-            "prompt": "Please read the directions here for the next task.",
-            "content": "<p>Thinking about the video you've just watched, which of the following characters spoke directly with one another? Please answer this question for each pair of characters in the video. It does not matter if only one person in the pair spoke; please indicate \"yes\" if EITHER of the characters spoke with the other one in the pair.</p>"
+            "prompt": "Please enter your study ID."
         },
         {
             "eid": "ps1",
             "sheetid": "1",
-            "poolid": "labstudy1-boxpop",
+            "poolid": "abcd",
             "sortIndex": 0,
-            "title": "altertiesTask",
-            "controlmodule": "alterties",
-            "prompt": "Please indicate \"yes\" if EITHER of the characters spoke with the other one in the pair.",
-            "verb": "communicated with",
-            "connectOptions": {
-                "connected": "Yes",
-                "notconnected": "No"
-            },
+            "title": "nodelinkTask",
+            "controlmodule": "nodelink",
+            "prompt": "Draw lines between the characters by dragging from one character to the other. Re-draw the line to remove it.",
             "tieDetails": {
                 "relation": "communicate",
                 "type": "undirected",
@@ -145,14 +130,65 @@
             }
         },
         {
+            "eid": "description",
+            "sheetid": "1",
+            "poolid": "abcd",
+            "sortIndex": -10,
+            "title": "demoBoiler",
+            "controlmodule": "boilerplate",
+            "prompt": "Please read the directions here for the next task.",
+            "content": "<p>Thinking about the video you’ve just watched, which of the following characters spoke directly to one another? Please draw a line between circles with the characters’ names to indicate that those two characters spoke to one another. For instance, did Mom talk to Dad? If so, draw a line from “Mom” to “Dad.” Feel free to use your character list as you complete this exercise.</p><p>To delete a line, just re-draw it over the existing line.</p><h3>Here is an example:</h3><div class=\"flex\"><img style=\"width: 100%;\" src=\"./assets/nodelink_starwars.png\"></img></div>"
+        },
+        {
+            "eid": "102",
+            "sheetid": "2",
+            "poolid": "abcd",
+            "sortIndex": -100,
+            "title": "someGoodFoods",
+            "controlmodule": "checklist",
+            "prompt": "Which foods have you eaten in the last month?",
+            "arrayPrompts": [
+                {
+                    "arrayid": 0,
+                    "prompt": "apple",
+                    "value": "apple"
+                },
+                {
+                    "arrayid": 1,
+                    "prompt": "orange",
+                    "value": "orange"
+                },
+                {
+                    "arrayid": 2,
+                    "prompt": "ice",
+                    "value": "ice"
+                },
+                {
+                    "arrayid": 3,
+                    "prompt": "delicious air",
+                    "value": "air"
+                }
+            ]
+        },
+        {
             "eid": "boily",
             "sheetid": "2",
-            "poolid": "labstudy1-boxpop",
+            "poolid": "abcd",
             "sortIndex": -1,
             "title": "gobackBoiler",
             "controlmodule": "boilerplate",
             "prompt": "<h3>All done, go back.</h3>",
             "content": "That's it for this portion. You can leave this tab open and go back to the first tab."
+        },
+        {
+            "eid": "2222",
+            "sheetid": "2",
+            "poolid": "abcd",
+            "sortIndex": -1000,
+            "title": "jsonTest",
+            "controlmodule": "shorttext",
+            "prompt": "JSON Test Oh Boy",
+            "content": "This is the boilerplate content"
         }
     ]
 }

@@ -15,6 +15,10 @@ module.exports = Marionette.LayoutView.extend({
     },
 
     initialize: function (opts) {
+        var self = this;
+        app.channels.response.on('response-updated', function (e) {
+            self.checkCondition();
+        });
     },
 
     onShow: function() {
@@ -26,5 +30,15 @@ module.exports = Marionette.LayoutView.extend({
         var ControlView = app.OEModules[this.model.attributes.controlmodule].views.eddicontrol;
         var controlView = new ControlView({model: this.model});
         this.controlspace.show(controlView);
+
+        this.checkCondition();
+    },
+
+    checkCondition: function() {
+        if(!this.model.checkCondition()) {
+            this.$el.hide();
+        } else  {
+            this.$el.show();
+        }
     }
 });

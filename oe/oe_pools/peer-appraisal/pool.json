@@ -1,0 +1,276 @@
+{
+  "poollogic":
+  {
+    "poolid": "peer-appraisal",
+    "title": "MGT410 Peer Appraisal",
+    "description": "Peer appraisals for the final presentation project.",
+    "introduction": "",
+    "afterward": "",
+    "sheetOrder": [
+      "intro",
+      "identify",
+      "groupmembers",
+      "collaboration",
+      "end"
+    ],
+    "dateCreated": "2016-04-26 15:11:00-04:00",
+    "roster" : [
+      {"name":"Akin, James", "lists": [ "class" ] },
+      {"name":"Burba, Trevor", "lists": [ "class" ] },
+      {"name":"Carner, Olivia", "lists": [ "class" ] },
+      {"name":"Cleveland, Miranda", "lists": [ "class" ] },
+      {"name":"Conn, Alyssa", "lists": [ "class" ] },
+      {"name":"Desmarais, Christopher", "lists": [ "class" ] },
+      {"name":"Drake, Joseph", "lists": [ "class" ] },
+      {"name":"DuPont, Rachel", "lists": [ "class" ] },
+      {"name":"Fowler, Taylor", "lists": [ "class" ] },
+      {"name":"Gardner, Jackson", "lists": [ "class" ] },
+      {"name":"Geise, Onno", "lists": [ "class" ] },
+      {"name":"Gianacakes, Dimitri", "lists": [ "class" ] },
+      {"name":"Goetting, Margo", "lists": [ "class" ] },
+      {"name":"Goodloe IV, John", "lists": [ "class" ] },
+      {"name":"Groves, Jacob", "lists": [ "class" ] },
+      {"name":"Hale, Brandon", "lists": [ "class" ] },
+      {"name":"Hill, Thomas", "lists": [ "class" ] },
+      {"name":"Hoagland, Andrew", "lists": [ "class" ] },
+      {"name":"Huddleston, Alyssa", "lists": [ "class" ] },
+      {"name":"Jenkins, James", "lists": [ "class" ] },
+      {"name":"Jenkins, Kellen", "lists": [ "class" ] },
+      {"name":"Macginnis, Austin", "lists": [ "class" ] },
+      {"name":"McCulloch, David", "lists": [ "class" ] },
+      {"name":"Miller, Adam", "lists": [ "class" ] },
+      {"name":"Miller, Andrew", "lists": [ "class" ] },
+      {"name":"Pruitt, Tyler", "lists": [ "class" ] },
+      {"name":"Pumpelly, Benjamin", "lists": [ "class" ] },
+      {"name":"Ralls, Jason", "lists": [ "class" ] },
+      {"name":"Ritchie, Sean", "lists": [ "class" ] },
+      {"name":"Salow, Corey", "lists": [ "class" ] },
+      {"name":"Sleeper, Colin", "lists": [ "class" ] },
+      {"name":"Smith, Jackson", "lists": [ "class" ] },
+      {"name":"Snowden, William", "lists": [ "class" ] },
+      {"name":"Stanley, Kierstyn", "lists": [ "class" ] },
+      {"name":"Taylor, Kelli", "lists": [ "class" ] },
+      {"name":"Tollefsen, Kristoffer", "lists": [ "class" ] },
+      {"name":"Wiedeman, Madalyn", "lists": [ "class" ] },
+      {"name":"Wilson, Austin", "lists": [ "class" ] },
+      {"name":"Zacher, Corey", "lists": [ "class" ] }
+    ]
+  },
+  "sheetlogic":
+  [
+    {"sheetid": "intro", "title" : "Introduction", "description" : ""},
+    {"sheetid": "identify", "title" : "Who are you?", "description" : ""},
+    {"sheetid": "groupmembers", "title" : "Who was in your group?", "description": ""},
+    {"sheetid": "collaboration", "title" : "Tell me about your experience", "description": ""},
+    {"sheetid": "end", "title" : "Thanks!", "description": "" }
+  ],
+  "eddilogic":
+  [
+    {
+      "eid": "intro-boiler",
+      "sheetid": "intro",
+      "poolid": "peer-appraisal",
+      "sortIndex": -1,
+      "title": "introBoiler",
+      "controlmodule": "boilerplate",
+      "prompt": "<h3>Peer Appraisal</h3>",
+      "content": "<p>Complete this survey as your peer appraisal credit.</p><p>This is software that I've been writing myself for data collection. Let me know if you discover any bugs. It's probably best if you use <strong>Chrome</strong> when taking it, but it <em>should</em> work well in other browsers too</p><p>Keep in mind that your responses are <strong>completely confidential</strong>. I will not share your responses with anyone. I am using this data for the purposes of group appraisals and nothing more.</p><p>Click or tap <strong>next</strong> to move to the next page.</p>"
+    },
+    {
+      "eid": "studentID",
+      "sheetid": "identify",
+      "poolid": "peer-appraisal",
+      "sortIndex": 0,
+      "title": "studentID",
+      "controlmodule": "shorttext",
+      "prompt": "Enter your student ID number."
+    },
+    {
+      "eid": "ego-name",
+      "sheetid": "identify",
+      "poolid": "peer-appraisal",
+      "sortIndex": 10,
+      "title": "egoName",
+      "controlmodule": "radiolist",
+      "prompt": "Select <strong>your name</strong> from the list below.",
+      "arrayPrompts": [
+        {"arrayid":1, "prompt": "Akin, James", "value" : "Akin, James"},
+        {"arrayid":2, "prompt": "Burba, Trevor", "value" : "Burba, Trevor"},
+        {"arrayid":3, "prompt": "Carner, Olivia", "value" : "Carner, Olivia"},
+        {"arrayid":4, "prompt": "Cleveland, Miranda", "value" : "Cleveland, Miranda"},
+        {"arrayid":5, "prompt": "Conn, Alyssa", "value" : "Conn, Alyssa"},
+        {"arrayid":6, "prompt": "Desmarais, Christopher", "value" : "Desmarais, Christopher"},
+        {"arrayid":7, "prompt": "Drake, Joseph", "value" : "Drake, Joseph"},
+        {"arrayid":8, "prompt": "DuPont, Rachel", "value" : "DuPont, Rachel"},
+        {"arrayid":9, "prompt": "Fowler, Taylor", "value" : "Fowler, Taylor"},
+        {"arrayid":10, "prompt": "Gardner, Jackson", "value" : "Gardner, Jackson"},
+        {"arrayid":11, "prompt": "Geise, Onno", "value" : "Geise, Onno"},
+        {"arrayid":12, "prompt": "Gianacakes, Dimitri", "value" : "Gianacakes, Dimitri"},
+        {"arrayid":13, "prompt": "Goetting, Margo", "value" : "Goetting, Margo"},
+        {"arrayid":14, "prompt": "Goodloe IV, John", "value" : "Goodloe IV, John"},
+        {"arrayid":15, "prompt": "Groves, Jacob", "value" : "Groves, Jacob"},
+        {"arrayid":16, "prompt": "Hale, Brandon", "value" : "Hale, Brandon"},
+        {"arrayid":17, "prompt": "Hill, Thomas", "value" : "Hill, Thomas"},
+        {"arrayid":18, "prompt": "Hoagland, Andrew", "value" : "Hoagland, Andrew"},
+        {"arrayid":19, "prompt": "Huddleston, Alyssa", "value" : "Huddleston, Alyssa"},
+        {"arrayid":20, "prompt": "Jenkins, James", "value" : "Jenkins, James"},
+        {"arrayid":21, "prompt": "Jenkins, Kellen", "value" : "Jenkins, Kellen"},
+        {"arrayid":22, "prompt": "Macginnis, Austin", "value" : "Macginnis, Austin"},
+        {"arrayid":23, "prompt": "McCulloch, David", "value" : "McCulloch, David"},
+        {"arrayid":24, "prompt": "Miller, Adam", "value" : "Miller, Adam"},
+        {"arrayid":25, "prompt": "Miller, Andrew", "value" : "Miller, Andrew"},
+        {"arrayid":26, "prompt": "Pruitt, Tyler", "value" : "Pruitt, Tyler"},
+        {"arrayid":27, "prompt": "Pumpelly, Benjamin", "value" : "Pumpelly, Benjamin"},
+        {"arrayid":28, "prompt": "Ralls, Jason", "value" : "Ralls, Jason"},
+        {"arrayid":29, "prompt": "Ritchie, Sean", "value" : "Ritchie, Sean"},
+        {"arrayid":30, "prompt": "Salow, Corey", "value" : "Salow, Corey"},
+        {"arrayid":31, "prompt": "Sleeper, Colin", "value" : "Sleeper, Colin"},
+        {"arrayid":32, "prompt": "Smith, Jackson", "value" : "Smith, Jackson"},
+        {"arrayid":33, "prompt": "Snowden, William", "value" : "Snowden, William"},
+        {"arrayid":34, "prompt": "Stanley, Kierstyn", "value" : "Stanley, Kierstyn"},
+        {"arrayid":35, "prompt": "Taylor, Kelli", "value" : "Taylor, Kelli"},
+        {"arrayid":36, "prompt": "Tollefsen, Kristoffer", "value" : "Tollefsen, Kristoffer"},
+        {"arrayid":37, "prompt": "Wiedeman, Madalyn", "value" : "Wiedeman, Madalyn"},
+        {"arrayid":38, "prompt": "Wilson, Austin", "value" : "Wilson, Austin"},
+        {"arrayid":39, "prompt": "Zacher, Corey", "value" : "Zacher, Corey"}
+      ]
+    },
+    {
+      "eid": "select-members",
+      "sheetid": "groupmembers",
+      "poolid": "peer-appraisal",
+      "sortIndex": -1,
+      "title": "selectMembers",
+      "controlmodule": "namepick",
+      "prompt": "Select your group members from the list below.",
+      "namelist": "groupmembers"
+    },
+    {
+      "eid": "group-contribution",
+      "sheetid": "collaboration",
+      "poolid": "peer-appraisal",
+      "sortIndex": 1,
+      "title": "groupContribution",
+      "controlmodule": "niBoxpop",
+      "namelist": "groupmembers",
+      "prompt": "How would you describe the <strong>contributions</strong> of each group member?",
+      "controltype": "radio",
+      "arrayPrompts": [
+        {
+          "arrayid": 1,
+          "prompt": "Unacceptable",
+          "value": "1"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Somewhat unacceptable",
+          "value": "2"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Neutral",
+          "value": "3"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "Somewhat acceptable",
+          "value": "4"
+        },
+        {
+          "arrayid": 5,
+          "prompt": "Acceptable",
+          "value": "5"
+        }
+      ]
+    },
+    {
+      "eid": "group-communication",
+      "sheetid": "collaboration",
+      "poolid": "peer-appraisal",
+      "sortIndex": 2,
+      "title": "groupCommunication",
+      "controlmodule": "niBoxpop",
+      "namelist": "groupmembers",
+      "prompt": "How would you rate each group member's <strong>communication</strong> with the group?",
+      "controltype": "radio",
+      "arrayPrompts": [
+        {
+          "arrayid": 1,
+          "prompt": "Unacceptable",
+          "value": "1"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Somewhat unacceptable",
+          "value": "2"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Neutral",
+          "value": "3"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "Somewhat acceptable",
+          "value": "4"
+        },
+        {
+          "arrayid": 5,
+          "prompt": "Acceptable",
+          "value": "5"
+        }
+      ]
+    },
+    {
+      "eid": "group-overall",
+      "sheetid": "collaboration",
+      "poolid": "peer-appraisal",
+      "sortIndex": 3,
+      "title": "groupOverall",
+      "controlmodule": "niBoxpop",
+      "namelist": "groupmembers",
+      "prompt": "How would you rate each group member's <strong>overall performance</strong>?",
+      "controltype": "radio",
+      "arrayPrompts": [
+        {
+          "arrayid": 1,
+          "prompt": "Unacceptable",
+          "value": "1"
+        },
+        {
+          "arrayid": 2,
+          "prompt": "Somewhat unacceptable",
+          "value": "2"
+        },
+        {
+          "arrayid": 3,
+          "prompt": "Neutral",
+          "value": "3"
+        },
+        {
+          "arrayid": 4,
+          "prompt": "Somewhat acceptable",
+          "value": "4"
+        },
+        {
+          "arrayid": 5,
+          "prompt": "Acceptable",
+          "value": "5"
+        }
+      ]
+    },
+    {
+      "eid": "exit-boiler",
+      "sheetid": "end",
+      "poolid": "peer-appraisal",
+      "sortIndex": -1,
+      "title": "extiBoiler",
+      "controlmodule": "boilerplate",
+      "prompt": "<h3>All Done</h3>",
+      "content": "<p>That's it. You're all done!</p><p>You can close the tab now.</p>"
+    }
+  ]
+}
+
+
+

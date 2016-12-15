@@ -1,154 +1,153 @@
 {
-  "poollogic": {
-    "poolid": "labstudy1-pilesort",
-    "title": "LabStudy1 Pilesort Task",
-    "description": "Pilesort task.",
-    "introduction": "Introduction goes here.",
-    "afterward": "The afterword (exit message) goes here.",
-    "sheetOrder": [
-      "getid",
-      "1",
-      "2"
+    "poollogic": {
+        "poolid": "labstudy1-pilesort",
+        "title": "LabStudy1 Pilesort Task",
+        "description": "Pilesort \"task\".",
+        "introduction": "Introduction goes here.",
+        "afterward": "The afterword (exit message) goes here.",
+        "dateCreated": "2016-11-21T20:57:25.565Z",
+        "username": null,
+        "meta": null,
+        "sheetOrder": [
+            "getid",
+            "1",
+            "2"
+        ],
+        "roster": [
+            {
+                "name": "Kevin",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Paul",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Winnie",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Wayne",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Brian",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Dad",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Mom",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Karen",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Teacher",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Charles",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Coach",
+                "lists": [
+                    "wonderyears"
+                ]
+            },
+            {
+                "name": "Steve",
+                "lists": [
+                    "wonderyears"
+                ]
+            }
+        ]
+    },
+    "sheetlogic": [
+        {
+            "sheetid": "getid",
+            "title": "Enter ID",
+            "description": "Pile Sort of Characters"
+        },
+        {
+            "sheetid": "1",
+            "title": "Pile sort",
+            "description": "Pile Sort of Characters"
+        },
+        {
+            "sheetid": "2",
+            "title": "Go back",
+            "description": "Pile Sort of Characters"
+        }
     ],
-    "dateCreated": "2016-03-19 20:21:00-04:00",
-    "roster": [
-      {
-        "name": "Kevin",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Paul",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Winnie",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Wayne",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Brian",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Dad",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Mom",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Karen",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Teacher",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Charles",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Coach",
-        "lists": [
-          "wonderyears"
-        ]
-      },
-      {
-        "name": "Steve",
-        "lists": [
-          "wonderyears"
-        ]
-      }
+    "eddilogic": [
+        {
+            "eid": "getid",
+            "sheetid": "getid",
+            "poolid": "labstudy1-pilesort",
+            "sortIndex": 0,
+            "title": "studyID",
+            "controlmodule": "shorttext",
+            "prompt": "Please enter your study ID."
+        },
+        {
+            "eid": "description",
+            "sheetid": "1",
+            "poolid": "labstudy1-pilesort",
+            "sortIndex": -10,
+            "title": "demoBoiler",
+            "controlmodule": "boilerplate",
+            "prompt": "Please read the directions here for the next task.",
+            "content": "<p>Thinking about the video you’ve just watched, which of the following characters spoke directly to one another? Sort the cards into piles by dragging a card down with your mouse.</p><p>Each pile should represent a group of people who all <strong>talked directly with each other</strong>. If someone only talked to one other person, then put just those two people in a pile. For instance, did Mom talk to Dad? If so, drag the card marked “Mom” down the space below, and then drag the card marked “Dad” into a pile with “Mom.” Feel free to use your character list as you complete this exercise.</p><p>A card can be in multiple piles, and you can make as many piles as you need to show who talked to whom in the video. If you need to delete a card, drag it to the top row.</p><h3>Here is an example:</h3><div class=\"flex\"><img style=\"width: 100%;\" src=\"./assets/pilesort_starwars.png\"></img></div>"
+        },
+        {
+            "eid": "ps1",
+            "sheetid": "1",
+            "poolid": "labstudy1-pilesort",
+            "sortIndex": 0,
+            "title": "pileSortTask",
+            "controlmodule": "alterpilesort",
+            "prompt": "Sort the cards into piles. Each pile should represent a group of people who all <strong>talked directly with each other</strong>. A card can be in multiple piles. Drag a card to the top row to delete it.",
+            "tieDetails": {
+                "relation": "communicate",
+                "type": "undirected",
+                "weighted": false
+            }
+        },
+        {
+            "eid": "boily",
+            "sheetid": "2",
+            "poolid": "labstudy1-pilesort",
+            "sortIndex": -1,
+            "title": "gobackBoiler",
+            "controlmodule": "boilerplate",
+            "prompt": "<h3>All done, go back.</h3>",
+            "content": "That's it for this portion. You can leave this tab open and go back to the first tab."
+        }
     ]
-  },
-  "sheetlogic": [
-    {
-      "sheetid": "getid",
-      "title": "Enter ID",
-      "description": "Pile Sort of Characters"
-    },
-    {
-      "sheetid": "1",
-      "title": "Pile sort",
-      "description": "Pile Sort of Characters"
-    },
-    {
-      "sheetid": "2",
-      "title": "Go back",
-      "description": "Pile Sort of Characters"
-    }
-  ],
-  "eddilogic": [
-    {
-      "eid": "getid",
-      "sheetid": "getid",
-      "poolid": "labstudy1-pilesort",
-      "sortIndex": 0,
-      "title": "studyID",
-      "controlmodule": "shorttext",
-      "prompt": "Please enter your study ID."
-    },
-    {
-      "eid": "description",
-      "sheetid": "1",
-      "poolid": "labstudy1-pilesort",
-      "title": "demoBoiler",
-      "controlmodule": "boilerplate",
-      "sortIndex": -10,
-      "prompt": "Please read the directions here for the next task.",
-      "content": "<p>Thinking about the video you’ve just watched, which of the following characters spoke directly to one another? Sort the cards into piles by dragging a card down with your mouse.</p><p>Each pile should represent a group of people who all <strong>talked directly with each other</strong>. If someone only talked to one other person, then put just those two people in a pile. For instance, did Mom talk to Dad? If so, drag the card marked “Mom” down the space below, and then drag the card marked “Dad” into a pile with “Mom.” Feel free to use your character list as you complete this exercise.</p><p>A card can be in multiple piles, and you can make as many piles as you need to show who talked to whom in the video. If you need to delete a card, drag it to the top row.</p><h3>Here is an example:</h3><div class=\"flex\"><img style=\"width: 100%;\" src=\"./assets/pilesort_starwars.png\"></img></div>"
-    },
-    {
-      "eid": "ps1",
-      "sheetid": "1",
-      "poolid": "labstudy1-pilesort",
-      "sortIndex": 0,
-      "title": "pileSortTask",
-      "controlmodule": "alterpilesort",
-      "prompt": "Sort the cards into piles. Each pile should represent a group of people who all <strong>talked directly with each other</strong>. A card can be in multiple piles. Drag a card to the top row to delete it.",
-      "tieDetails": {
-        "relation": "communicate",
-        "type": "undirected",
-        "weighted": false
-      }
-    },
-    {
-      "eid": "boily",
-      "sheetid": "2",
-      "poolid": "labstudy1-pilesort",
-      "sortIndex": -1,
-      "title": "gobackBoiler",
-      "controlmodule": "boilerplate",
-      "prompt": "<h3>All done, go back.</h3>",
-      "content": "That's it for this portion. You can leave this tab open and go back to the first tab."
-    }
-  ]
 }
-
-
-
