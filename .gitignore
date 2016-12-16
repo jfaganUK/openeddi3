@@ -17,6 +17,15 @@
 scratch.txt
 notes.md
 
+npm-debug.log
 oe/npm-debug.log
 built.min.js
 built.min.js.map
+
+# Pools that I don't want in the repo
+
+oe/oe_pools/pool1
+oe/oe_pools/pool2
+oe/oe_pools/pool3
+oe/oe_pools/pool4
+oe/oe_pools/rapproject
