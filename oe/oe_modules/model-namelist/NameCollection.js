@@ -8,7 +8,9 @@ var NameModel = require('./NameModel');
 module.exports = Backbone.Collection.extend({
     model: NameModel,
     url: function () {
-        return '/api/namelist/' + app.appState.get('puid');
+        // return '/api/namelist/' + app.appState.get('puid');
+        // Added slash at the end of the path for ease of splitting and working with localStorage. bd
+        return '/api/namelist/' + app.appState.get('puid') + '/';
     },
 
     initialize: function () {
@@ -61,7 +63,7 @@ module.exports = Backbone.Collection.extend({
     /***
      * Add a new name to the
      * @param name a name object with
-     * @param options Options can be empty. doNotSave, if true then it will not persist. preventDuplicates will disallow a name to duplicate
+     * @param options Options can be empty. doNotSave,  if true then it will not persist. preventDuplicates will disallow a name to duplicate
      */
     addName: function (name, options) {
         var options = options || {};
