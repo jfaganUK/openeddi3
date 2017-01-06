@@ -13,8 +13,14 @@ var guid = require('../../oe_client/helpers/guid');
 module.exports = function (app) {
 
     // Set up the API
-    app.use(bodyParser.urlencoded({extended: true}));
-    app.use(bodyParser.json());
+    var urlencodedParser = bodyParser.urlencoded({
+        extended: true,
+        limit: 1024 * 1024 * 20,
+        type: 'application/x-www-form-urlencoding'
+    });
+    var jsonParser = bodyParser.json({limit: 1024 * 1024 * 20, type: 'application/json'});
+    app.use(jsonParser);
+    app.use(urlencodedParser);
 
     var router = express.Router();
     app.use('/api', router);
@@ -23,8 +29,8 @@ module.exports = function (app) {
         res.json({message: 'the OpenEddi API is working.'});
     });
 
-    // The appstate route
-    // TODO: do something with the appstate, it coudl be very useful
+    // The appstate routew
+    // TODO: do something with the appstate, it could be very useful
     router.route('/appstate/:id')
         .get(function(req, res) {
             res.json({});
