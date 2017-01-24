@@ -79,16 +79,17 @@
                 </template>
             </paper-listbox>
             
-            <template is="dom-if" if="{{buttonhidden}}">
-          
-            </template>
-          
-                <paper-button disabled$="{{disabled}}" raised="" on-tap="sync" class="start-button">
-                <iron-icon icon="add">{{button}}</iron-icon>{{button}}
-              </paper-button>
+            <paper-button disabled$="{{disabled}}" raised="" on-tap="sync" class="start-button">
+              <iron-icon icon="add">{{button}}</iron-icon>{{button}}
+            </paper-button>
+            
+            <p>{{localstoragemessage}}<p>
+            <paper-button disabled$="{{localstoragebuttondisabled}}" raised="" on-tap="clearLocalStorage" class="start-button">
+              <iron-icon icon="add">{{localstoragebutton}}</iron-icon>{{localstoragebutton}}
+            </paper-button>
             
           </div> 
-          
+                                                                     
         </template>
         
         <script>
@@ -104,7 +105,6 @@
                   button: {
                     type: String,
                     value: 'Sync Records to Server?',
-                    // observer: 'buttonChanged',
                     notify: true
                   },
                   disabled: {
@@ -113,47 +113,39 @@
                   message: {
                     type: String,
                     value: '',
-                    // observer: 'buttonChanged',
                     notify: true
-                  }
+                  },
+                  localstoragemessage: {
+                    type: String,
+                    value: '',
+                    notify: true
+                  },
+                  localstoragebutton: {
+                    type: String,
+                    value: 'Clear Local Storage?',
+                    notify: true
+                  },
+                 localstoragebuttondisabled: {
+                   type: Boolean,
+                   value: false
+                 }
                 },
-            
             _disabledChanged: function(newValue, oldValue) {
-                  // console.log('disabled ', newValue, oldValue);
                this.toggleClass('disabled', newValue);
             },
-                
-            // modelUpdated: function(oldValue, newValue) {
-              // console.log('\n\n mod updated ', oldValue, newValue);
-            // },
             disableButton: function(v, newValue) {
-               console.log('\n\nhide button ? ', v, newValue);
               if (newValue !== 'undefined' ) {
-                console.log('\n\nhide button ? ', v, newValue);
                 this.set('disablebutton', newValue);
-                 console.log('this.disablebutton ' , this.disablebutton);
               }
             },
-            ready: function() {
-            //   console.log('is the sync component read?');
-            },
+            // ready: function() {
+            // },
             sync: function() {
               app.channels.response.command('sync', this);
+            },
+            clearLocalStorage: function() {
+              app.channels.response.command('clearLocalStorage', this);
             }
-            // ,
-            // attrUpdateChanged: function() {
-            //   // console.log('attrUpdateChanged CHANGED');
-            // },
-            // syncChanged: function(v) {
-            //   // console.log(' -------------------> CHANGED  value = ', v );
-            // },
-            // buttonChanged: function(v) {
-            //   // console.log(' ------------------->  BUTTON CHANGED  value = ', v );
-            // },
-            // _updateElAttrsFromModel: function() {
-            //   // console.log('marionette-polymer...');
-            // }
-            
             });
         </script>
     </dom-module>
