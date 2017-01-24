@@ -27,6 +27,7 @@ var LayoutAdminPoolListings = Mn.LayoutView.extend({
     
     radioListen: function() {
       app.channels.response.comply('sync', this.syncDirtyRecords, this);
+      app.channels.response.comply('clearLocalStorage', this.clearLocalStorage, this);
       app.channels.response.comply('hasDirtyRecords', this.hasDirtyRecords, this);
     },
     
@@ -39,6 +40,7 @@ var LayoutAdminPoolListings = Mn.LayoutView.extend({
             self.showPoolListings();
             this.poolListings = results;
             self.hasDirtyRecords(results); 
+            self.checkLocalStorage();
           }
       });
       
@@ -184,11 +186,6 @@ var LayoutAdminPoolListings = Mn.LayoutView.extend({
       // Iterate localStorage
       _.forOwn(localStorage, function(value, key) { 
           
-          
-          console.log('key ', key);
-          console.log('--> responses ',  dirtyResponses.exec(key));
-          console.log('--> name ', dirtyNames.exec(key));
-          
           // Responses
           if ( dirtyResponses.exec(key) ) {
             
@@ -224,7 +221,7 @@ var LayoutAdminPoolListings = Mn.LayoutView.extend({
                   
                   var path = splitKey.slice(0,4).join('/')+'/'+id;
                   
-                  try {
+                  try { 
                     var o = JSON.parse(localStorage.getItem(path));
                     names.push(o.poolid);
                   }
@@ -256,7 +253,27 @@ var LayoutAdminPoolListings = Mn.LayoutView.extend({
         this.viewSync._setAttributes({'disabled': true });
       }
       
+    },
+    
+    checkLocalStorage: function() {
+    
+      // I am assuming here, in accordance with International System of Units (SI), that kilo refers to 1,000 (not 1,024) and mega to 100,000 (not 1,048,576).
+      var lsTotal = 0, msg, lsLimit = 5000000;
+      
+      _.forOwn(localStorage, function(value, key) { 
+          lsTotal += (value.length + key.length) * 2;
+      });
+      
+      msg = 'Local storage currently using ' + Math.round((lsTotal/lsLimit)*100) + '% of the total available space';
+      this.viewSync._setAttributes({'localstoragemessage': msg });
+        
+    },
+    
+    clearLocalStorage: function() {
+      localStorage.clear();
+      this.checkLocalStorage();
     }
+    
 });
 
 module.exports = LayoutAdminPoolListings;
