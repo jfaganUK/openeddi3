@@ -12,6 +12,7 @@ var sequelize = new Sequelize(
     OEConfig.db.username,
     OEConfig.db.password,
     {
+        host: 'localhost',
         dialect: 'postgres',
         logging: function (str) {
             //do nothing, it's way too noisy!

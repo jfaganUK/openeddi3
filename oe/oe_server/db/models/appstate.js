@@ -9,7 +9,10 @@ var Sequelize = require('sequelize');
 var sequelize = require('../config');
 
 var AppState = sequelize.define('AppState', {
-    id: Sequelize.STRING,         // unique id of the appstate
+    id: { 
+        type: Sequelize.STRING,   // unique id of the appstate
+        primaryKey: true
+    },
     session: Sequelize.STRING,    // The session key of the person
     username: Sequelize.STRING,   // The username, if available of the person
     page: Sequelize.STRING,       // The page / section of the application they are on

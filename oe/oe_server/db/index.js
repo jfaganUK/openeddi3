@@ -14,13 +14,12 @@ module.exports = function (moduleCallback) {
     var authDb = function (callback) {
         sequelize
             .authenticate()
-            .complete(function (err) {
-                if (!!err) {
-                    log("[db] Unable to connect to the database:", err);
-                } else {
-                    log("[db] Connection has been established successfully.");
-                    callback(null);
-                }
+            .then(function (err) {
+                log("[db] Connection has been established successfully.");
+                callback(null);
+            })
+            .catch(function (err) {
+                log("[db] Unable to connect to the database:", err);
             });
     };
 
@@ -29,20 +28,19 @@ module.exports = function (moduleCallback) {
         models = require('./models/_list');
 
         // Sync the models with the server
-        sequelize.sync({force: OEConfig.db.forceSync})
-            .complete(function (err) {
-                if (!!err) {
-                    log('[db] An error occurred while creating the table: ', err.message);
-                    log(err.sql)
-                } else {
-                    log('[db] Server is synced.');
-                    callback(null);
-                }
+        sequelize.sync({ force: OEConfig.db.forceSync })
+            .then(function (err) {
+                log('[db] Server is synced.');
+                callback(null);
+            })
+            .catch(function (err) {
+                log('[db] An error occurred while creating the table: ', err.message);
+                log(err.sql);
             });
     };
 
     async.series([authDb, syncModels], function (callback, results) {
-        moduleCallback({sequelize: sequelize, models: models});
+        moduleCallback({ sequelize: sequelize, models: models });
     });
 };
 

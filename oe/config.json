@@ -1,6 +1,6 @@
 {
   "db": {
-    "forceSync": false,
+    "forceSync": true,
     "database": "openeddi",
     "username": "openeddi",
     "password": "openeddi"
