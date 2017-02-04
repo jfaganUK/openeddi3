@@ -160,7 +160,7 @@
                 var scGroup = sc.enter().insert('g')
                         .attr('class', 'nameCard startingCard')
                         .attr('transform', function (d) {
-                            return "translate(" + (d.x) + ", " + d.y + "), scale(0.0001)";
+                            return "translate(" + (d.x) + ", " + d.y + "), scale(1)";
                         })
                         .on('mouseover', function (d) {
                             self.highlightPiles(d.id);
@@ -180,7 +180,7 @@
                         .text(function (d) {
                             return d.name;
                         });
-                scGroup.transition()
+/*                scGroup.transition()
                         .duration(500)
                         .delay(function (d, i) {
                             if (self.initialSetup) {
@@ -191,7 +191,7 @@
                         })
                         .attr('transform', function (d) {
                             return "translate(" + (d.x) + ", " + d.y + "), scale(1)";
-                        });
+                        });*/
                 sc.exit().remove();
             },
 
