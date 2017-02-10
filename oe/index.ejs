@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html manifest="/oe_client/oe_manifest.mf">
 <head lang="en">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
@@ -16,7 +16,9 @@
     </script>
     <script src="/bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
-    <link rel="import" href="/bower_components/polymer/polymer-micro.html">
+    <!-- bd: explicit imports for appCache -->
+    <link rel="import" href="/oe_client/vulcanized-app.html">
+   <!-- end -->
 
     <!------- POLYMER WEB-COMPONENTS ------->
     <link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">
