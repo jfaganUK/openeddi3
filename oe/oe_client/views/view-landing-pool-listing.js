@@ -4,12 +4,13 @@
  */
 "use strict";
 
+var template = require('../templates/template-landing-pool-listing.ejs');
 var PoolListingModel = require('../models/model-pool-listing');
 
 module.exports = Mn.PolymerView.extend({
     tagName: 'pool-listing-landing',
     model: PoolListingModel,
-    template: require('../templates/template-landing-pool-listing.ejs'),
+    template: template,
     _publishedKeys: ['poolTitle', 'dateCreated', 'description', 'oe'],
     initialize: function() {
         this.$el.on('start-new-pool', _.bind(this.newPool, this));
