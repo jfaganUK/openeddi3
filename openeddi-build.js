@@ -59,11 +59,15 @@ var renderOEEJS = function (callback) {
         if (err) {
             return console.log(err);
         } else {
-            fs.writeFile("./oe/compiled-app.html", str, function (err) {
+          var options = { flag : 'w' };
+            // fs.writeFile("./oe/compiled-app.html", str, function (err) {
+            fs.writeFile("./oe/oe_client/compiled-app.html", str, options, function (err) {
                 if (err) {
                     callback(err);
                 } else {
-                    callback()
+                    log('compiled-app.html complete');
+                    // callback();
+                    callback(null);
                 }
             });
         }
@@ -86,6 +90,7 @@ var renderOEEJS = function (callback) {
  * @returns {void|*}
  */
 var vulcanizeOpenEddi = function (callback) {
+    
     var vulcanExcludes = ["/bower_components/iron-flex-layout/iron-flex-layout-classes.html",
         "/bower_components/iron-flex-layout/iron-flex-layout.html"];
     // Excluding these things lets chrome work, but then firefox doesn't work
@@ -104,17 +109,25 @@ var vulcanizeOpenEddi = function (callback) {
     });
 
     log('[openeddi-build] Vulcanizing application');
-    vulcan.process('./compiled-app.html', function (err, inlinedHtml) {
+    // vulcan.process('./compiled-app.html', function (err, inlinedHtml) {
+    vulcan.process('./oe_client/compiled-app.html', function (err, inlinedHtml) {
+    
         if (err) {
+            log('vulcan error error ');
+            log(err);
             callback(err);
         }
 
-        fs.writeFile("./oe/vulcanized-app.html", inlinedHtml, function (err) {
+        // fs.writeFile("./oe/vulcanized-app.html", inlinedHtml, function (err) {
+        var options = { flag : 'w' };
+        fs.writeFile("./oe/oe_client/vulcanized-app.html", inlinedHtml, options, function (err) {
             if (err) {
+                log('vlucan file error');
                 return log(err);
             }
             log('[openeddi-build] Vulcanized to file');
             callback(null);
+            // callback();
         });
     });
 };
@@ -131,7 +144,7 @@ var uglifyBuiltJS = function (callback) {
         if (err) {
             callback(err);
         } else {
-            callback(null)
+            callback(null);
         }
     });
 };
@@ -155,6 +168,8 @@ var buildAppFile = function (callback) {
     }
 
     async.series(appBuildQueue, function (err) {
+        
+        log(' async func... do we ever get here?');
         if (err) {
             log('[openeddi-build] Error building the application file');
             log(err);
