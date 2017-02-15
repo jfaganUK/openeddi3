@@ -59168,7 +59168,7 @@ module.exports = Backbone.Model.extend({
     checkCondition: function() {
         // if there are no conditions, return true
         // otherwise check the condition
-        if (this.attributes.conditions !== undefined) {
+        if (this.attributes.conditions) {
             var conds = this.attributes.conditions.values;
             var comp = this.attributes.conditions.comparator;
             var results = [];
