@@ -21,6 +21,7 @@ npm-debug.log
 oe/npm-debug.log
 built.min.js
 built.min.js.map
+built.js
 
 # Pools that I don't want in the repo
 
