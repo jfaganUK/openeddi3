@@ -6,8 +6,8 @@
     "password": "openeddi"
   },
   "adminAccount": {
-    "username": "admin",
-    "password": "changeThisPassword",
+    "username": "bront",
+    "password": "theEnd",
     "email": "admin@changeThisEmail.com",
     "firstName": "Admin",
     "lastName": "McAdmin"

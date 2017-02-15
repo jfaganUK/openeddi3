@@ -111,25 +111,29 @@ var App = Marionette.Application.extend({
     },
 
     loadLanding: function() {
-        var self = this;
-
-        this.showLanding();
-
-        // Grab the existing pools
-        this.router.navigate('landing/listings');
-        var PoolListingsCollection = require('./collections/collection-pool-listings');
-        var poolListingsCollection = new PoolListingsCollection();
-        poolListingsCollection.fetch();
-
-        var PoolListingsView = require('./views/view-landing-pool-listings'),
-            poolListingsView = {};
-
-        poolListingsCollection.on('sync', function () {
-            console.log('--- PoolListingsSynced');
-            poolListingsView = new PoolListingsView({collection: this});
-            //noinspection JSUnresolvedVariable
-            self.landingView.content.show(poolListingsView);
-        });
+      var self = this;
+      
+      this.showLanding();
+      
+      // Grab the existing pools
+      this.router.navigate('landing/listings');
+      var PoolListingsCollection = require('./collections/collection-pool-listings');
+      var poolListingsCollection = new PoolListingsCollection();
+      poolListingsCollection.fetch();
+      
+      var PoolListingsView = require('./views/view-landing-pool-listings'),
+      poolListingsView = {};
+      
+      poolListingsCollection.on('sync', function () {
+          console.log('--- PoolListingsSynced');
+          poolListingsView = new PoolListingsView({collection: this});
+          //noinspection JSUnresolvedVariable
+          self.landingView.content.show(poolListingsView);
+      });
+      
+      var SyncView = require('./views/view-admin-sync-data');
+      var viewSync = new SyncView();
+      self.landingView.sync.show(viewSync);
     },
 
     newPool: function(e) {

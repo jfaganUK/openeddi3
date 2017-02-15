@@ -13,6 +13,7 @@ module.exports = Marionette.LayoutView.extend({
     id: 'oeLandingContainer',
     regions: {
         header: '#oe-landing-header',
+        sync: '#oe-sync',
         content: '#oe-landing-content',
         footer: 'oe-landing-footer'
     },
