@@ -29,3 +29,6 @@ oe/oe_pools/pool2
 oe/oe_pools/pool3
 oe/oe_pools/pool4
 oe/oe_pools/rapproject
+
+# ignore the vscode
+.vscode/
