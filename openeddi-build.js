@@ -122,7 +122,7 @@ var vulcanizeOpenEddi = function (callback) {
         var options = { flag : 'w' };
         fs.writeFile("./oe/oe_client/vulcanized-app.html", inlinedHtml, options, function (err) {
             if (err) {
-                log('vlucan file error');
+                log('vulcan file error');
                 return log(err);
             }
             log('[openeddi-build] Vulcanized to file');
