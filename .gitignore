@@ -22,6 +22,9 @@ oe/npm-debug.log
 built.min.js
 built.min.js.map
 built.js
+/oe/built.js
+/oe/oe_client/vulcanized-app.html
+/oe/oe_client/compiled-app.html
 
 # Pools that I don't want in the repo
 

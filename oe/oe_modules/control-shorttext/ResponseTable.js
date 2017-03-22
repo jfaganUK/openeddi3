@@ -12,6 +12,7 @@ function shorttextResponseTable(poolid, eddi, callback) {
     Response.findAll({where: {poolid: poolid, eid: eddi.eid}})
         .then(function (rs) {
             vec[eddi.title] = _.pluck(_.pluck(rs, 'response'), 'value');
+            vec[eddi.title + "_puid"] = _.pluck(rs, 'puid');
             callback(vec);
         })
         .catch(function (err) {
