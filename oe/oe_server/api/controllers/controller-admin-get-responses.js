@@ -72,6 +72,13 @@ function getResponseTable(poolid, callback) {
         var fileLoc, responseVectorFunc;
 
         // get the pool-level information (like the id of the respondent, date they started, etc)
+        /**
+         * The results object needs is to be structured like this:
+         * a = {"puid1" : {"column1": 58}, "puid2" : {"column1": 62}}
+         * b = {"puid1" : {"column2" : "hellow world"}, "puid2" : {"column2": "goodbye world"}}
+         * _.merge(a, b)
+         * ... then we can restructure.
+        **/
         fq.push(function getResponseHeaderInfo(callback) {
             Pool.findAll({where: {poolid: poolid}})
                 .then(function (pools) {
